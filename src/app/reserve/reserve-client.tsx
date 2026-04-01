@@ -1,8 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { PRICE_PER_HOUR, TIME_SLOTS } from "../../../lib/constants";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { PRICE_PER_HOUR } from "../../../lib/constants";
 import { formatHourLabel, formatRupiah } from "../../../lib/utils";
+
+type TableSlot = {
+  hour: number;
+  isAvailable: boolean;
+};
 
 type StoreOption = {
   id: string;
@@ -16,6 +22,14 @@ type StoreOption = {
   }[];
 };
 
+type AvailabilityTable = {
+  id: string;
+  tableNumber: number;
+  tableCode: string | null;
+  capacity: number | null;
+  slots: TableSlot[];
+};
+
 type ReserveClientProps = {
   stores: StoreOption[];
   defaultDate: string;
@@ -25,6 +39,8 @@ export default function ReserveClient({
   stores,
   defaultDate,
 }: ReserveClientProps) {
+  const router = useRouter();
+
   const [selectedStoreId, setSelectedStoreId] = useState<string>(
     stores[0]?.id ?? ""
   );
@@ -32,32 +48,83 @@ export default function ReserveClient({
   const [selectedTableId, setSelectedTableId] = useState<string>("");
   const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
 
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const [availabilityTables, setAvailabilityTables] = useState<AvailabilityTable[]>([]);
+  const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const selectedStore = useMemo(
     () => stores.find((store) => store.id === selectedStoreId),
     [stores, selectedStoreId]
   );
 
   const selectedTable = useMemo(
-    () => selectedStore?.tables.find((table) => table.id === selectedTableId),
-    [selectedStore, selectedTableId]
+    () => availabilityTables.find((table) => table.id === selectedTableId),
+    [availabilityTables, selectedTableId]
   );
 
   const totalHours = selectedSlots.length;
   const totalPrice = totalHours * PRICE_PER_HOUR;
 
+  useEffect(() => {
+    async function loadAvailability() {
+      if (!selectedStoreId || !selectedDate) return;
+
+      try {
+        setIsLoadingAvailability(true);
+        setErrorMessage("");
+
+        const response = await fetch(
+          `/api/availability?storeId=${selectedStoreId}&bookingDate=${selectedDate}`
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          setErrorMessage(result.error ?? "Gagal mengambil availability.");
+          setAvailabilityTables([]);
+          return;
+        }
+
+        setAvailabilityTables(result.data);
+      } catch (error) {
+        console.error(error);
+        setErrorMessage("Terjadi kesalahan saat mengambil availability.");
+        setAvailabilityTables([]);
+      } finally {
+        setIsLoadingAvailability(false);
+      }
+    }
+
+    loadAvailability();
+  }, [selectedStoreId, selectedDate]);
+
   const handleSelectStore = (storeId: string) => {
     setSelectedStoreId(storeId);
     setSelectedTableId("");
     setSelectedSlots([]);
+    setErrorMessage("");
   };
 
   const handleSelectTable = (tableId: string) => {
     setSelectedTableId(tableId);
     setSelectedSlots([]);
+    setErrorMessage("");
   };
 
   const handleToggleSlot = (hour: number) => {
-    if (!selectedTableId) return;
+    if (!selectedTableId || !selectedTable) return;
+
+    const selectedTableSlot = selectedTable.slots.find((slot) => slot.hour === hour);
+    if (!selectedTableSlot?.isAvailable && !selectedSlots.includes(hour)) {
+      return;
+    }
 
     let nextSlots: number[] = [];
 
@@ -77,7 +144,66 @@ export default function ReserveClient({
       return;
     }
 
+    const allStillAvailable = nextSlots.every((slotHour) => {
+      const found = selectedTable.slots.find((slot) => slot.hour === slotHour);
+      return found?.isAvailable;
+    });
+
+    if (!allStillAvailable) {
+      alert("Ada slot yang tidak tersedia.");
+      return;
+    }
+
     setSelectedSlots(nextSlots);
+    setErrorMessage("");
+  };
+
+  const handleSubmitBooking = async () => {
+    if (!selectedStoreId || !selectedDate || !selectedTableId || selectedSlots.length === 0) {
+      setErrorMessage("Lengkapi store, tanggal, meja, dan slot jam dulu ya.");
+      return;
+    }
+
+    if (!customerName.trim() || !customerPhone.trim()) {
+      setErrorMessage("Nama dan nomor HP wajib diisi.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setErrorMessage("");
+
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          storeId: selectedStoreId,
+          tableId: selectedTableId,
+          bookingDate: selectedDate,
+          selectedSlots,
+          customerName,
+          customerPhone,
+          customerEmail,
+          notes,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setErrorMessage(result.error ?? "Gagal membuat booking.");
+        return;
+      }
+
+      router.push(`/booking/${result.bookingCode}`);
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("Terjadi kesalahan saat mengirim booking.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -131,6 +257,7 @@ export default function ReserveClient({
                   setSelectedDate(e.target.value);
                   setSelectedTableId("");
                   setSelectedSlots([]);
+                  setErrorMessage("");
                 }}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
               />
@@ -139,12 +266,15 @@ export default function ReserveClient({
             <div className="rounded-3xl bg-white p-6 shadow-sm">
               <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">3. Pilih Meja</h2>
 
-              {!selectedStore ? (
-                <p className="text-slate-500">Belum ada store tersedia.</p>
+              {isLoadingAvailability ? (
+                <p className="text-slate-500">Memuat meja...</p>
+              ) : availabilityTables.length === 0 ? (
+                <p className="text-slate-500">Belum ada meja tersedia.</p>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                  {selectedStore.tables.map((table) => {
+                  {availabilityTables.map((table) => {
                     const isActive = table.id === selectedTableId;
+                    const availableCount = table.slots.filter((slot) => slot.isAvailable).length;
 
                     return (
                       <button
@@ -163,6 +293,9 @@ export default function ReserveClient({
                         <p className="text-sm text-slate-500">
                           Kapasitas: {table.capacity ?? "-"} orang
                         </p>
+                        <p className="mt-2 text-xs text-slate-600">
+                          Slot tersedia: {availableCount}
+                        </p>
                       </button>
                     );
                   })}
@@ -177,28 +310,77 @@ export default function ReserveClient({
                 <p className="text-slate-500">
                   Pilih meja dulu supaya slot jam bisa dipilih.
                 </p>
+              ) : !selectedTable ? (
+                <p className="text-slate-500">Meja tidak ditemukan.</p>
               ) : (
                 <div className="grid gap-3 md:grid-cols-2">
-                  {TIME_SLOTS.map((hour) => {
-                    const selected = selectedSlots.includes(hour);
+                  {selectedTable.slots.map((slot) => {
+                    const selected = selectedSlots.includes(slot.hour);
+                    const disabled = !slot.isAvailable && !selected;
 
                     return (
                       <button
-                        key={hour}
+                        key={slot.hour}
                         type="button"
-                        onClick={() => handleToggleSlot(hour)}
+                        onClick={() => handleToggleSlot(slot.hour)}
+                        disabled={disabled}
                         className={`rounded-2xl border px-4 py-3 text-left transition ${
                           selected
                             ? "border-[#5D3FD3] bg-[#5D3FD3] text-white"
+                            : disabled
+                            ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
                             : "border-slate-200 bg-white hover:border-slate-300"
                         }`}
                       >
-                        <span className="font-semibold">{formatHourLabel(hour)}</span>
+                        <span className="font-semibold">
+                          {formatHourLabel(slot.hour)}
+                        </span>
+                        <p className="mt-1 text-xs">
+                          {slot.isAvailable ? "Tersedia" : "Terisi"}
+                        </p>
                       </button>
                     );
                   })}
                 </div>
               )}
+            </div>
+
+            <div className="rounded-3xl bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">5. Data Pemesan</h2>
+
+              <div className="grid gap-4">
+                <input
+                  type="text"
+                  placeholder="Nama lengkap"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Nomor WhatsApp / HP"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                />
+
+                <input
+                  type="email"
+                  placeholder="Email (opsional)"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                />
+
+                <textarea
+                  placeholder="Catatan tambahan (opsional)"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={4}
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                />
+              </div>
             </div>
           </div>
 
@@ -256,17 +438,32 @@ export default function ReserveClient({
               </div>
             </div>
 
+            {errorMessage ? (
+              <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+                {errorMessage}
+              </div>
+            ) : null}
+
             <button
               type="button"
-              disabled={!selectedStoreId || !selectedDate || !selectedTableId || selectedSlots.length === 0}
+              onClick={handleSubmitBooking}
+              disabled={
+                isSubmitting ||
+                !selectedStoreId ||
+                !selectedDate ||
+                !selectedTableId ||
+                selectedSlots.length === 0
+              }
               className="mt-6 w-full rounded-2xl bg-[#5D3FD3] px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
             >
-              Lanjut ke Booking
+              {isSubmitting ? "Menyimpan Booking..." : "Buat Booking"}
             </button>
 
-            <p className="mt-3 text-xs text-slate-500">
-              Untuk tahap ini, tombol belum menyimpan data. Kita lagi bangun UI dan alur dasar dulu.
-            </p>
+            <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-xs text-slate-600">
+              <p>• Slot abu-abu berarti sudah terisi.</p>
+              <p>• Slot yang dipilih harus berurutan.</p>
+              <p>• Booking akan di-hold selama 15 menit sambil menunggu pembayaran.</p>
+            </div>
           </aside>
         </section>
       </div>

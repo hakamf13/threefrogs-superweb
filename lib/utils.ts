@@ -21,3 +21,43 @@ export function getTodayDateString() {
 export function formatHourLabel(hour: number) {
   return `${String(hour).padStart(2, "0")}:00 - ${String(hour + 1).padStart(2, "0")}:00`;
 }
+
+export function formatDateDisplay(date: Date) {
+  return new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "full",
+  }).format(date);
+}
+
+export function getBookingStatusLabel(status: string) {
+  switch (status) {
+    case "AWAITING_PAYMENT":
+      return "Menunggu Pembayaran";
+    case "PENDING_VERIFICATION":
+      return "Menunggu Verifikasi";
+    case "CONFIRMED":
+      return "Terkonfirmasi";
+    case "CANCELLED":
+      return "Dibatalkan";
+    case "EXPIRED":
+      return "Kadaluarsa";
+    default:
+      return status;
+  }
+}
+
+export function getBookingStatusColor(status: string) {
+  switch (status) {
+    case "AWAITING_PAYMENT":
+      return "bg-orange-100 text-orange-700";
+    case "PENDING_VERIFICATION":
+      return "bg-yellow-100 text-yellow-700";
+    case "CONFIRMED":
+      return "bg-green-100 text-green-700";
+    case "CANCELLED":
+      return "bg-red-100 text-red-700";
+    case "EXPIRED":
+      return "bg-slate-200 text-slate-700";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+}
