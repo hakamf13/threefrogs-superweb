@@ -42,6 +42,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
         data: {
           status: "CONFIRMED",
           confirmedAt: new Date(),
+          cancelledAt: null,
         },
       });
 
@@ -54,16 +55,17 @@ export async function PATCH(_request: Request, context: RouteContext) {
         },
       });
 
-      const latestProof = booking.paymentProofs[0];
-      if (latestProof) {
-        await tx.paymentProof.update({
-          where: { id: latestProof.id },
-          data: {
-            verificationStatus: "APPROVED",
-            verifiedAt: new Date(),
-          },
-        });
-      }
+      await tx.paymentProof.updateMany({
+        where: {
+          bookingId: booking.id,
+          verificationStatus: "PENDING",
+        },
+        data: {
+          verificationStatus: "APPROVED",
+          verifiedAt: new Date(),
+          rejectionReason: null,
+        },
+      });
 
       await tx.bookingStatusLog.create({
         data: {

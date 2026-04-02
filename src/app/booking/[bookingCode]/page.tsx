@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import SiteHeader from "@/components/layout/site-header";
 import { prisma } from "../../../../lib/prisma";
 import BookingProofUploader from "./proof-uploader";
 import {
@@ -45,6 +46,7 @@ export default async function BookingDetailPage({
 
   return (
     <main className="min-h-screen bg-[#F8F4FF] px-6 py-16 text-slate-800">
+        {/* <SiteHeader /> */}
       <div className="mx-auto max-w-3xl rounded-3xl bg-white p-8 shadow-sm">
         <div className="mb-6">
           <p className="text-sm font-semibold text-slate-500">Kode Booking</p>

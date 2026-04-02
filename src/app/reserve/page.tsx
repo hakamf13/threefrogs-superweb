@@ -1,3 +1,4 @@
+import SiteHeader from "@/components/layout/site-header";
 import { prisma } from "../../../lib/prisma";
 import { getTodayDateString } from "../../../lib/utils";
 import ReserveClient from "./reserve-client";
@@ -30,9 +31,9 @@ export default async function ReservePage() {
   });
 
   return (
-    <ReserveClient
-      stores={stores}
-      defaultDate={getTodayDateString()}
-    />
+    <div className="min-h-screen bg-[#F8F4FF] text-slate-800">
+      <SiteHeader />
+      <ReserveClient stores={stores} defaultDate={getTodayDateString()} />
+    </div>
   );
 }
