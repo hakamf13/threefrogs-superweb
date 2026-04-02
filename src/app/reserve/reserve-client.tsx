@@ -275,30 +275,34 @@ export default function ReserveClient({
                   {availabilityTables.map((table) => {
                     const isActive = table.id === selectedTableId;
                     const availableCount = table.slots.filter((slot) => slot.isAvailable).length;
+                    const isFullyBooked = availableCount === 0;
 
                     return (
-                      <button
+                        <button
                         key={table.id}
                         type="button"
-                        onClick={() => handleSelectTable(table.id)}
+                        onClick={() => !isFullyBooked && handleSelectTable(table.id)}
+                        disabled={isFullyBooked}
                         className={`rounded-2xl border p-4 text-left transition ${
-                          isActive
+                            isActive
                             ? "border-[#5D3FD3] bg-[#F3EEFF]"
+                            : isFullyBooked
+                            ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
                             : "border-slate-200 bg-white hover:border-slate-300"
                         }`}
-                      >
-                        <p className="font-bold text-[#5D3FD3]">
-                          Meja {table.tableNumber}
+                        >
+                        <p className={`font-bold ${isFullyBooked ? "text-slate-500" : "text-[#5D3FD3]"}`}>
+                            Meja {table.tableNumber}
                         </p>
                         <p className="text-sm text-slate-500">
-                          Kapasitas: {table.capacity ?? "-"} orang
+                            Kapasitas: {table.capacity ?? "-"} orang
                         </p>
-                        <p className="mt-2 text-xs text-slate-600">
-                          Slot tersedia: {availableCount}
+                        <p className="mt-2 text-xs">
+                            {isFullyBooked ? "Full booked hari ini" : `Slot tersedia: ${availableCount}`}
                         </p>
-                      </button>
-                    );
-                  })}
+                        </button>
+                        );
+                    })}
                 </div>
               )}
             </div>

@@ -1,32 +1,78 @@
-export const dynamic = "force-dynamic"
-
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import SiteHeader from "@/components/layout/site-header";
 import { prisma } from "../../../lib/prisma";
+import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 import {
   formatDateDisplay,
   formatRupiah,
   getBookingStatusColor,
   getBookingStatusLabel,
 } from "../../../lib/utils";
-import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 
-export default async function MyBookingsPage() {
+export const dynamic = "force-dynamic";
+
+type MyBookingsPageProps = {
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    sort?: string;
+  }>;
+};
+
+export default async function MyBookingsPage({
+  searchParams,
+}: MyBookingsPageProps) {
   const session = await auth();
-  await expireOverdueBookings();
 
   if (!session?.user) {
     redirect("/login?callbackUrl=/my-bookings");
   }
 
+  await expireOverdueBookings();
+
+  const params = await searchParams;
+
+  const q = (params.q ?? "").trim();
+  const status = (params.status ?? "").trim();
+  const sort = params.sort === "oldest" ? "oldest" : "newest";
+
+  const whereClause: any = {
+    userId: session.user.id,
+  };
+
+  if (q) {
+    whereClause.OR = [
+      {
+        bookingCode: {
+          contains: q,
+          mode: "insensitive",
+        },
+      },
+      {
+        customerName: {
+          contains: q,
+          mode: "insensitive",
+        },
+      },
+      {
+        customerPhone: {
+          contains: q,
+          mode: "insensitive",
+        },
+      },
+    ];
+  }
+
+  if (status) {
+    whereClause.status = status;
+  }
+
   const bookings = await prisma.booking.findMany({
-    where: {
-      userId: session.user.id,
-    },
+    where: whereClause,
     orderBy: {
-      createdAt: "desc",
+      createdAt: sort === "oldest" ? "asc" : "desc",
     },
     include: {
       store: true,
@@ -47,11 +93,76 @@ export default async function MyBookingsPage() {
             </p>
           </div>
 
+          <section className="rounded-3xl bg-white p-6 shadow-sm">
+            <form className="grid gap-4 lg:grid-cols-4">
+              <div className="lg:col-span-2">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Cari Booking
+                </label>
+                <input
+                  type="text"
+                  name="q"
+                  defaultValue={q}
+                  placeholder="Kode booking / nama / no. HP"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Status
+                </label>
+                <select
+                  name="status"
+                  defaultValue={status}
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                >
+                  <option value="">Semua Status</option>
+                  <option value="AWAITING_PAYMENT">Menunggu Bayar</option>
+                  <option value="PENDING_VERIFICATION">Menunggu Verif</option>
+                  <option value="CONFIRMED">Confirmed</option>
+                  <option value="CANCELLED">Cancelled</option>
+                  <option value="EXPIRED">Expired</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  Urutan
+                </label>
+                <select
+                  name="sort"
+                  defaultValue={sort}
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                >
+                  <option value="newest">Terbaru</option>
+                  <option value="oldest">Terlama</option>
+                </select>
+              </div>
+
+              <div className="lg:col-span-4 flex flex-wrap gap-3">
+                <button
+                  type="submit"
+                  className="rounded-2xl bg-[#5D3FD3] px-5 py-3 font-bold text-white"
+                >
+                  Terapkan Filter
+                </button>
+
+                <Link
+                  href="/my-bookings"
+                  className="rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-700"
+                >
+                  Tampilkan Semua
+                </Link>
+              </div>
+            </form>
+          </section>
+
           <div className="space-y-4">
             {bookings.length === 0 ? (
               <div className="rounded-3xl bg-white p-8 shadow-sm">
                 <p className="text-slate-500">
-                  Belum ada booking yang terhubung ke akun kamu.
+                  Belum ada booking yang cocok dengan filter ini.
                 </p>
               </div>
             ) : (

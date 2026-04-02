@@ -4,6 +4,7 @@ import UserLogoutButton from "@/components/auth/user-logout-button";
 
 export default async function SiteHeader() {
   const session = await auth();
+  const isAdmin = session?.user?.role === "ADMIN";
 
   return (
     <header className="border-b border-slate-200 bg-white">
@@ -47,6 +48,15 @@ export default async function SiteHeader() {
               >
                 Booking Saya
               </Link>
+
+              {isAdmin ? (
+                <Link
+                  href="/admin"
+                  className="rounded-2xl bg-[#5D3FD3] px-4 py-2 text-sm font-semibold text-white"
+                >
+                  Admin Dashboard
+                </Link>
+              ) : null}
 
               <UserLogoutButton />
             </>
