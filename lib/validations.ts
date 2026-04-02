@@ -23,3 +23,16 @@ export const registerUserSchema = z
     message: "Konfirmasi password tidak sama.",
     path: ["confirmPassword"],
   });
+
+export const createManualBookingSchema = z.object({
+  storeId: z.string().min(1, "Store wajib dipilih."),
+  tableId: z.string().min(1, "Meja wajib dipilih."),
+  bookingDate: z.string().min(1, "Tanggal wajib dipilih."),
+  selectedSlots: z.array(z.number().int()).min(1, "Pilih minimal 1 slot."),
+  customerName: z.string().min(2, "Nama customer minimal 2 karakter."),
+  customerPhone: z.string().min(6, "Nomor HP customer tidak valid."),
+  customerEmail: z.string().email("Email tidak valid.").optional().or(z.literal("")),
+  notes: z.string().optional(),
+  source: z.enum(["WALK_IN", "ADMIN"]),
+  initialStatus: z.enum(["CONFIRMED", "AWAITING_PAYMENT"]),
+});

@@ -40,14 +40,21 @@ export default async function AdminDashboardPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/admin/bookings"
-              className="rounded-2xl bg-[#5D3FD3] px-5 py-3 font-bold text-white"
-            >
-              Lihat Semua Booking
-            </Link>
-          </div>
+            <div className="flex flex-wrap gap-3">
+                <Link
+                href="/admin/bookings"
+                className="rounded-2xl border border-[#5D3FD3] px-5 py-3 font-bold text-[#5D3FD3]"
+                >
+                Lihat Semua Booking
+                </Link>
+
+                <Link
+                href="/admin/manual-booking"
+                className="rounded-2xl bg-[#5D3FD3] px-5 py-3 font-bold text-white"
+                >
+                Manual Booking
+                </Link>
+            </div>
         </div>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">

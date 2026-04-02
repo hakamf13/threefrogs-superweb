@@ -42,51 +42,96 @@ export default function AdminBookingActions({
     }
   };
 
-  const handleRejectProof = async () => {
-    const reason =
-        window.prompt(
-        "Masukkan alasan penolakan bukti pembayaran:",
-        "Bukti pembayaran kurang jelas."
-        ) || "";
+  const handleDirectConfirm = async () => {
+    const note =
+      window.prompt(
+        "Masukkan catatan konfirmasi langsung:",
+        "Booking dikonfirmasi langsung oleh admin."
+      ) || "";
 
-    if (!reason.trim()) {
-        return;
+    if (!note.trim()) {
+      return;
     }
 
     try {
-        setIsLoading(true);
-        setMessage("");
+      setIsLoading(true);
+      setMessage("");
 
-        const response = await fetch(
+      const response = await fetch(
+        `/api/admin/bookings/${bookingId}/confirm-direct`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ note }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setMessage(result.error ?? "Gagal mengonfirmasi langsung.");
+        return;
+      }
+
+      setMessage("Booking berhasil dikonfirmasi langsung.");
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      setMessage("Terjadi kesalahan saat direct confirm.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRejectProof = async () => {
+    const reason =
+      window.prompt(
+        "Masukkan alasan penolakan bukti pembayaran:",
+        "Bukti pembayaran kurang jelas."
+      ) || "";
+
+    if (!reason.trim()) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setMessage("");
+
+      const response = await fetch(
         `/api/admin/bookings/${bookingId}/reject-proof`,
         {
-            method: "PATCH",
-            headers: {
+          method: "PATCH",
+          headers: {
             "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ reason }),
+          },
+          body: JSON.stringify({
+            reason,
+          }),
         }
-        );
+      );
 
-        const contentType = response.headers.get("content-type") || "";
-        const result = contentType.includes("application/json")
+      const contentType = response.headers.get("content-type") || "";
+      const result = contentType.includes("application/json")
         ? await response.json()
         : { error: `HTTP ${response.status}` };
 
-        if (!response.ok) {
+      if (!response.ok) {
         setMessage(result.error ?? "Gagal menolak bukti pembayaran.");
         return;
-        }
+      }
 
-        setMessage("Bukti pembayaran berhasil ditolak.");
-        router.refresh();
+      setMessage("Bukti pembayaran berhasil ditolak.");
+      router.refresh();
     } catch (error) {
-        console.error(error);
-        setMessage("Terjadi kesalahan saat menolak bukti.");
+      console.error(error);
+      setMessage("Terjadi kesalahan saat menolak bukti.");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
-    };
+  };
 
   const handleCancel = async () => {
     const ok = window.confirm("Yakin ingin membatalkan booking ini?");
@@ -122,6 +167,17 @@ export default function AdminBookingActions({
       <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">Aksi Admin</h2>
 
       <div className="flex flex-wrap gap-3">
+        {(status === "AWAITING_PAYMENT" || status === "PENDING_VERIFICATION") && (
+          <button
+            type="button"
+            onClick={handleDirectConfirm}
+            disabled={isLoading}
+            className="rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white disabled:bg-slate-300"
+          >
+            {isLoading ? "Memproses..." : "Konfirmasi Booking Langsung"}
+          </button>
+        )}
+
         {status === "PENDING_VERIFICATION" ? (
           <>
             <button
