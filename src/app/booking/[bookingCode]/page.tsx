@@ -1,13 +1,17 @@
 import { notFound } from "next/navigation";
-import SiteHeader from "@/components/layout/site-header";
 import { prisma } from "../../../../lib/prisma";
-import BookingProofUploader from "./proof-uploader";
+import PaymentProofUploader from "@/components/payments/payment-proof-uploader";
 import {
   formatDateDisplay,
   formatHourLabel,
   formatRupiah,
   getBookingStatusLabel,
+  getPaymentProofStatusColor,
+  getPaymentProofStatusLabel,
 } from "../../../../lib/utils";
+import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
+
+export const dynamic = "force-dynamic";
 
 type BookingDetailPageProps = {
   params: Promise<{
@@ -19,6 +23,7 @@ export default async function BookingDetailPage({
   params,
 }: BookingDetailPageProps) {
   const { bookingCode } = await params;
+  await expireOverdueBookings();
 
   const booking = await prisma.booking.findUnique({
     where: {
@@ -46,7 +51,6 @@ export default async function BookingDetailPage({
 
   return (
     <main className="min-h-screen bg-[#F8F4FF] px-6 py-16 text-slate-800">
-        {/* <SiteHeader /> */}
       <div className="mx-auto max-w-3xl rounded-3xl bg-white p-8 shadow-sm">
         <div className="mb-6">
           <p className="text-sm font-semibold text-slate-500">Kode Booking</p>
@@ -122,23 +126,67 @@ export default async function BookingDetailPage({
           <p>Atas Nama: Threefrogs</p>
         </div>
 
-        {booking.status === "AWAITING_PAYMENT" ? (
+        {(booking.status === "AWAITING_PAYMENT" ||
+          booking.status === "PENDING_VERIFICATION") && (
           <div className="mt-8">
-            <BookingProofUploader bookingCode={booking.bookingCode} />
+            <PaymentProofUploader
+              bookingCode={booking.bookingCode}
+              bookingStatus={booking.status}
+              existingProofCount={booking.paymentProofs.length}
+            />
           </div>
-        ) : null}
+        )}
 
         {booking.paymentProofs.length > 0 ? (
           <div className="mt-8">
-            <p className="mb-3 text-sm text-slate-500">Bukti Pembayaran Terakhir</p>
-            <a
-              href={booking.paymentProofs[0].fileUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex rounded-2xl border border-[#5D3FD3] px-4 py-3 font-semibold text-[#5D3FD3]"
-            >
-              Lihat Bukti Pembayaran
-            </a>
+            <p className="mb-3 text-sm text-slate-500">Riwayat Bukti Pembayaran</p>
+
+            <div className="space-y-3">
+              {booking.paymentProofs.map((proof) => (
+                <div
+                  key={proof.id}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="font-semibold text-slate-800">
+                        {proof.fileName || "Bukti Pembayaran"}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        {new Intl.DateTimeFormat("id-ID", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        }).format(proof.uploadedAt)}
+                      </p>
+                      {proof.rejectionReason ? (
+                        <p className="mt-1 text-sm text-slate-600">
+                          Catatan: {proof.rejectionReason}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${getPaymentProofStatusColor(
+                          proof.verificationStatus
+                        )}`}
+                      >
+                        {getPaymentProofStatusLabel(proof.verificationStatus)}
+                      </span>
+
+                      <a
+                        href={proof.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-2xl border border-[#5D3FD3] px-4 py-2 font-semibold text-[#5D3FD3]"
+                      >
+                        Lihat
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : null}
       </div>

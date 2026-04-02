@@ -5,13 +5,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    const {
-      bookingCode,
-      fileUrl,
-      fileName,
-      fileSize,
-      mimeType,
-    } = body as {
+    const { bookingCode, fileUrl, fileName, fileSize, mimeType } = body as {
       bookingCode?: string;
       fileUrl?: string;
       fileName?: string;
@@ -43,7 +37,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (booking.status !== "AWAITING_PAYMENT") {
+    if (
+      booking.status !== "AWAITING_PAYMENT" &&
+      booking.status !== "PENDING_VERIFICATION"
+    ) {
       return NextResponse.json(
         {
           error:
@@ -54,6 +51,17 @@ export async function POST(request: Request) {
     }
 
     await prisma.$transaction(async (tx) => {
+      await tx.paymentProof.updateMany({
+        where: {
+          bookingId: booking.id,
+          verificationStatus: "PENDING",
+        },
+        data: {
+          verificationStatus: "SUPERSEDED",
+          rejectionReason: "Digantikan oleh upload ulang user.",
+        },
+      });
+
       await tx.paymentProof.create({
         data: {
           bookingId: booking.id,
@@ -65,32 +73,43 @@ export async function POST(request: Request) {
         },
       });
 
-      await tx.booking.update({
-        where: {
-          id: booking.id,
-        },
-        data: {
-          status: "PENDING_VERIFICATION",
-        },
-      });
+      if (booking.status === "AWAITING_PAYMENT") {
+        await tx.booking.update({
+          where: {
+            id: booking.id,
+          },
+          data: {
+            status: "PENDING_VERIFICATION",
+          },
+        });
 
-      await tx.bookingSlot.updateMany({
-        where: {
-          bookingId: booking.id,
-        },
-        data: {
-          status: "PENDING_VERIFICATION",
-        },
-      });
+        await tx.bookingSlot.updateMany({
+          where: {
+            bookingId: booking.id,
+          },
+          data: {
+            status: "PENDING_VERIFICATION",
+          },
+        });
 
-      await tx.bookingStatusLog.create({
-        data: {
-          bookingId: booking.id,
-          oldStatus: "AWAITING_PAYMENT",
-          newStatus: "PENDING_VERIFICATION",
-          note: "User mengupload bukti pembayaran.",
-        },
-      });
+        await tx.bookingStatusLog.create({
+          data: {
+            bookingId: booking.id,
+            oldStatus: "AWAITING_PAYMENT",
+            newStatus: "PENDING_VERIFICATION",
+            note: "User mengupload bukti pembayaran.",
+          },
+        });
+      } else {
+        await tx.bookingStatusLog.create({
+          data: {
+            bookingId: booking.id,
+            oldStatus: "PENDING_VERIFICATION",
+            newStatus: "PENDING_VERIFICATION",
+            note: "User mengupload ulang bukti pembayaran.",
+          },
+        });
+      }
     });
 
     return NextResponse.json({

@@ -11,9 +11,11 @@ import {
   getBookingStatusColor,
   getBookingStatusLabel,
 } from "../../../lib/utils";
+import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 
 export default async function MyBookingsPage() {
   const session = await auth();
+  await expireOverdueBookings();
 
   if (!session?.user) {
     redirect("/login?callbackUrl=/my-bookings");

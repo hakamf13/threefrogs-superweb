@@ -42,6 +42,52 @@ export default function AdminBookingActions({
     }
   };
 
+  const handleRejectProof = async () => {
+    const reason =
+        window.prompt(
+        "Masukkan alasan penolakan bukti pembayaran:",
+        "Bukti pembayaran kurang jelas."
+        ) || "";
+
+    if (!reason.trim()) {
+        return;
+    }
+
+    try {
+        setIsLoading(true);
+        setMessage("");
+
+        const response = await fetch(
+        `/api/admin/bookings/${bookingId}/reject-proof`,
+        {
+            method: "PATCH",
+            headers: {
+            "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ reason }),
+        }
+        );
+
+        const contentType = response.headers.get("content-type") || "";
+        const result = contentType.includes("application/json")
+        ? await response.json()
+        : { error: `HTTP ${response.status}` };
+
+        if (!response.ok) {
+        setMessage(result.error ?? "Gagal menolak bukti pembayaran.");
+        return;
+        }
+
+        setMessage("Bukti pembayaran berhasil ditolak.");
+        router.refresh();
+    } catch (error) {
+        console.error(error);
+        setMessage("Terjadi kesalahan saat menolak bukti.");
+    } finally {
+        setIsLoading(false);
+    }
+    };
+
   const handleCancel = async () => {
     const ok = window.confirm("Yakin ingin membatalkan booking ini?");
     if (!ok) return;
@@ -77,14 +123,25 @@ export default function AdminBookingActions({
 
       <div className="flex flex-wrap gap-3">
         {status === "PENDING_VERIFICATION" ? (
-          <button
-            type="button"
-            onClick={handleConfirm}
-            disabled={isLoading}
-            className="rounded-2xl bg-green-600 px-5 py-3 font-bold text-white disabled:bg-slate-300"
-          >
-            {isLoading ? "Memproses..." : "Konfirmasi Pembayaran"}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={handleConfirm}
+              disabled={isLoading}
+              className="rounded-2xl bg-green-600 px-5 py-3 font-bold text-white disabled:bg-slate-300"
+            >
+              {isLoading ? "Memproses..." : "Konfirmasi Pembayaran"}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleRejectProof}
+              disabled={isLoading}
+              className="rounded-2xl bg-orange-500 px-5 py-3 font-bold text-white disabled:bg-slate-300"
+            >
+              {isLoading ? "Memproses..." : "Tolak Bukti Pembayaran"}
+            </button>
+          </>
         ) : null}
 
         {status !== "CANCELLED" && status !== "EXPIRED" ? (

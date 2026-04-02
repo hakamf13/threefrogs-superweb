@@ -1,10 +1,13 @@
 import { prisma } from "../../../lib/prisma";
 import { ACTIVE_BOOKING_STATUSES, TIME_SLOTS } from "../../../lib/constants";
+import { expireOverdueBookings } from "./expire-overdue-bookings";
 
 export async function getAvailabilityByStoreAndDate(
   storeId: string,
   bookingDate: string
 ) {
+  await expireOverdueBookings();
+
   const dateValue = new Date(`${bookingDate}T00:00:00.000Z`);
 
   const tables = await prisma.table.findMany({

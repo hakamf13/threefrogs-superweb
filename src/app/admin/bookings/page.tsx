@@ -8,8 +8,12 @@ import {
   getBookingStatusColor,
   getBookingStatusLabel,
 } from "../../../../lib/utils";
+import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 
 export default async function AdminBookingsPage() {
+
+  await expireOverdueBookings();        
+
   const bookings = await prisma.booking.findMany({
     orderBy: {
       createdAt: "desc",

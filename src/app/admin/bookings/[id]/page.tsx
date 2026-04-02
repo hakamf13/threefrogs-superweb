@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic";
-
 import { notFound } from "next/navigation";
 import { prisma } from "../../../../../lib/prisma";
 import AdminBookingActions from "./admin-booking-actions";
@@ -9,7 +7,12 @@ import {
   formatRupiah,
   getBookingStatusColor,
   getBookingStatusLabel,
+  getPaymentProofStatusColor,
+  getPaymentProofStatusLabel,
 } from "../../../../../lib/utils";
+import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
+
+export const dynamic = "force-dynamic";
 
 type AdminBookingDetailPageProps = {
   params: Promise<{
@@ -21,6 +24,8 @@ export default async function AdminBookingDetailPage({
   params,
 }: AdminBookingDetailPageProps) {
   const { id } = await params;
+
+  await expireOverdueBookings();
 
   const booking = await prisma.booking.findUnique({
     where: { id },
@@ -124,17 +129,55 @@ export default async function AdminBookingDetailPage({
         {booking.paymentProofs.length > 0 ? (
           <div className="rounded-3xl bg-white p-8 shadow-sm">
             <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">
-              Bukti Pembayaran
+              Riwayat Bukti Pembayaran
             </h2>
 
-            <a
-              href={booking.paymentProofs[0].fileUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex rounded-2xl border border-[#5D3FD3] px-4 py-3 font-semibold text-[#5D3FD3]"
-            >
-              Lihat Bukti Pembayaran
-            </a>
+            <div className="space-y-3">
+              {booking.paymentProofs.map((proof, index) => (
+                <div
+                  key={proof.id}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="font-semibold text-slate-800">
+                        {index === 0 ? "Bukti Terbaru" : proof.fileName || "Bukti Pembayaran"}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        {new Intl.DateTimeFormat("id-ID", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        }).format(proof.uploadedAt)}
+                      </p>
+                      {proof.rejectionReason ? (
+                        <p className="mt-1 text-sm text-slate-600">
+                          Catatan: {proof.rejectionReason}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${getPaymentProofStatusColor(
+                          proof.verificationStatus
+                        )}`}
+                      >
+                        {getPaymentProofStatusLabel(proof.verificationStatus)}
+                      </span>
+
+                      <a
+                        href={proof.fileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-2xl border border-[#5D3FD3] px-4 py-2 font-semibold text-[#5D3FD3]"
+                      >
+                        Lihat
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : null}
 

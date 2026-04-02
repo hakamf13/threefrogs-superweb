@@ -10,6 +10,7 @@ import {
   PRICE_PER_HOUR,
 } from "../../../../lib/constants";
 import { createBookingSchema } from "../../../../lib/validations";
+import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 
 function isSequential(slots: number[]) {
   const sorted = [...slots].sort((a, b) => a - b);
@@ -41,6 +42,7 @@ async function generateBookingCode(bookingDate: string) {
 export async function POST(request: Request) {
   try {
     const session = await auth();
+    await expireOverdueBookings();
 
     const body = await request.json();
     const parsed = createBookingSchema.safeParse(body);

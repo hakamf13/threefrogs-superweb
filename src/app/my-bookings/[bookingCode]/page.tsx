@@ -1,9 +1,8 @@
-export const dynamic = "force-dynamic";
-
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/auth";
 import SiteHeader from "@/components/layout/site-header";
+import PaymentProofUploader from "@/components/payments/payment-proof-uploader";
 import { prisma } from "../../../../lib/prisma";
 import {
   formatDateDisplay,
@@ -11,8 +10,13 @@ import {
   formatRupiah,
   getBookingStatusColor,
   getBookingStatusLabel,
+  getPaymentProofStatusColor,
+  getPaymentProofStatusLabel,
 } from "../../../../lib/utils";
 import CancelBookingButton from "./cancel-booking-button";
+import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
+
+export const dynamic = "force-dynamic";
 
 type MyBookingDetailPageProps = {
   params: Promise<{
@@ -24,6 +28,7 @@ export default async function MyBookingDetailPage({
   params,
 }: MyBookingDetailPageProps) {
   const session = await auth();
+  await expireOverdueBookings();
 
   if (!session?.user) {
     redirect("/login?callbackUrl=/my-bookings");
@@ -117,17 +122,67 @@ export default async function MyBookingDetailPage({
             </div>
           </div>
 
+          {(booking.status === "AWAITING_PAYMENT" ||
+            booking.status === "PENDING_VERIFICATION") && (
+            <div className="mt-8">
+              <PaymentProofUploader
+                bookingCode={booking.bookingCode}
+                bookingStatus={booking.status}
+                existingProofCount={booking.paymentProofs.length}
+              />
+            </div>
+          )}
+
           {booking.paymentProofs.length > 0 ? (
             <div className="mt-8">
-              <p className="mb-3 text-sm text-slate-500">Bukti Pembayaran</p>
-              <a
-                href={booking.paymentProofs[0].fileUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex rounded-2xl border border-[#5D3FD3] px-4 py-3 font-semibold text-[#5D3FD3]"
-              >
-                Lihat Bukti Pembayaran
-              </a>
+              <p className="mb-3 text-sm text-slate-500">Riwayat Bukti Pembayaran</p>
+
+              <div className="space-y-3">
+                {booking.paymentProofs.map((proof) => (
+                  <div
+                    key={proof.id}
+                    className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
+                  >
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className="font-semibold text-slate-800">
+                          {proof.fileName || "Bukti Pembayaran"}
+                        </p>
+                        <p className="text-sm text-slate-500">
+                          {new Intl.DateTimeFormat("id-ID", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          }).format(proof.uploadedAt)}
+                        </p>
+                        {proof.rejectionReason ? (
+                          <p className="mt-1 text-sm text-slate-600">
+                            Catatan: {proof.rejectionReason}
+                          </p>
+                        ) : null}
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${getPaymentProofStatusColor(
+                            proof.verificationStatus
+                          )}`}
+                        >
+                          {getPaymentProofStatusLabel(proof.verificationStatus)}
+                        </span>
+
+                        <a
+                          href={proof.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-2xl border border-[#5D3FD3] px-4 py-2 font-semibold text-[#5D3FD3]"
+                        >
+                          Lihat
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
 

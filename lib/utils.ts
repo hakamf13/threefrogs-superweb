@@ -61,3 +61,33 @@ export function getBookingStatusColor(status: string) {
       return "bg-slate-100 text-slate-700";
   }
 }
+
+export function getPaymentProofStatusLabel(status: string) {
+  switch (status) {
+    case "PENDING":
+      return "Menunggu Dicek";
+    case "APPROVED":
+      return "Disetujui";
+    case "REJECTED":
+      return "Ditolak";
+    case "SUPERSEDED":
+      return "Digantikan";
+    default:
+      return status;
+  }
+}
+
+export function getPaymentProofStatusColor(status: string) {
+  switch (status) {
+    case "PENDING":
+      return "bg-yellow-100 text-yellow-700";
+    case "APPROVED":
+      return "bg-green-100 text-green-700";
+    case "REJECTED":
+      return "bg-red-100 text-red-700";
+    case "SUPERSEDED":
+      return "bg-slate-200 text-slate-700";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+}

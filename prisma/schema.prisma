@@ -42,6 +42,7 @@ enum PaymentProofStatus {
   PENDING
   APPROVED
   REJECTED
+  SUPERSEDED
 }
 
 enum BookingSource {
