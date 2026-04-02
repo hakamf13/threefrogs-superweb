@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../../lib/prisma";
+import { auth } from "@/auth";
 import {
   ACTIVE_BOOKING_STATUSES,
   BOOKING_HOLD_MINUTES,
@@ -39,6 +40,8 @@ async function generateBookingCode(bookingDate: string) {
 
 export async function POST(request: Request) {
   try {
+    const session = await auth();
+
     const body = await request.json();
     const parsed = createBookingSchema.safeParse(body);
 
@@ -152,11 +155,14 @@ export async function POST(request: Request) {
     const bookingCode = await generateBookingCode(bookingDate);
     const expiresAt = new Date(Date.now() + BOOKING_HOLD_MINUTES * 60 * 1000);
 
+    const userId = session?.user?.id || null;
+
     const booking = await prisma.$transaction(
       async (tx) => {
         const createdBooking = await tx.booking.create({
           data: {
             bookingCode,
+            userId,
             storeId,
             tableId,
             bookingType: "MAHJONG",
@@ -193,7 +199,9 @@ export async function POST(request: Request) {
             bookingId: createdBooking.id,
             oldStatus: null,
             newStatus: "AWAITING_PAYMENT",
-            note: "Booking dibuat oleh user.",
+            note: userId
+              ? "Booking dibuat oleh user login."
+              : "Booking dibuat oleh guest/user tanpa login.",
           },
         });
 
