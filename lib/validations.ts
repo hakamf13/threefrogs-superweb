@@ -13,9 +13,9 @@ export const createBookingSchema = z.object({
 
 export const registerUserSchema = z
   .object({
-    name: z.string().min(4, "Nama minimal 4 karakter."),
-    email: z.email("Email tidak valid."),
+    name: z.string().min(4, "Nama minimal 2 karakter."),
     phone: z.string().min(6, "Nomor HP tidak valid."),
+    email: z.email("Email tidak valid.").optional().or(z.literal("")),
     password: z.string().min(8, "Password minimal 8 karakter."),
     confirmPassword: z.string().min(8, "Konfirmasi password minimal 8 karakter."),
   })

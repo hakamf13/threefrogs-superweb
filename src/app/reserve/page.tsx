@@ -1,9 +1,17 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import SiteHeader from "@/components/layout/site-header";
 import { prisma } from "../../../lib/prisma";
 import { getTodayDateString } from "../../../lib/utils";
 import ReserveClient from "./reserve-client";
 
 export default async function ReservePage() {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/login?callbackUrl=/reserve");
+  }
+
   const stores = await prisma.store.findMany({
     where: {
       isActive: true,

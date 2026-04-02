@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </p>
           <h1 className="text-3xl font-black text-[#5D3FD3]">Login</h1>
           <p className="mt-2 text-slate-600">
-            Masuk untuk mengakses dashboard dan booking.
+            Masuk dengan nomor HP atau email untuk lanjut reservasi.
           </p>
         </div>
 

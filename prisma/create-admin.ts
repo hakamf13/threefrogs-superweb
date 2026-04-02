@@ -1,10 +1,13 @@
 import { PrismaClient, UserRole } from "@prisma/client";
 import { hash } from "bcryptjs";
+import { normalizePhoneNumber } from "../src/lib/identity";
 
 const prisma = new PrismaClient();
 
 async function main() {
   const email = "admin@threefrogs.com";
+  const rawPhone = "08132566996";
+  const phone = normalizePhoneNumber(rawPhone);
   const password = "Admin12345!";
   const passwordHash = await hash(password, 10);
 
@@ -17,12 +20,12 @@ async function main() {
       role: UserRole.ADMIN,
       isActive: true,
       passwordHash,
-      phone: "081234567890",
+      phone,
     },
     create: {
       name: "Threefrogs Admin",
       email,
-      phone: "081234567890",
+      phone,
       passwordHash,
       role: UserRole.ADMIN,
       isActive: true,
@@ -33,6 +36,7 @@ async function main() {
   console.log({
     id: admin.id,
     email: admin.email,
+    phone: admin.phone,
     role: admin.role,
     password: password,
   });

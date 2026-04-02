@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { prisma } from "../../../../lib/prisma";
 import { registerUserSchema } from "../../../../lib/validations";
+import { normalizePhoneNumber } from "../../../lib/identity";
 
 export async function POST(request: Request) {
   try {
@@ -17,22 +18,46 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, email, phone, password } = parsed.data;
+    const { name, phone, email, password } = parsed.data;
 
-    const existingUser = await prisma.user.findUnique({
+    const normalizedPhone = normalizePhoneNumber(phone);
+    const normalizedEmail = email?.trim().toLowerCase() || null;
+
+    if (!normalizedPhone) {
+      return NextResponse.json(
+        { error: "Nomor HP tidak valid." },
+        { status: 400 }
+      );
+    }
+
+    const existingUser = await prisma.user.findFirst({
       where: {
-        email,
+        OR: [
+          { phone: normalizedPhone },
+          ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
+        ],
       },
       select: {
         id: true,
+        phone: true,
+        email: true,
       },
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "Email sudah terdaftar." },
-        { status: 409 }
-      );
+      if (existingUser.phone === normalizedPhone) {
+        return NextResponse.json(
+          { error: "Nomor HP sudah terdaftar." },
+          { status: 409 }
+        );
+      }
+
+      if (normalizedEmail && existingUser.email === normalizedEmail) {
+        return NextResponse.json(
+          { error: "Email sudah terdaftar." },
+          { status: 409 }
+        );
+      }
     }
 
     const passwordHash = await hash(password, 10);
@@ -40,8 +65,8 @@ export async function POST(request: Request) {
     await prisma.user.create({
       data: {
         name,
-        email,
-        phone,
+        phone: normalizedPhone,
+        email: normalizedEmail,
         passwordHash,
         role: "USER",
         isActive: true,

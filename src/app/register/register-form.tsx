@@ -8,8 +8,8 @@ export default function RegisterForm() {
   const router = useRouter();
 
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -30,8 +30,8 @@ export default function RegisterForm() {
         },
         body: JSON.stringify({
           name,
-          email,
           phone,
+          email,
           password,
           confirmPassword,
         }),
@@ -71,20 +71,6 @@ export default function RegisterForm() {
 
       <div>
         <label className="mb-2 block text-sm font-medium text-slate-700">
-          Email
-        </label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="email@kamu.com"
-          className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
           Nomor HP
         </label>
         <input
@@ -94,6 +80,19 @@ export default function RegisterForm() {
           placeholder="08xxxxxxxxxx"
           className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
           required
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium text-slate-700">
+          Email (opsional)
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="email@kamu.com"
+          className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
         />
       </div>
 

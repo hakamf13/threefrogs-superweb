@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "../lib/prisma";
+import { isEmailIdentifier, normalizePhoneNumber } from "./lib/identity";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
@@ -14,9 +15,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email: {
-          label: "Email",
-          type: "email",
+        identifier: {
+          label: "Nomor HP atau Email",
+          type: "text",
         },
         password: {
           label: "Password",
@@ -25,47 +26,51 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         try {
-          const email = String(credentials?.email ?? "").trim().toLowerCase();
+          const rawIdentifier = String(credentials?.identifier ?? "").trim();
           const password = String(credentials?.password ?? "");
 
-          if (!email || !password) {
+          if (!rawIdentifier || !password) {
             return null;
           }
 
-          const user = await prisma.user.findUnique({
-            where: {
-              email,
-            },
+          const user = await prisma.user.findFirst({
+            where: isEmailIdentifier(rawIdentifier)
+              ? {
+                  email: rawIdentifier.toLowerCase(),
+                }
+              : {
+                  phone: normalizePhoneNumber(rawIdentifier),
+                },
           });
 
           if (!user) {
-            console.log("[AUTH] user tidak ditemukan:", email);
+            console.log("[AUTH] user tidak ditemukan:", rawIdentifier);
             return null;
           }
 
           if (!user.passwordHash) {
-            console.log("[AUTH] user tidak punya passwordHash:", email);
+            console.log("[AUTH] user tidak punya passwordHash:", rawIdentifier);
             return null;
           }
 
           if (!user.isActive) {
-            console.log("[AUTH] user tidak aktif:", email);
+            console.log("[AUTH] user tidak aktif:", rawIdentifier);
             return null;
           }
 
           const isValidPassword = await compare(password, user.passwordHash);
 
           if (!isValidPassword) {
-            console.log("[AUTH] password salah:", email);
+            console.log("[AUTH] password salah:", rawIdentifier);
             return null;
           }
 
-          console.log("[AUTH] login sukses:", email);
+          console.log("[AUTH] login sukses:", rawIdentifier);
 
           return {
             id: user.id,
             name: user.name,
-            email: user.email,
+            email: user.email ?? null,
             role: user.role,
           };
         } catch (error) {
