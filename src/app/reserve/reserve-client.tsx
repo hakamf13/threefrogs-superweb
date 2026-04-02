@@ -30,14 +30,23 @@ type AvailabilityTable = {
   slots: TableSlot[];
 };
 
+type CurrentUser = {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+};
+
 type ReserveClientProps = {
   stores: StoreOption[];
   defaultDate: string;
+  currentUser: CurrentUser;
 };
 
 export default function ReserveClient({
   stores,
   defaultDate,
+  currentUser,
 }: ReserveClientProps) {
   const router = useRouter();
 
@@ -47,10 +56,6 @@ export default function ReserveClient({
   const [selectedDate, setSelectedDate] = useState(defaultDate);
   const [selectedTableId, setSelectedTableId] = useState<string>("");
   const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
-
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
   const [notes, setNotes] = useState("");
 
   const [availabilityTables, setAvailabilityTables] = useState<AvailabilityTable[]>([]);
@@ -71,6 +76,8 @@ export default function ReserveClient({
 
   const totalHours = selectedSlots.length;
   const totalPrice = totalHours * PRICE_PER_HOUR;
+
+  const isProfileComplete = Boolean(currentUser.name && currentUser.phone);
 
   useEffect(() => {
     async function loadAvailability() {
@@ -159,13 +166,13 @@ export default function ReserveClient({
   };
 
   const handleSubmitBooking = async () => {
-    if (!selectedStoreId || !selectedDate || !selectedTableId || selectedSlots.length === 0) {
-      setErrorMessage("Lengkapi store, tanggal, meja, dan slot jam dulu ya.");
+    if (!isProfileComplete) {
+      setErrorMessage("Profil kamu belum lengkap. Nama dan nomor HP wajib ada.");
       return;
     }
 
-    if (!customerName.trim() || !customerPhone.trim()) {
-      setErrorMessage("Nama dan nomor HP wajib diisi.");
+    if (!selectedStoreId || !selectedDate || !selectedTableId || selectedSlots.length === 0) {
+      setErrorMessage("Lengkapi store, tanggal, meja, dan slot jam dulu ya.");
       return;
     }
 
@@ -183,9 +190,6 @@ export default function ReserveClient({
           tableId: selectedTableId,
           bookingDate: selectedDate,
           selectedSlots,
-          customerName,
-          customerPhone,
-          customerEmail,
           notes,
         }),
       });
@@ -207,7 +211,7 @@ export default function ReserveClient({
   };
 
   return (
-    <main className="min-h-screen bg-[#F8F4FF] px-6 py-16 text-slate-800">
+    <main className="min-h-[calc(100vh-88px)] bg-[#F8F4FF] px-6 py-16 text-slate-800">
       <div className="mx-auto max-w-6xl space-y-10">
         <div>
           <h1 className="text-4xl font-black text-[#5D3FD3]">Reservasi Mahjong</h1>
@@ -219,7 +223,34 @@ export default function ReserveClient({
         <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-8">
             <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">1. Pilih Store</h2>
+              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">1. Data Pemesan</h2>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm text-slate-500">Nama</p>
+                  <p className="font-semibold text-slate-800">{currentUser.name || "-"}</p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm text-slate-500">Nomor HP</p>
+                  <p className="font-semibold text-slate-800">{currentUser.phone || "-"}</p>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 md:col-span-2">
+                  <p className="text-sm text-slate-500">Email</p>
+                  <p className="font-semibold text-slate-800">{currentUser.email || "Belum diisi"}</p>
+                </div>
+              </div>
+
+              {!isProfileComplete ? (
+                <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+                  Profil kamu belum lengkap. Nama dan nomor HP wajib ada sebelum booking.
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-3xl bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">2. Pilih Store</h2>
 
               <div className="grid gap-4 md:grid-cols-2">
                 {stores.map((store) => {
@@ -247,7 +278,7 @@ export default function ReserveClient({
             </div>
 
             <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">2. Pilih Tanggal</h2>
+              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">3. Pilih Tanggal</h2>
 
               <input
                 type="date"
@@ -264,7 +295,7 @@ export default function ReserveClient({
             </div>
 
             <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">3. Pilih Meja</h2>
+              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">4. Pilih Meja</h2>
 
               {isLoadingAvailability ? (
                 <p className="text-slate-500">Memuat meja...</p>
@@ -278,37 +309,37 @@ export default function ReserveClient({
                     const isFullyBooked = availableCount === 0;
 
                     return (
-                        <button
+                      <button
                         key={table.id}
                         type="button"
                         onClick={() => !isFullyBooked && handleSelectTable(table.id)}
                         disabled={isFullyBooked}
                         className={`rounded-2xl border p-4 text-left transition ${
-                            isActive
+                          isActive
                             ? "border-[#5D3FD3] bg-[#F3EEFF]"
                             : isFullyBooked
                             ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
                             : "border-slate-200 bg-white hover:border-slate-300"
                         }`}
-                        >
+                      >
                         <p className={`font-bold ${isFullyBooked ? "text-slate-500" : "text-[#5D3FD3]"}`}>
-                            Meja {table.tableNumber}
+                          Meja {table.tableNumber}
                         </p>
                         <p className="text-sm text-slate-500">
-                            Kapasitas: {table.capacity ?? "-"} orang
+                          Kapasitas: {table.capacity ?? "-"} orang
                         </p>
                         <p className="mt-2 text-xs">
-                            {isFullyBooked ? "Full booked hari ini" : `Slot tersedia: ${availableCount}`}
+                          {isFullyBooked ? "Full booked hari ini" : `Slot tersedia: ${availableCount}`}
                         </p>
-                        </button>
-                        );
-                    })}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
             <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">4. Pilih Slot Jam</h2>
+              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">5. Pilih Slot Jam</h2>
 
               {!selectedTableId ? (
                 <p className="text-slate-500">
@@ -350,41 +381,15 @@ export default function ReserveClient({
             </div>
 
             <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">5. Data Pemesan</h2>
+              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">6. Catatan Booking</h2>
 
-              <div className="grid gap-4">
-                <input
-                  type="text"
-                  placeholder="Nama lengkap"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
-                />
-
-                <input
-                  type="text"
-                  placeholder="Nomor WhatsApp / HP"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
-                />
-
-                <input
-                  type="email"
-                  placeholder="Email (opsional)"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
-                />
-
-                <textarea
-                  placeholder="Catatan tambahan (opsional)"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={4}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
-                />
-              </div>
+              <textarea
+                placeholder="Contoh: tiles besar, datang terlambat 10 menit, dan lainnya"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={4}
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+              />
             </div>
           </div>
 
@@ -394,6 +399,11 @@ export default function ReserveClient({
             </h2>
 
             <div className="space-y-3 text-sm text-slate-700">
+              <div>
+                <p className="text-slate-500">Pemesan</p>
+                <p className="font-semibold">{currentUser.name || "-"}</p>
+              </div>
+
               <div>
                 <p className="text-slate-500">Store</p>
                 <p className="font-semibold">{selectedStore?.name ?? "-"}</p>
@@ -453,6 +463,7 @@ export default function ReserveClient({
               onClick={handleSubmitBooking}
               disabled={
                 isSubmitting ||
+                !isProfileComplete ||
                 !selectedStoreId ||
                 !selectedDate ||
                 !selectedTableId ||

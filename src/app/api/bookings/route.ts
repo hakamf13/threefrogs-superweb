@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../../lib/prisma";
 import { auth } from "@/auth";
+import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 import {
   ACTIVE_BOOKING_STATUSES,
   BOOKING_HOLD_MINUTES,
@@ -10,7 +11,6 @@ import {
   PRICE_PER_HOUR,
 } from "../../../../lib/constants";
 import { createBookingSchema } from "../../../../lib/validations";
-import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 
 function isSequential(slots: number[]) {
   const sorted = [...slots].sort((a, b) => a - b);
@@ -42,7 +42,42 @@ async function generateBookingCode(bookingDate: string) {
 export async function POST(request: Request) {
   try {
     const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Kamu harus login dulu." },
+        { status: 401 }
+      );
+    }
+
     await expireOverdueBookings();
+
+    const currentUser = await prisma.user.findUnique({
+      where: {
+        id: session.user.id,
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        email: true,
+        isActive: true,
+      },
+    });
+
+    if (!currentUser || !currentUser.isActive) {
+      return NextResponse.json(
+        { error: "Akun user tidak ditemukan atau tidak aktif." },
+        { status: 403 }
+      );
+    }
+
+    if (!currentUser.name || !currentUser.phone) {
+      return NextResponse.json(
+        { error: "Profil kamu belum lengkap. Nama dan nomor HP wajib ada." },
+        { status: 400 }
+      );
+    }
 
     const body = await request.json();
     const parsed = createBookingSchema.safeParse(body);
@@ -56,16 +91,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const {
-      storeId,
-      tableId,
-      bookingDate,
-      selectedSlots,
-      customerName,
-      customerPhone,
-      customerEmail,
-      notes,
-    } = parsed.data;
+    const { storeId, tableId, bookingDate, selectedSlots, notes } = parsed.data;
 
     const normalizedSlots = [...new Set(selectedSlots)].sort((a, b) => a - b);
 
@@ -157,22 +183,20 @@ export async function POST(request: Request) {
     const bookingCode = await generateBookingCode(bookingDate);
     const expiresAt = new Date(Date.now() + BOOKING_HOLD_MINUTES * 60 * 1000);
 
-    const userId = session?.user?.id || null;
-
     const booking = await prisma.$transaction(
       async (tx) => {
         const createdBooking = await tx.booking.create({
           data: {
             bookingCode,
-            userId,
+            userId: currentUser.id,
             storeId,
             tableId,
             bookingType: "MAHJONG",
             status: "AWAITING_PAYMENT",
             source: "ONLINE",
-            customerName,
-            customerPhone,
-            customerEmail: customerEmail || null,
+            customerName: currentUser.name,
+            customerPhone: currentUser.phone,
+            customerEmail: currentUser.email || null,
             bookingDate: bookingDateValue,
             startHour: firstSlot,
             endHour: lastSlot + 1,
@@ -201,9 +225,7 @@ export async function POST(request: Request) {
             bookingId: createdBooking.id,
             oldStatus: null,
             newStatus: "AWAITING_PAYMENT",
-            note: userId
-              ? "Booking dibuat oleh user login."
-              : "Booking dibuat oleh guest/user tanpa login.",
+            note: "Booking dibuat oleh user login.",
           },
         });
 
