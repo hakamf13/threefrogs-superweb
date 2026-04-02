@@ -11,6 +11,7 @@ import {
   PRICE_PER_HOUR,
 } from "../../../../lib/constants";
 import { createBookingSchema } from "../../../../lib/validations";
+import { getBookingWindow, isDateWithinBookingWindow } from "@/lib/booking-window";
 
 function isSequential(slots: number[]) {
   const sorted = [...slots].sort((a, b) => a - b);
@@ -93,6 +94,17 @@ export async function POST(request: Request) {
 
     const { storeId, tableId, bookingDate, selectedSlots, notes } = parsed.data;
 
+    if (!isDateWithinBookingWindow(bookingDate)) {
+        const { minDate, maxDate } = getBookingWindow();
+
+        return NextResponse.json(
+            {
+            error: `Reservasi hanya bisa dibuat untuk tanggal ${minDate} sampai ${maxDate}.`,
+            },
+            { status: 400 }
+        );
+    }
+    
     const normalizedSlots = [...new Set(selectedSlots)].sort((a, b) => a - b);
 
     if (!isSequential(normalizedSlots)) {

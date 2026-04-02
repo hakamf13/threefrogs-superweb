@@ -4,6 +4,7 @@ import SiteHeader from "@/components/layout/site-header";
 import { prisma } from "../../../lib/prisma";
 import { getTodayDateString } from "../../../lib/utils";
 import ReserveClient from "./reserve-client";
+import { getBookingWindow } from "@/lib/booking-window";
 
 export default async function ReservePage() {
   const session = await auth();
@@ -55,12 +56,15 @@ export default async function ReservePage() {
     redirect("/login?callbackUrl=/reserve");
   }
 
+  const { minDate, maxDate } = getBookingWindow();
+
   return (
     <div className="min-h-screen bg-[#F8F4FF] text-slate-800">
       <SiteHeader />
       <ReserveClient
         stores={stores}
-        defaultDate={getTodayDateString()}
+        defaultDate={minDate}
+        maxDate={maxDate}
         currentUser={currentUser}
       />
     </div>

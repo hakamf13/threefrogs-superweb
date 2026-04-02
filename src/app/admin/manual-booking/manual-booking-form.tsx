@@ -32,6 +32,8 @@ type StoreOption = {
 
 type AdminManualBookingFormProps = {
   stores: StoreOption[];
+  defaultDate: string;
+  maxDate: string;
 };
 
 function getTodayDateString() {
@@ -44,11 +46,13 @@ function getTodayDateString() {
 
 export default function AdminManualBookingForm({
   stores,
+  defaultDate,
+  maxDate,
 }: AdminManualBookingFormProps) {
   const router = useRouter();
 
   const [selectedStoreId, setSelectedStoreId] = useState(stores[0]?.id ?? "");
-  const [selectedDate, setSelectedDate] = useState(getTodayDateString());
+  const [selectedDate, setSelectedDate] = useState(defaultDate);
   const [selectedTableId, setSelectedTableId] = useState("");
   const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
 
@@ -262,14 +266,19 @@ export default function AdminManualBookingForm({
               <input
                 type="date"
                 value={selectedDate}
-                min={getTodayDateString()}
+                min={defaultDate}
+                max={maxDate}
                 onChange={(e) => {
-                  setSelectedDate(e.target.value);
-                  setSelectedTableId("");
-                  setSelectedSlots([]);
+                    setSelectedDate(e.target.value);
+                    setSelectedTableId("");
+                    setSelectedSlots([]);
                 }}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
-              />
+                />
+
+                <p className="mt-2 text-sm text-slate-500">
+                Booking hanya bisa dibuat untuk tanggal {defaultDate} sampai {maxDate}.
+                </p>
             </div>
 
             <div className="rounded-3xl bg-white p-6 shadow-sm">

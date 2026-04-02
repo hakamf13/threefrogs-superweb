@@ -40,12 +40,14 @@ type CurrentUser = {
 type ReserveClientProps = {
   stores: StoreOption[];
   defaultDate: string;
+  maxDate: string;
   currentUser: CurrentUser;
 };
 
 export default function ReserveClient({
   stores,
   defaultDate,
+  maxDate,
   currentUser,
 }: ReserveClientProps) {
   const router = useRouter();
@@ -284,14 +286,19 @@ export default function ReserveClient({
                 type="date"
                 value={selectedDate}
                 min={defaultDate}
+                max={maxDate}
                 onChange={(e) => {
-                  setSelectedDate(e.target.value);
-                  setSelectedTableId("");
-                  setSelectedSlots([]);
-                  setErrorMessage("");
+                    setSelectedDate(e.target.value);
+                    setSelectedTableId("");
+                    setSelectedSlots([]);
+                    setErrorMessage("");
                 }}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
-              />
+                />
+
+                <p className="mt-2 text-sm text-slate-500">
+                Booking hanya bisa dibuat untuk tanggal {defaultDate} sampai {maxDate}.
+                </p>
             </div>
 
             <div className="rounded-3xl bg-white p-6 shadow-sm">
