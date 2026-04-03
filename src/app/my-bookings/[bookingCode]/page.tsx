@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/auth";
 import SiteHeader from "@/components/layout/site-header";
+import SiteFooter from "@/components/layout/site-footer";
 import PaymentProofUploader from "@/components/payments/payment-proof-uploader";
 import { prisma } from "../../../../lib/prisma";
 import {
@@ -203,6 +204,9 @@ export default async function MyBookingDetailPage({
           </div>
         </div>
       </main>
+
+      <SiteFooter />
+      
     </div>
   );
 }

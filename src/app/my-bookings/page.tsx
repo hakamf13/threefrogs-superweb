@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import SiteHeader from "@/components/layout/site-header";
+import SiteFooter from "@/components/layout/site-footer";
 import { prisma } from "../../../lib/prisma";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 import {
@@ -87,13 +88,13 @@ export default async function MyBookingsPage({
       <main className="px-6 py-16">
         <div className="mx-auto max-w-6xl space-y-8">
           <div>
-            <h1 className="text-4xl font-black text-[#5D3FD3]">Booking Saya</h1>
+            <h1 className="text-4xl font-black text-[var(--tf-purple)]">Booking Saya</h1>
             <p className="mt-2 text-slate-600">
               Semua booking yang kamu buat saat login akan tampil di sini.
             </p>
           </div>
 
-          <section className="rounded-3xl bg-white p-6 shadow-sm">
+          <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
             <form className="grid gap-4 lg:grid-cols-4">
               <div className="lg:col-span-2">
                 <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -169,7 +170,7 @@ export default async function MyBookingsPage({
               bookings.map((booking) => (
                 <div
                   key={booking.id}
-                  className="rounded-3xl bg-white p-6 shadow-sm"
+                  className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="space-y-2">
@@ -200,12 +201,12 @@ export default async function MyBookingsPage({
                     </div>
 
                     <div>
-                      <Link
-                        href={`/my-bookings/${booking.bookingCode}`}
-                        className="rounded-2xl border border-[#5D3FD3] px-4 py-2 font-semibold text-[#5D3FD3]"
-                      >
-                        Lihat Detail
-                      </Link>
+                        <Link
+                            href={`/my-bookings/${booking.bookingCode}`}
+                            className="rounded-2xl bg-[var(--tf-purple)] px-4 py-2 font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
+                            >
+                            Lihat Detail
+                        </Link>
                     </div>
                   </div>
                 </div>
@@ -214,6 +215,8 @@ export default async function MyBookingsPage({
           </div>
         </div>
       </main>
+
+      <SiteFooter />
     </div>
   );
 }

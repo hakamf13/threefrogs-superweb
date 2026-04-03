@@ -213,10 +213,12 @@ export default function ReserveClient({
   };
 
   return (
-    <main className="min-h-[calc(100vh-88px)] bg-[#F8F4FF] px-6 py-16 text-slate-800">
+    <main className="min-h-[calc(100vh-88px)] bg-[var(--tf-bg)] px-6 py-16 text-slate-800">
       <div className="mx-auto max-w-6xl space-y-10">
         <div>
-          <h1 className="text-4xl font-black text-[#5D3FD3]">Reservasi Mahjong</h1>
+            <h1 className="text-4xl font-black text-[var(--tf-purple)] md:text-5xl">
+                Reservasi Mahjong
+            </h1>
           <p className="mt-2 text-slate-600">
             Pilih store, tanggal, meja, lalu slot jam bermain.
           </p>
@@ -224,7 +226,7 @@ export default function ReserveClient({
 
         <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-8">
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
               <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">1. Data Pemesan</h2>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -245,13 +247,13 @@ export default function ReserveClient({
               </div>
 
               {!isProfileComplete ? (
-                <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
-                  Profil kamu belum lengkap. Nama dan nomor HP wajib ada sebelum booking.
+                <div className="mt-4 rounded-2xl bg-[var(--tf-cream)] px-4 py-3 text-sm text-[var(--tf-orange-dark)]">
+                    Profil kamu belum lengkap. Nama dan nomor HP wajib ada sebelum booking.
                 </div>
               ) : null}
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
               <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">2. Pilih Store</h2>
 
               <div className="grid gap-4 md:grid-cols-2">
@@ -279,7 +281,7 @@ export default function ReserveClient({
               </div>
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
               <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">3. Pilih Tanggal</h2>
 
               <input
@@ -301,7 +303,7 @@ export default function ReserveClient({
                 </p>
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
               <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">4. Pilih Meja</h2>
 
               {isLoadingAvailability ? (
@@ -345,7 +347,7 @@ export default function ReserveClient({
               )}
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
               <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">5. Pilih Slot Jam</h2>
 
               {!selectedTableId ? (
@@ -387,7 +389,7 @@ export default function ReserveClient({
               )}
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
               <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">6. Catatan Booking</h2>
 
               <textarea
@@ -476,7 +478,7 @@ export default function ReserveClient({
                 !selectedTableId ||
                 selectedSlots.length === 0
               }
-              className="mt-6 w-full rounded-2xl bg-[#5D3FD3] px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="mt-6 w-full rounded-2xl bg-[var(--tf-purple)] px-4 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)] disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               {isSubmitting ? "Menyimpan Booking..." : "Buat Booking"}
             </button>

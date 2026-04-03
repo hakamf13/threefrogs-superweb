@@ -3,6 +3,29 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --tf-purple: #7b2cbf;
+  --tf-purple-dark: #5a189a;
+  --tf-lavender: #f4ebff;
+
+  --tf-green: #9ddc34;
+  --tf-green-dark: #6ea91f;
+
+  --tf-orange: #f39c12;
+  --tf-orange-dark: #e67e22;
+
+  --tf-cream: #fff8e7;
+  --tf-card: #ffffff;
+  --tf-bg: #fbf7ff;
+
+  --tf-text: #1f2937;
+  --tf-muted: #64748b;
+
+  --tf-radius-xl: 1.5rem;
+  --tf-radius-2xl: 2rem;
+  --tf-radius-3xl: 2.5rem;
+
+  --tf-shadow-soft: 0 10px 30px rgba(91, 24, 154, 0.08);
+  --tf-shadow-card: 0 12px 32px rgba(123, 44, 191, 0.08);
 }
 
 @theme inline {
@@ -20,7 +43,7 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--tf-bg);
+  color: var(--tf-text);
   font-family: Arial, Helvetica, sans-serif;
 }
