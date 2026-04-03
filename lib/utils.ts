@@ -91,3 +91,46 @@ export function getPaymentProofStatusColor(status: string) {
       return "bg-slate-100 text-slate-700";
   }
 }
+
+export function formatDateTimeDisplay(value: Date | string) {
+  const date = typeof value === "string" ? new Date(value) : value;
+
+  return new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+export function getBookingStatusDescription(status: string) {
+  switch (status) {
+    case "AWAITING_PAYMENT":
+      return "Booking kamu sudah dibuat. Silakan upload bukti pembayaran sebelum batas waktu habis.";
+    case "PENDING_VERIFICATION":
+      return "Bukti pembayaran sudah masuk dan sedang dicek admin.";
+    case "CONFIRMED":
+      return "Booking kamu sudah dikonfirmasi. Tinggal datang dan main sesuai jadwal.";
+    case "CANCELLED":
+      return "Booking ini sudah dibatalkan.";
+    case "EXPIRED":
+      return "Booking ini kadaluarsa karena melewati batas waktu pembayaran.";
+    default:
+      return status;
+  }
+}
+
+export function getBookingStatusPanelClass(status: string) {
+  switch (status) {
+    case "AWAITING_PAYMENT":
+      return "bg-orange-50 text-orange-800 border-orange-200";
+    case "PENDING_VERIFICATION":
+      return "bg-yellow-50 text-yellow-800 border-yellow-200";
+    case "CONFIRMED":
+      return "bg-green-50 text-green-800 border-green-200";
+    case "CANCELLED":
+      return "bg-red-50 text-red-800 border-red-200";
+    case "EXPIRED":
+      return "bg-slate-100 text-slate-700 border-slate-200";
+    default:
+      return "bg-slate-50 text-slate-700 border-slate-200";
+  }
+}

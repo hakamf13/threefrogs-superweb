@@ -441,6 +441,17 @@ export default function ReserveClient({
                     ))}
                   </ul>
                 )}
+                {selectedSlots.length > 0 ? (
+                    <div className="rounded-[1.5rem] border border-[var(--tf-green)] bg-[#f6ffe6] p-4">
+                        <p className="text-sm font-bold text-[var(--tf-green-dark)]">
+                        Slot Terpilih Sudah Siap
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-700">
+                        Kamu memilih {selectedSlots.length} jam bermain di{" "}
+                        {selectedTable ? `Meja ${selectedTable.tableNumber}` : "meja pilihan"}.
+                        </p>
+                    </div>
+                    ) : null}
               </div>
 
               <div>

@@ -49,13 +49,13 @@ export default function CancelBookingButton({
         type="button"
         onClick={handleCancel}
         disabled={isLoading}
-        className="rounded-2xl bg-red-600 px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+        className="rounded-2xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
       >
         {isLoading ? "Membatalkan..." : "Batalkan Booking"}
       </button>
 
       {message ? (
-        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+        <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
           {message}
         </div>
       ) : null}
