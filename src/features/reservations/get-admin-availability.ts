@@ -1,5 +1,9 @@
-import { prisma } from "../../../lib/prisma";
-import { ACTIVE_BOOKING_STATUSES, TIME_SLOTS } from "../../../lib/constants";
+import { prisma } from "@/lib/prisma";
+import { ACTIVE_BOOKING_STATUSES, TIME_SLOTS } from "@/lib/constants";
+import {
+  getCurrentHourInJakarta,
+  getTodayDateStringInJakarta,
+} from "@/lib/booking-window";
 import { expireOverdueBookings } from "./expire-overdue-bookings";
 
 export async function getAdminAvailabilityByStoreAndDate(
@@ -9,6 +13,9 @@ export async function getAdminAvailabilityByStoreAndDate(
   await expireOverdueBookings();
 
   const dateValue = new Date(`${bookingDate}T00:00:00.000Z`);
+  const todayInJakarta = getTodayDateStringInJakarta();
+  const isToday = bookingDate === todayInJakarta;
+  const currentHour = getCurrentHourInJakarta();
 
   const tables = await prisma.table.findMany({
     where: {
@@ -52,11 +59,12 @@ export async function getAdminAvailabilityByStoreAndDate(
     string,
     {
       status: string;
-      bookingId: string;
-      bookingCode: string;
-      customerName: string;
-      customerPhone: string;
-      source: string;
+      bookingId: string | null;
+      bookingCode: string | null;
+      customerName: string | null;
+      customerPhone: string | null;
+      source: string | null;
+      openTableSessionId: string | null;
     }
   >();
 
@@ -68,7 +76,41 @@ export async function getAdminAvailabilityByStoreAndDate(
       customerName: slot.booking.customerName,
       customerPhone: slot.booking.customerPhone,
       source: slot.booking.source,
+      openTableSessionId: null,
     });
+  }
+
+  if (isToday) {
+    const openSessions = await prisma.openTableSession.findMany({
+      where: {
+        storeId,
+        status: "OPEN",
+      },
+      select: {
+        id: true,
+        tableId: true,
+        customerName: true,
+        customerPhone: true,
+      },
+    });
+
+    for (const session of openSessions) {
+      for (const hour of TIME_SLOTS) {
+        if (hour >= currentHour) {
+          const key = `${session.tableId}-${hour}`;
+
+          slotMap.set(key, {
+            status: "OPEN_TABLE",
+            bookingId: null,
+            bookingCode: null,
+            customerName: session.customerName,
+            customerPhone: session.customerPhone,
+            source: "OPEN_TABLE",
+            openTableSessionId: session.id,
+          });
+        }
+      }
+    }
   }
 
   return tables.map((table) => ({
@@ -87,6 +129,7 @@ export async function getAdminAvailabilityByStoreAndDate(
           customerName: null,
           customerPhone: null,
           source: null,
+          openTableSessionId: null,
         };
       }
 
@@ -99,6 +142,7 @@ export async function getAdminAvailabilityByStoreAndDate(
         customerName: found.customerName,
         customerPhone: found.customerPhone,
         source: found.source,
+        openTableSessionId: found.openTableSessionId,
       };
     }),
   }));

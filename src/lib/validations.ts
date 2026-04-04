@@ -39,3 +39,11 @@ export const createManualBookingSchema = z.object({
   source: z.enum(["WALK_IN", "ADMIN"]),
   initialStatus: z.enum(["CONFIRMED", "AWAITING_PAYMENT"]),
 });
+
+export const createOpenTableSessionSchema = z.object({
+  storeId: z.string().min(1, "Store wajib dipilih."),
+  tableId: z.string().min(1, "Meja wajib dipilih."),
+  customerName: z.string().min(4, "Nama customer minimal 4 karakter."),
+  customerPhone: z.string().optional().or(z.literal("")),
+  notes: z.string().optional(),
+});

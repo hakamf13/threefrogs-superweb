@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { prisma } from "../../../../../lib/prisma";
+import { prisma } from "../../../../lib/prisma";
 import AdminBookingActions from "./admin-booking-actions";
 import {
   formatDateDisplay,
@@ -9,7 +9,7 @@ import {
   getBookingStatusLabel,
   getPaymentProofStatusColor,
   getPaymentProofStatusLabel,
-} from "../../../../../lib/utils";
+} from "../../../../lib/utils";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 
 export const dynamic = "force-dynamic";

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatHourLabel } from "../../../../lib/utils";
+import { formatHourLabel } from "../../../lib/utils";
 
 type StoreOption = {
   id: string;
@@ -20,6 +20,7 @@ type AvailabilityCell = {
   customerName: string | null;
   customerPhone: string | null;
   source: string | null;
+  openTableSessionId: string | null;
 };
 
 type AvailabilityTable = {
@@ -43,6 +44,8 @@ function getCellClasses(status: string) {
       return "border-yellow-200 bg-yellow-50 text-yellow-700";
     case "CONFIRMED":
       return "border-green-200 bg-green-50 text-green-700";
+    case "OPEN_TABLE":
+      return "border-[var(--tf-purple)] bg-[var(--tf-lavender)] text-[var(--tf-purple-dark)]";
     case "AVAILABLE":
     default:
       return "border-slate-200 bg-white text-slate-700";
@@ -57,6 +60,8 @@ function getCellLabel(status: string) {
       return "Menunggu Verif";
     case "CONFIRMED":
       return "Confirmed";
+    case "OPEN_TABLE":
+      return "Open Table";
     case "AVAILABLE":
     default:
       return "Kosong";
@@ -191,6 +196,9 @@ export default function AdminAvailabilityBoard({
             <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-2 text-green-700">
               Confirmed
             </div>
+            <div className="rounded-2xl border border-[var(--tf-purple)] bg-[var(--tf-lavender)] px-4 py-2 text-[var(--tf-purple-dark)]">
+              Open Table
+          </div>
           </div>
         </section>
 
@@ -226,7 +234,7 @@ export default function AdminAvailabilityBoard({
 
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   {table.slots.map((slot) => {
-                    const clickable = !!slot.bookingId;
+                    const clickable = !!slot.bookingId || !!slot.openTableSessionId;
 
                     return (
                       <button
@@ -236,6 +244,11 @@ export default function AdminAvailabilityBoard({
                         onClick={() => {
                           if (slot.bookingId) {
                             router.push(`/admin/bookings/${slot.bookingId}`);
+                            return;
+                          }
+
+                          if (slot.openTableSessionId) {
+                            router.push(`/admin/open-tables`);
                           }
                         }}
                         className={`rounded-2xl border p-4 text-left transition ${getCellClasses(
@@ -251,7 +264,12 @@ export default function AdminAvailabilityBoard({
                           {getCellLabel(slot.status)}
                         </p>
 
-                        {slot.bookingCode ? (
+                        {slot.status === "OPEN_TABLE" ? (
+                          <div className="mt-3 space-y-1 text-xs">
+                            <p>Mode: Open Table</p>
+                            <p>Nama: {slot.customerName}</p>
+                          </div>
+                        ) : slot.bookingCode ? (
                           <div className="mt-3 space-y-1 text-xs">
                             <p>Kode: {slot.bookingCode}</p>
                             <p>Nama: {slot.customerName}</p>

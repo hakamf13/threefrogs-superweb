@@ -51,6 +51,12 @@ enum BookingSource {
   ADMIN
 }
 
+enum OpenTableSessionStatus {
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
 model User {
   id                     String             @id @default(cuid())
   name                   String
@@ -68,20 +74,21 @@ model User {
 }
 
 model Store {
-  id           String        @id @default(cuid())
-  name         String
-  slug         String        @unique
-  category     StoreCategory @default(MAHJONG)
-  address      String?
-  city         String?
-  description  String?
-  openHour     Int           @default(11)
-  closeHour    Int           @default(22)
-  isActive     Boolean       @default(true)
-  coverImageUrl       String?
-  coverImagePublicId  String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                      String        @id @default(cuid())
+  name                    String
+  slug                    String        @unique
+  category                StoreCategory @default(MAHJONG)
+  address                 String?
+  city                    String?
+  description             String?
+  openHour                Int           @default(11)
+  closeHour               Int           @default(22)
+  isActive                Boolean       @default(true)
+  coverImageUrl           String?
+  coverImagePublicId      String?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  openTableSessions       OpenTableSession[]
 
   tables       Table[]
   bookings     Booking[]
@@ -89,17 +96,18 @@ model Store {
 }
 
 model Table {
-  id           String        @id @default(cuid())
-  storeId      String
-  tableNumber  Int
-  tableCode    String?
-  tableType    TableType     @default(MAHJONG)
-  capacity     Int?
-  positionX    Int?
-  positionY    Int?
-  isActive     Boolean       @default(true)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                      String        @id @default(cuid())
+  storeId                 String
+  tableNumber             Int
+  tableCode               String?
+  tableType               TableType     @default(MAHJONG)
+  capacity                Int?
+  positionX               Int?
+  positionY               Int?
+  isActive                Boolean       @default(true)
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  openTableSessions       OpenTableSession[]
 
   store        Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
   bookings     Booking[]
@@ -204,4 +212,33 @@ model BookingStatusLog {
 
   @@index([bookingId])
   @@index([newStatus])
+}
+
+model OpenTableSession {
+  id               String                 @id @default(cuid())
+  storeId          String
+  tableId          String
+
+  customerName     String
+  customerPhone    String?
+  notes            String?
+
+  status           OpenTableSessionStatus @default(OPEN)
+
+  openedAt         DateTime
+  closedAt         DateTime?
+
+  durationMinutes  Int?
+  billedHours      Float?
+  pricePerHour     Int                    @default(45000)
+  totalPrice       Int?
+
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  store            Store                  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  table            Table                  @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, status])
+  @@index([tableId, status])
 }

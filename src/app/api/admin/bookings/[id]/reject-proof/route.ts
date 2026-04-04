@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../../../../../lib/prisma";
-import { BOOKING_HOLD_MINUTES } from "../../../../../../../lib/constants";
+import { prisma } from "../../../../../../lib/prisma";
+import { BOOKING_HOLD_MINUTES } from "../../../../../../lib/constants";
 
 type RouteContext = {
   params: Promise<{

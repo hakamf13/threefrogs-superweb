@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "../../lib/prisma";
 import SiteHeader from "@/components/layout/site-header";
 import SiteFooter from "@/components/layout/site-footer";
 import ProfileForm from "./profile-form";

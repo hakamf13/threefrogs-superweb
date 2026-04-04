@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "../../lib/prisma";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 import {
   formatDateDisplay,
@@ -7,7 +7,7 @@ import {
   formatRupiah,
   getBookingStatusColor,
   getBookingStatusLabel,
-} from "../../../lib/utils";
+} from "../../lib/utils";
 
 export const dynamic = "force-dynamic";
 

@@ -1,6 +1,6 @@
 import SiteHeader from "@/components/layout/site-header";
 import SiteFooter from "@/components/layout/site-footer";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "../../lib/prisma";
 import EmptyStateCard from "@/components/ui/empty-state-card";
 
 export default async function StoresPage() {

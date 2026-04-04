@@ -32,3 +32,13 @@ export function isDateWithinBookingWindow(dateString: string, now = new Date()) 
   const { minDate, maxDate } = getBookingWindow(now);
   return dateString >= minDate && dateString <= maxDate;
 }
+
+export function getCurrentHourInJakarta(now = new Date()) {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Jakarta",
+    hour: "2-digit",
+    hour12: false,
+  });
+
+  return Number(formatter.format(now));
+}

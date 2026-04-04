@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PRICE_PER_HOUR } from "../../../lib/constants";
-import { formatHourLabel, formatRupiah } from "../../../lib/utils";
+import { PRICE_PER_HOUR } from "../../lib/constants";
+import { formatHourLabel, formatRupiah } from "../../lib/utils";
 
 type TableSlot = {
-	hour: number;
-	isAvailable: boolean;
+  hour: number;
+  isAvailable: boolean;
+  reason: "PAST_TIME" | "BOOKED" | null;
 };
 
 type StoreOption = {
@@ -391,10 +392,14 @@ export default function ReserveClient({
 													{formatHourLabel(slot.hour)}
 												</span>
 												<p className="mt-1 text-xs">
-													{slot.isAvailable ? "Tersedia" : "Terisi"}
+													{slot.isAvailable
+														? "Tersedia"
+														: slot.reason === "PAST_TIME"
+														? "Lewat"
+														: "Terisi"}
 												</p>
 											</button>
-										);
+											);
 									})}
 								</div>
 							)}
@@ -520,7 +525,7 @@ export default function ReserveClient({
 						</button>
 
 						<div className="mt-4 rounded-2xl bg-slate-50 p-4 text-xs text-slate-600">
-							<p>• Slot abu-abu berarti sudah terisi.</p>
+							<p>• Slot abu-abu bisa berarti sudah terisi atau jamnya sudah lewat.</p>
 							<p>• Slot yang dipilih harus berurutan.</p>
 							<p>• Booking akan di-hold selama 15 menit sambil menunggu pembayaran.</p>
 						</div>

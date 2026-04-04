@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "OpenTableSession" ALTER COLUMN "billedHours" SET DATA TYPE DOUBLE PRECISION;

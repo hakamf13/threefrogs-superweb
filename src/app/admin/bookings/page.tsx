@@ -1,13 +1,13 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { prisma } from "../../../../lib/prisma";
+import { prisma } from "../../../lib/prisma";
 import {
   formatDateDisplay,
   formatHourLabel,
   getBookingStatusColor,
   getBookingStatusLabel,
-} from "../../../../lib/utils";
+} from "../../../lib/utils";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 import EmptyStateCard from "@/components/ui/empty-state-card";
 

@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import SiteHeader from "@/components/layout/site-header";
-import { prisma } from "../../../lib/prisma";
-import { getTodayDateString } from "../../../lib/utils";
+import { prisma } from "../../lib/prisma";
+import { getTodayDateString } from "../../lib/utils";
 import ReserveClient from "./reserve-client";
 import { getBookingWindow } from "@/lib/booking-window";
 

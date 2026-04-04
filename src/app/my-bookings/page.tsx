@@ -3,14 +3,14 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import SiteHeader from "@/components/layout/site-header";
 import SiteFooter from "@/components/layout/site-footer";
-import { prisma } from "../../../lib/prisma";
+import { prisma } from "../../lib/prisma";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 import {
   formatDateDisplay,
   formatRupiah,
   getBookingStatusColor,
   getBookingStatusLabel,
-} from "../../../lib/utils";
+} from "../../lib/utils";
 import EmptyStateCard from "@/components/ui/empty-state-card";
 
 export const dynamic = "force-dynamic";

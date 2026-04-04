@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
-import { prisma } from "../lib/prisma";
+import { prisma } from "./lib/prisma";
 import { isEmailIdentifier, normalizePhoneNumber } from "./lib/identity";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({

@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PRICE_PER_HOUR } from "../../../../lib/constants";
-import { formatHourLabel, formatRupiah } from "../../../../lib/utils";
+import { PRICE_PER_HOUR } from "../../../lib/constants";
+import { formatHourLabel, formatRupiah } from "../../../lib/utils";
 
 type TableSlot = {
   hour: number;
   isAvailable: boolean;
+  reason: "PAST_TIME" | "BOOKED" | null;
 };
 
 type AvailabilityTable = {
@@ -356,7 +357,11 @@ export default function AdminManualBookingForm({
                           {formatHourLabel(slot.hour)}
                         </span>
                         <p className="mt-1 text-xs">
-                          {slot.isAvailable ? "Tersedia" : "Terisi"}
+                          {slot.isAvailable
+                            ? "Tersedia"
+                            : slot.reason === "PAST_TIME"
+                            ? "Lewat"
+                            : "Terisi"}
                         </p>
                       </button>
                     );

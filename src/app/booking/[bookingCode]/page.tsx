@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import SiteHeader from "@/components/layout/site-header";
 import SiteFooter from "@/components/layout/site-footer";
-import { prisma } from "../../../../lib/prisma";
+import { prisma } from "../../../lib/prisma";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 import PaymentProofUploader from "@/components/payments/payment-proof-uploader";
 import {
@@ -15,7 +15,7 @@ import {
   getBookingStatusPanelClass,
   getPaymentProofStatusColor,
   getPaymentProofStatusLabel,
-} from "../../../../lib/utils";
+} from "../../../lib/utils";
 
 export const dynamic = "force-dynamic";
 

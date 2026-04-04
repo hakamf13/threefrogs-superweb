@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import SiteHeader from "@/components/layout/site-header";
 import SiteFooter from "@/components/layout/site-footer";
 import PaymentProofUploader from "@/components/payments/payment-proof-uploader";
-import { prisma } from "../../../../lib/prisma";
+import { prisma } from "../../../lib/prisma";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 import {
   formatDateDisplay,
@@ -17,7 +17,7 @@ import {
   getBookingStatusPanelClass,
   getPaymentProofStatusColor,
   getPaymentProofStatusLabel,
-} from "../../../../lib/utils";
+} from "../../../lib/utils";
 import CancelBookingButton from "./cancel-booking-button";
 
 export const dynamic = "force-dynamic";

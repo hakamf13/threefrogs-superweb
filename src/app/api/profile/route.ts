@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "../../../../lib/prisma";
+import { prisma } from "../../../lib/prisma";
 import { normalizePhoneNumber } from "@/lib/identity";
-import { updateProfileSchema } from "../../../../lib/validations";
+import { updateProfileSchema } from "../../../lib/validations";
 
 export async function PATCH(request: Request) {
   try {

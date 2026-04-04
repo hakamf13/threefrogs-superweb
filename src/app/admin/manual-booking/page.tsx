@@ -1,4 +1,4 @@
-import { prisma } from "../../../../lib/prisma";
+import { prisma } from "../../../lib/prisma";
 import { getBookingWindow } from "@/lib/booking-window";
 import AdminManualBookingForm from "./manual-booking-form";
 

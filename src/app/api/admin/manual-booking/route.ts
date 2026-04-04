@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
-import { prisma } from "../../../../../lib/prisma";
+import { prisma } from "../../../../lib/prisma";
 import {
   ACTIVE_BOOKING_STATUSES,
   BOOKING_HOLD_MINUTES,
   CLOSE_HOUR,
   OPEN_HOUR,
   PRICE_PER_HOUR,
-} from "../../../../../lib/constants";
-import { createManualBookingSchema } from "../../../../../lib/validations";
+} from "../../../../lib/constants";
+import { createManualBookingSchema } from "../../../../lib/validations";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 import { getBookingWindow, isDateWithinBookingWindow } from "@/lib/booking-window";
+import { getCurrentHourInJakarta, getTodayDateStringInJakarta } from "@/lib/booking-window";
 
 function isSequential(slots: number[]) {
   const sorted = [...slots].sort((a, b) => a - b);
@@ -105,6 +106,19 @@ export async function POST(request: Request) {
     if (firstSlot < OPEN_HOUR || lastSlot + 1 > CLOSE_HOUR) {
       return NextResponse.json(
         { error: "Slot di luar jam operasional." },
+        { status: 400 }
+      );
+    }
+
+    const todayInJakarta = getTodayDateStringInJakarta();
+    const currentHour = getCurrentHourInJakarta();
+
+    if (bookingDate === todayInJakarta && firstSlot <= currentHour) {
+      return NextResponse.json(
+        {
+          error:
+            "Untuk hari ini, manual booking tidak bisa dibuat di slot yang sudah lewat atau sedang berjalan.",
+        },
         { status: 400 }
       );
     }

@@ -1,4 +1,4 @@
-import { prisma } from "../../../../lib/prisma";
+import { prisma } from "../../../lib/prisma";
 import AdminAvailabilityBoard from "./availability-board";
 
 export const dynamic = "force-dynamic";

@@ -33,6 +33,13 @@ export default async function AdminLayout({
 
 					<nav className="flex flex-wrap items-center gap-3">
 						<Link
+							href="/admin/today-operations"
+							className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+							>
+							Today Ops
+						</Link>
+
+						<Link
 							href="/admin"
 							className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
 						>
@@ -58,6 +65,13 @@ export default async function AdminLayout({
 							className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
 						>
 							Availability
+						</Link>
+
+						<Link
+							href="/admin/open-tables"
+							className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+						>
+							Open Tables
 						</Link>
 
 						<Link

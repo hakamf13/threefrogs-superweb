@@ -1,4 +1,4 @@
-import { prisma } from "../../../../lib/prisma";
+import { prisma } from "../../../lib/prisma";
 import AdminStoreImageManager from "./store-image-manager";
 
 export const dynamic = "force-dynamic";

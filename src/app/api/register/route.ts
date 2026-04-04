@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
-import { prisma } from "../../../../lib/prisma";
-import { registerUserSchema } from "../../../../lib/validations";
+import { prisma } from "../../../lib/prisma";
+import { registerUserSchema } from "../../../lib/validations";
 import { normalizePhoneNumber } from "../../../lib/identity";
 
 export async function POST(request: Request) {

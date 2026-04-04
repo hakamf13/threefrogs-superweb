@@ -134,3 +134,34 @@ export function getBookingStatusPanelClass(status: string) {
       return "bg-slate-50 text-slate-700 border-slate-200";
   }
 }
+
+export function formatDurationMinutes(minutes?: number | null) {
+  if (!minutes || minutes <= 0) return "-";
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours > 0 && remainingMinutes > 0) {
+    return `${hours} jam ${remainingMinutes} menit`;
+  }
+
+  if (hours > 0) {
+    return `${hours} jam`;
+  }
+
+  return `${remainingMinutes} menit`;
+}
+
+export function formatBilledHours(hours?: number | null) {
+  if (!hours || hours <= 0) return "-";
+
+  if (hours === 0.5) {
+    return "30 menit";
+  }
+
+  if (Number.isInteger(hours)) {
+    return `${hours} jam`;
+  }
+
+  return `${hours} jam`;
+}
