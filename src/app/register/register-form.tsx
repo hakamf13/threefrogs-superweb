@@ -54,9 +54,9 @@ export default function RegisterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
+        <label className="mb-2 block text-sm font-semibold text-slate-700">
           Nama
         </label>
         <input
@@ -64,13 +64,13 @@ export default function RegisterForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nama lengkap"
-          className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+          className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
           required
         />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
+        <label className="mb-2 block text-sm font-semibold text-slate-700">
           Nomor HP
         </label>
         <input
@@ -78,13 +78,16 @@ export default function RegisterForm() {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="08xxxxxxxxxx"
-          className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+          className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
           required
         />
+        <p className="mt-2 text-xs text-slate-500">
+          Nomor HP akan jadi identitas utama untuk login dan booking.
+        </p>
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
+        <label className="mb-2 block text-sm font-semibold text-slate-700">
           Email (opsional)
         </label>
         <input
@@ -92,12 +95,12 @@ export default function RegisterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="email@kamu.com"
-          className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+          className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
         />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
+        <label className="mb-2 block text-sm font-semibold text-slate-700">
           Password
         </label>
         <input
@@ -105,13 +108,13 @@ export default function RegisterForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Minimal 8 karakter"
-          className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+          className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
           required
         />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-700">
+        <label className="mb-2 block text-sm font-semibold text-slate-700">
           Konfirmasi Password
         </label>
         <input
@@ -119,13 +122,13 @@ export default function RegisterForm() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           placeholder="Ulangi password"
-          className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+          className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
           required
         />
       </div>
 
       {errorMessage ? (
-        <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="rounded-[1.5rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
           {errorMessage}
         </div>
       ) : null}
@@ -133,14 +136,14 @@ export default function RegisterForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-2xl bg-[#5D3FD3] px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+        className="w-full rounded-[1.5rem] bg-[var(--tf-purple)] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)] disabled:cursor-not-allowed disabled:bg-slate-300"
       >
         {isSubmitting ? "Mendaftar..." : "Daftar"}
       </button>
 
       <p className="text-center text-sm text-slate-600">
         Sudah punya akun?{" "}
-        <Link href="/login" className="font-semibold text-[#5D3FD3]">
+        <Link href="/login" className="font-semibold text-[var(--tf-purple)]">
           Login
         </Link>
       </p>

@@ -5,6 +5,53 @@ import SiteFooter from "@/components/layout/site-footer";
 
 export const dynamic = "force-dynamic";
 
+const GAME_TEASERS = [
+  {
+    title: "Party Games",
+    description: "Game ringan, seru, dan cepat buat pecah suasana bareng teman.",
+    accent: "bg-[var(--tf-cream)] text-[var(--tf-orange-dark)]",
+  },
+  {
+    title: "Strategy Games",
+    description: "Cocok untuk pemain yang suka mikir, planning, dan adu taktik.",
+    accent: "bg-[var(--tf-lavender)] text-[var(--tf-purple-dark)]",
+  },
+  {
+    title: "Mahjong Session",
+    description: "Flow reservasi utama Threefrogs saat ini, rapi dan siap dipakai.",
+    accent: "bg-[#eef9d8] text-[var(--tf-green-dark)]",
+  },
+];
+
+const SNACK_TEASERS = [
+  "Snack ringan buat nemenin main",
+  "Minuman dingin & hangat",
+  "Mie instant untuk sesi panjang",
+];
+
+const FAQS = [
+  {
+    question: "Apakah harus login dulu untuk booking?",
+    answer:
+      "Iya. Customer perlu login dulu supaya booking tersimpan ke akun dan bisa dicek lagi di Booking Saya.",
+  },
+  {
+    question: "Berapa lama slot ditahan kalau belum bayar?",
+    answer:
+      "Booking akan di-hold sementara sambil menunggu pembayaran. Kalau lewat batas waktu, booking akan otomatis kadaluarsa.",
+  },
+  {
+    question: "Kalau salah upload bukti bayar bagaimana?",
+    answer:
+      "Tenang, bukti pembayaran bisa di-upload ulang selama booking masih dalam status yang mengizinkan.",
+  },
+  {
+    question: "Apakah admin bisa bantu booking walk-in?",
+    answer:
+      "Bisa. Admin punya flow manual booking dan direct confirm untuk kebutuhan operasional di store.",
+  },
+];
+
 export default async function HomePage() {
   const stores = await prisma.store.findMany({
     where: {
@@ -43,7 +90,9 @@ export default async function HomePage() {
               <div>
                 <h1 className="text-5xl font-black leading-tight tracking-tight text-[var(--tf-purple-dark)] md:text-6xl">
                   Tempat Main yang
-                  <span className="block text-[var(--tf-orange)]">Seru, Lucu, dan Rapi</span>
+                  <span className="block text-[var(--tf-orange)]">
+                    Seru, Lucu, dan Rapi
+                  </span>
                 </h1>
 
                 <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
@@ -171,117 +220,138 @@ export default async function HomePage() {
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="mb-8 text-center md:text-left">
             <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
-              Announcement
+              Store Showcase
             </p>
             <h2 className="mt-3 text-3xl font-black text-[var(--tf-purple)] md:text-4xl">
-              Update terbaru dari Threefrogs
+              Vibes tempat mainmu ada di sini
             </h2>
+            <p className="mt-3 max-w-2xl text-slate-600">
+              Untuk sekarang kita pakai visual placeholder yang rapi dulu. Nanti
+              tinggal diganti dengan foto store asli tanpa perlu bongkar layout.
+            </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
-              <div className="mb-4 inline-flex rounded-full bg-[var(--tf-lavender)] px-3 py-1 text-xs font-bold text-[var(--tf-purple-dark)]">
-                LIVE NOW
-              </div>
-              <h3 className="text-xl font-black text-[var(--tf-purple)]">
-                Reservasi Mahjong Sudah Aktif
-              </h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Customer sudah bisa login, pilih slot, booking, upload bukti, dan
-                lihat riwayat booking sendiri.
-              </p>
-            </div>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {stores.map((store, index) => (
+              <div
+                key={store.id}
+                className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]"
+              >
+                <div
+                  className={`mb-4 h-52 rounded-[1.75rem] ${
+                    index % 4 === 0
+                      ? "bg-gradient-to-br from-[var(--tf-lavender)] to-[var(--tf-cream)]"
+                      : index % 4 === 1
+                      ? "bg-gradient-to-br from-[#fff0d8] to-[#f4ebff]"
+                      : index % 4 === 2
+                      ? "bg-gradient-to-br from-[#eef9d8] to-[#f8f2ff]"
+                      : "bg-gradient-to-br from-[#fde8ff] to-[#fff8e7]"
+                  }`}
+                />
 
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
-              <div className="mb-4 inline-flex rounded-full bg-[var(--tf-cream)] px-3 py-1 text-xs font-bold text-[var(--tf-orange-dark)]">
-                NEXT
-              </div>
-              <h3 className="text-xl font-black text-[var(--tf-purple)]">
-                Boardgame Flow Menyusul
-              </h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Katalog boardgame, filter game, dan flow reservasi boardgame akan
-                dibuka di tahap pengembangan berikutnya.
-              </p>
-            </div>
+                <h3 className="text-xl font-black text-[var(--tf-purple)]">
+                  {store.name}
+                </h3>
 
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
-              <div className="mb-4 inline-flex rounded-full bg-[#eef9d8] px-3 py-1 text-xs font-bold text-[var(--tf-green-dark)]">
-                STORE
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {store.description ||
+                    "Store Threefrogs yang siap dipakai untuk sesi bermain mahjong yang seru."}
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="rounded-full bg-[var(--tf-lavender)] px-3 py-1 text-xs font-semibold text-[var(--tf-purple-dark)]">
+                    {store.tables.length} meja aktif
+                  </span>
+                  <span className="rounded-full bg-[var(--tf-cream)] px-3 py-1 text-xs font-semibold text-[var(--tf-orange-dark)]">
+                    Surabaya
+                  </span>
+                </div>
+
+                <Link
+                  href="/reserve"
+                  className="mt-5 inline-flex rounded-2xl bg-[var(--tf-purple)] px-4 py-2 font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
+                >
+                  Reservasi di sini
+                </Link>
               </div>
-              <h3 className="text-xl font-black text-[var(--tf-purple)]">
-                Manual Booking untuk Walk-in
-              </h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Admin sekarang bisa input manual booking, direct confirm, dan cek
-                availability secara visual untuk operasional toko.
-              </p>
-            </div>
+            ))}
           </div>
         </section>
 
         <section className="bg-white">
           <div className="mx-auto max-w-6xl px-6 py-16">
-            <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
-                  Store Highlights
-                </p>
-                <h2 className="mt-3 text-3xl font-black text-[var(--tf-purple)] md:text-4xl">
-                  Main di store Threefrogs favoritmu
-                </h2>
-              </div>
-
-              <Link
-                href="/stores"
-                className="font-semibold text-[var(--tf-purple)] hover:underline"
-              >
-                Lihat semua store
-              </Link>
+            <div className="mb-8">
+              <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
+                Teaser
+              </p>
+              <h2 className="mt-3 text-3xl font-black text-[var(--tf-purple)] md:text-4xl">
+                Sedikit gambaran isi dunia Threefrogs
+              </h2>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-              {stores.map((store, index) => (
-                <div
-                  key={store.id}
-                  className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]"
-                >
-                  <div
-                    className={`mb-5 h-36 rounded-[1.5rem] ${
-                      index % 3 === 0
-                        ? "bg-gradient-to-br from-[var(--tf-lavender)] to-[var(--tf-cream)]"
-                        : index % 3 === 1
-                        ? "bg-gradient-to-br from-[#fff0d8] to-[#f4ebff]"
-                        : "bg-gradient-to-br from-[#eef9d8] to-[#f4ebff]"
-                    }`}
-                  />
+            <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
+                <h3 className="text-2xl font-black text-[var(--tf-purple)]">
+                  Boardgame Teaser
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  Nanti katalog game akan dibuat lebih proper, lengkap dengan
+                  filter dan discovery. Untuk sekarang, kita siapkan nuansa dan
+                  arahnya dulu.
+                </p>
 
-                  <h3 className="text-xl font-black text-[var(--tf-purple)]">
-                    {store.name}
-                  </h3>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {store.description ||
-                      "Store Threefrogs yang siap untuk reservasi mahjong."}
-                  </p>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="rounded-full bg-[var(--tf-lavender)] px-3 py-1 text-xs font-semibold text-[var(--tf-purple-dark)]">
-                      {store.tables.length} meja aktif
-                    </span>
-                    <span className="rounded-full bg-[var(--tf-cream)] px-3 py-1 text-xs font-semibold text-[var(--tf-orange-dark)]">
-                      Surabaya
-                    </span>
-                  </div>
-
-                  <Link
-                    href="/reserve"
-                    className="mt-5 inline-flex rounded-2xl bg-[var(--tf-purple)] px-4 py-2 font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
-                  >
-                    Reservasi di sini
-                  </Link>
+                <div className="mt-6 grid gap-4 md:grid-cols-3">
+                  {GAME_TEASERS.map((item) => (
+                    <div
+                      key={item.title}
+                      className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4"
+                    >
+                      <div
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${item.accent}`}
+                      >
+                        {item.title}
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-slate-600">
+                        {item.description}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
+                <h3 className="text-2xl font-black text-[var(--tf-purple)]">
+                  Snack & Drinks
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  Selain main, customer juga nantinya bisa lihat daftar snack dan
+                  minuman yang tersedia di store.
+                </p>
+
+                <div className="mt-6 space-y-3">
+                  {SNACK_TEASERS.map((item, index) => (
+                    <div
+                      key={item}
+                      className={`rounded-[1.25rem] p-4 ${
+                        index === 0
+                          ? "bg-[var(--tf-cream)]"
+                          : index === 1
+                          ? "bg-[var(--tf-lavender)]"
+                          : "bg-[#eef9d8]"
+                      }`}
+                    >
+                      <p className="font-semibold text-slate-700">{item}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <Link
+                  href="/reserve"
+                  className="mt-6 inline-flex rounded-2xl border border-[var(--tf-purple)] px-4 py-2 font-semibold text-[var(--tf-purple)] transition hover:bg-[var(--tf-lavender)]"
+                >
+                  Lanjut ke Reservasi
+                </Link>
+              </div>
             </div>
           </div>
         </section>
@@ -289,46 +359,27 @@ export default async function HomePage() {
         <section className="mx-auto max-w-6xl px-6 py-16">
           <div className="mb-8 text-center md:text-left">
             <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
-              Why Threefrogs
+              FAQ
             </p>
             <h2 className="mt-3 text-3xl font-black text-[var(--tf-purple)] md:text-4xl">
-              Kenapa booking di sini terasa lebih enak
+              Pertanyaan yang paling sering ditanya
             </h2>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
-              <p className="text-sm font-black text-[var(--tf-orange-dark)]">01</p>
-              <h3 className="mt-3 text-xl font-black text-[var(--tf-purple)]">
-                Slot jelas & realtime
-              </h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Customer bisa langsung lihat meja dan jam yang tersedia tanpa
-                tebak-tebakan.
-              </p>
-            </div>
-
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
-              <p className="text-sm font-black text-[var(--tf-orange-dark)]">02</p>
-              <h3 className="mt-3 text-xl font-black text-[var(--tf-purple)]">
-                Booking tersimpan ke akun
-              </h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Riwayat booking, status pembayaran, dan detail meja bisa dicek
-                lagi kapan saja.
-              </p>
-            </div>
-
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
-              <p className="text-sm font-black text-[var(--tf-orange-dark)]">03</p>
-              <h3 className="mt-3 text-xl font-black text-[var(--tf-purple)]">
-                Fleksibel untuk operasional
-              </h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Ada upload proof, upload ulang, direct confirm admin, manual
-                booking, dan expiry otomatis.
-              </p>
-            </div>
+          <div className="grid gap-4">
+            {FAQS.map((faq) => (
+              <div
+                key={faq.question}
+                className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]"
+              >
+                <h3 className="text-lg font-black text-[var(--tf-purple)]">
+                  {faq.question}
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {faq.answer}
+                </p>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -352,12 +403,12 @@ export default async function HomePage() {
                 </div>
 
                 <div className="rounded-[1.5rem] bg-[var(--tf-cream)] p-5">
-                  <p className="text-sm text-slate-500">Flow Pembayaran</p>
+                  <p className="text-sm text-slate-500">Pembayaran</p>
                   <p className="mt-2 text-xl font-black text-[var(--tf-purple)]">
                     Upload atau Confirm
                   </p>
                   <p className="text-sm text-slate-600">
-                    bisa via proof atau admin
+                    fleksibel untuk customer & admin
                   </p>
                 </div>
               </div>
