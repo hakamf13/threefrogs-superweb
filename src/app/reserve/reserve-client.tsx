@@ -216,12 +216,15 @@ export default function ReserveClient({
     <main className="min-h-[calc(100vh-88px)] bg-[var(--tf-bg)] px-6 py-16 text-slate-800">
       <div className="mx-auto max-w-6xl space-y-10">
         <div>
-            <h1 className="text-4xl font-black text-[var(--tf-purple)] md:text-5xl">
+            <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
+                Reservation
+            </p>
+            <h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)] md:text-5xl">
                 Reservasi Mahjong
             </h1>
-          <p className="mt-2 text-slate-600">
-            Pilih store, tanggal, meja, lalu slot jam bermain.
-          </p>
+            <p className="mt-3 max-w-2xl text-slate-600">
+                Pilih store, tentukan tanggal main, pilih meja, lalu booking slot jam favoritmu.
+            </p>
         </div>
 
         <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">

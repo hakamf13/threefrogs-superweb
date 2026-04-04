@@ -87,12 +87,17 @@ export default async function MyBookingsPage({
 
       <main className="px-6 py-16">
         <div className="mx-auto max-w-6xl space-y-8">
-          <div>
-            <h1 className="text-4xl font-black text-[var(--tf-purple)]">Booking Saya</h1>
-            <p className="mt-2 text-slate-600">
-              Semua booking yang kamu buat saat login akan tampil di sini.
-            </p>
-          </div>
+            <div>
+                <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
+                    My Reservations
+                </p>
+                <h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
+                    Booking Saya
+                </h1>
+                <p className="mt-2 text-slate-600">
+                    Semua booking yang kamu buat saat login akan tampil di sini.
+                </p>
+            </div>
 
           <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
             <form className="grid gap-4 lg:grid-cols-4">
