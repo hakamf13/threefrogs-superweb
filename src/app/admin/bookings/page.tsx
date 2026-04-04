@@ -9,10 +9,11 @@ import {
   getBookingStatusLabel,
 } from "../../../../lib/utils";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
+import EmptyStateCard from "@/components/ui/empty-state-card";
 
 export default async function AdminBookingsPage() {
 
-  await expireOverdueBookings();        
+        await expireOverdueBookings();        
 
   const bookings = await prisma.booking.findMany({
     orderBy: {
@@ -38,9 +39,13 @@ export default async function AdminBookingsPage() {
 
         <div className="space-y-4">
           {bookings.length === 0 ? (
-            <div className="rounded-3xl bg-white p-8 shadow-sm">
-              <p className="text-slate-500">Belum ada booking masuk.</p>
-            </div>
+            <EmptyStateCard
+              eyebrow="No Results"
+              title="Tidak ada booking yang cocok"
+              description="Coba ubah keyword, status, store, atau tanggal supaya hasil pencarian lebih sesuai."
+              actionHref="/admin/bookings"
+              actionLabel="Tampilkan Semua"
+            />
           ) : (
             bookings.map((booking) => (
               <div

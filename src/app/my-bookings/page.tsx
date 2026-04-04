@@ -11,6 +11,7 @@ import {
   getBookingStatusColor,
   getBookingStatusLabel,
 } from "../../../lib/utils";
+import EmptyStateCard from "@/components/ui/empty-state-card";
 
 export const dynamic = "force-dynamic";
 
@@ -166,11 +167,13 @@ export default async function MyBookingsPage({
 
           <div className="space-y-4">
             {bookings.length === 0 ? (
-              <div className="rounded-3xl bg-white p-8 shadow-sm">
-                <p className="text-slate-500">
-                  Belum ada booking yang cocok dengan filter ini.
-                </p>
-              </div>
+            <EmptyStateCard
+                eyebrow="No Results"
+                title="Belum ada booking yang cocok"
+                description="Coba ubah filter pencarianmu, atau buat reservasi baru kalau kamu belum punya jadwal main."
+                actionHref="/reserve"
+                actionLabel="Buat Reservasi"
+            />
             ) : (
               bookings.map((booking) => (
                 <div
@@ -178,9 +181,9 @@ export default async function MyBookingsPage({
                   className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-2xl font-bold text-[#5D3FD3]">
+                        <h2 className="text-2xl font-black text-[var(--tf-purple)]">
                           {booking.bookingCode}
                         </h2>
                         <span
@@ -192,9 +195,14 @@ export default async function MyBookingsPage({
                         </span>
                       </div>
 
-                      <p className="font-semibold text-slate-800">
-                        {booking.store.name} • Meja {booking.table.tableNumber}
-                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="rounded-full bg-[var(--tf-lavender)] px-3 py-1 text-xs font-semibold text-[var(--tf-purple-dark)]">
+                          {booking.store.name}
+                        </span>
+                        <span className="rounded-full bg-[var(--tf-cream)] px-3 py-1 text-xs font-semibold text-[var(--tf-orange-dark)]">
+                          Meja {booking.table.tableNumber}
+                        </span>
+                      </div>
 
                       <p className="text-sm text-slate-600">
                         {formatDateDisplay(booking.bookingDate)}

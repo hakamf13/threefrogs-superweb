@@ -237,17 +237,25 @@ export default async function HomePage() {
                 key={store.id}
                 className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]"
               >
-                <div
-                  className={`mb-4 h-52 rounded-[1.75rem] ${
-                    index % 4 === 0
-                      ? "bg-gradient-to-br from-[var(--tf-lavender)] to-[var(--tf-cream)]"
-                      : index % 4 === 1
-                      ? "bg-gradient-to-br from-[#fff0d8] to-[#f4ebff]"
-                      : index % 4 === 2
-                      ? "bg-gradient-to-br from-[#eef9d8] to-[#f8f2ff]"
-                      : "bg-gradient-to-br from-[#fde8ff] to-[#fff8e7]"
-                  }`}
-                />
+                {store.coverImageUrl ? (
+                  <img
+                    src={store.coverImageUrl}
+                    alt={store.name}
+                    className="mb-4 h-52 w-full rounded-[1.75rem] object-cover"
+                  />
+                ) : (
+                  <div
+                    className={`mb-4 h-52 rounded-[1.75rem] ${
+                      index % 4 === 0
+                        ? "bg-gradient-to-br from-[var(--tf-lavender)] to-[var(--tf-cream)]"
+                        : index % 4 === 1
+                        ? "bg-gradient-to-br from-[#fff0d8] to-[#f4ebff]"
+                        : index % 4 === 2
+                        ? "bg-gradient-to-br from-[#eef9d8] to-[#f8f2ff]"
+                        : "bg-gradient-to-br from-[#fde8ff] to-[#fff8e7]"
+                    }`}
+                  />
+                )}
 
                 <h3 className="text-xl font-black text-[var(--tf-purple)]">
                   {store.name}

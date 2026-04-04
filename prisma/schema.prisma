@@ -78,6 +78,8 @@ model Store {
   openHour     Int           @default(11)
   closeHour    Int           @default(22)
   isActive     Boolean       @default(true)
+  coverImageUrl       String?
+  coverImagePublicId  String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 

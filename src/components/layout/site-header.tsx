@@ -49,12 +49,19 @@ export default async function SiteHeader() {
 
           {session?.user ? (
             <>
-              <Link
+            <Link 
+                href="/profile"
+                className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--tf-purple)] hover:text-[var(--tf-purple)]"
+            >
+                Profil
+            </Link>
+
+            <Link
                 href="/my-bookings"
                 className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-[var(--tf-green-dark)] hover:text-[var(--tf-green-dark)]"
-              >
+            >
                 Booking Saya
-              </Link>
+            </Link>
 
               {isAdmin ? (
                 <Link
