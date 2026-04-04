@@ -40,6 +40,13 @@ export default async function AdminLayout({
 						</Link>
 
 						<Link
+							href="/admin/health-check"
+							className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+							>
+							Health Check
+						</Link>
+
+						<Link
 							href="/admin"
 							className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
 						>
