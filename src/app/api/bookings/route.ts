@@ -13,6 +13,10 @@ import {
 import { createBookingSchema } from "../../../lib/validations";
 import { getBookingWindow, isDateWithinBookingWindow } from "@/lib/booking-window";
 import { getCurrentHourInJakarta, getTodayDateStringInJakarta } from "@/lib/booking-window";
+import { generatePaymentReference } from "@/features/payments/generate-payment-reference";
+import { createXenditPaymentRequest } from "@/features/payments/create-xendit-payment-request";
+import { extractXenditPaymentAction } from "@/features/payments/extract-xendit-payment-action";
+import { updateBookingPaymentRequest } from "@/features/payments/update-booking-payment-request";
 
 function isSequential(slots: number[]) {
   const sorted = [...slots].sort((a, b) => a - b);
@@ -262,9 +266,67 @@ export async function POST(request: Request) {
       }
     );
 
+    const paymentReferenceId = generatePaymentReference(booking.bookingCode);
+
+    try {
+      const paymentRequest = await createXenditPaymentRequest({
+        referenceId: paymentReferenceId,
+        amount: booking.totalPrice,
+        bookingCode: booking.bookingCode,
+        customer: {
+          givenNames: booking.customerName,
+          email: booking.customerEmail,
+          mobileNumber: booking.customerPhone,
+        },
+      });
+
+      const action = extractXenditPaymentAction(paymentRequest);
+
+      await updateBookingPaymentRequest({
+        bookingId: booking.id,
+        paymentReferenceId:
+          paymentRequest.payment_request_id ?? paymentReferenceId,
+        paymentMethodCode: "QRIS",
+        gatewayStatus: paymentRequest.status ?? null,
+        checkoutUrl: action.checkoutUrl,
+        actionType: action.type,
+        actionDescriptor: action.descriptor,
+        actionValue: action.value,
+        payload: paymentRequest,
+      });
+    } catch (paymentError) {
+      console.error("Create Xendit payment request error:", paymentError);
+
+      // booking tetap dibuat supaya user tidak kehilangan slot,
+      // tapi status payment gateway belum terhubung sempurna
+    }
+      
+    const updatedBooking = await prisma.booking.findUnique({
+      where: {
+        id: booking.id,
+      },
+      select: {
+        bookingCode: true,
+        paymentCheckoutUrl: true,
+        paymentActionType: true,
+        paymentActionDescriptor: true,
+        paymentActionValue: true,
+        paymentGatewayStatus: true,
+      },
+    });
+
     return NextResponse.json({
       success: true,
       bookingCode: booking.bookingCode,
+      payment: updatedBooking
+        ? {
+            checkoutUrl: updatedBooking.paymentCheckoutUrl,
+            actionType: updatedBooking.paymentActionType,
+            actionDescriptor: updatedBooking.paymentActionDescriptor,
+            actionValue: updatedBooking.paymentActionValue,
+            gatewayStatus: updatedBooking.paymentGatewayStatus,
+          }
+        : null,
     });
   } catch (error) {
     console.error("Create booking error:", error);

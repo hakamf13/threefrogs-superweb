@@ -144,6 +144,19 @@ model Booking {
   cancelledAt      DateTime?
   graceMinutesUsed Int               @default(0)
 
+  paymentReferenceId        String?   @unique
+  paymentGatewayProvider    String?
+  paymentGatewayStatus      String?
+  paymentMethodCode         String?
+  paymentCheckoutUrl        String?
+  paymentGatewayPayload     Json?
+  paymentRequestedAt        DateTime?
+  paymentSucceededAt        DateTime?
+  paymentExpiredAt          DateTime?
+  paymentActionType         String?
+  paymentActionDescriptor   String?
+  paymentActionValue        String?
+
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 

@@ -181,7 +181,44 @@ export default async function BookingDetailPage({
               <p>Atas Nama: Threefrogs</p>
             </div>
 
-            {(booking.status === "AWAITING_PAYMENT" ||
+            {booking.paymentGatewayProvider === "XENDIT" &&
+            booking.status === "AWAITING_PAYMENT" ? (
+              <div className="mt-8 rounded-[1.5rem] border border-[var(--tf-purple)] bg-[var(--tf-lavender)] p-5">
+                <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
+                  Payment Gateway
+                </p>
+                <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
+                  Pembayaran Otomatis
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-slate-700">
+                  Pembayaran booking ini sudah terhubung ke gateway otomatis.
+                </p>
+
+                {booking.paymentActionType === "REDIRECT_CUSTOMER" &&
+                booking.paymentActionDescriptor === "WEB_URL" &&
+                booking.paymentCheckoutUrl ? (
+                  <a
+                    href={booking.paymentCheckoutUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-5 inline-flex rounded-2xl bg-[var(--tf-purple)] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)]"
+                  >
+                    Bayar Sekarang
+                  </a>
+                ) : null}
+
+                {booking.paymentActionType === "PRESENT_TO_CUSTOMER" &&
+                booking.paymentActionDescriptor === "QR_STRING" &&
+                booking.paymentActionValue ? (
+                  <div className="mt-5 rounded-[1.25rem] bg-white p-4 text-sm text-slate-700">
+                    QRIS payment berhasil dibuat. Langkah berikutnya adalah kita render QR
+                    ini sebagai gambar di batch berikutnya.
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            
+            {/* {(booking.status === "AWAITING_PAYMENT" ||
               booking.status === "PENDING_VERIFICATION") && (
               <div className="mt-8">
                 <PaymentProofUploader
@@ -190,7 +227,7 @@ export default async function BookingDetailPage({
                   existingProofCount={booking.paymentProofs.length}
                 />
               </div>
-            )}
+            )} */}
 
             {booking.paymentProofs.length > 0 ? (
               <div className="mt-8">

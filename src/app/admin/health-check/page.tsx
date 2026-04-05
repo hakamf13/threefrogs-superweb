@@ -4,7 +4,7 @@ import HealthCheckBoard from "./health-check-board";
 export const dynamic = "force-dynamic";
 
 export default async function HealthCheckPage() {
-  const data = await getMahjongHealthCheck();
+	const data = await getMahjongHealthCheck();
 
-  return <HealthCheckBoard data={data} />;
+	return <HealthCheckBoard data={data} />;
 }
