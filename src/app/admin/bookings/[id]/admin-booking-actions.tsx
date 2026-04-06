@@ -6,15 +6,24 @@ import { useState } from "react";
 type AdminBookingActionsProps = {
   bookingId: string;
   status: string;
+  paymentGatewayProvider?: string | null;
 };
 
 export default function AdminBookingActions({
   bookingId,
   status,
+  paymentGatewayProvider,
 }: AdminBookingActionsProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  const isMidtransBooking = paymentGatewayProvider === "MIDTRANS";
+  const canDirectConfirm =
+    status === "AWAITING_PAYMENT" || status === "PENDING_VERIFICATION";
+  const canManualProofReview =
+    !isMidtransBooking && status === "PENDING_VERIFICATION";
+  const canCancel = status !== "CANCELLED" && status !== "EXPIRED";
 
   const handleConfirm = async () => {
     try {
@@ -163,28 +172,51 @@ export default function AdminBookingActions({
   };
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6">
-      <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">Aksi Admin</h2>
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-[#5D3FD3]">Aksi Admin</h2>
 
-      <div className="flex flex-wrap gap-3">
-        {(status === "AWAITING_PAYMENT" || status === "PENDING_VERIFICATION") && (
+          {isMidtransBooking ? (
+            <p className="mt-2 text-sm text-slate-600">
+              Booking ini memakai Midtrans. Pembayaran normal akan terkonfirmasi
+              otomatis via webhook, jadi admin tidak perlu verifikasi bukti
+              pembayaran manual.
+            </p>
+          ) : (
+            <p className="mt-2 text-sm text-slate-600">
+              Booking ini memakai flow manual fallback, jadi admin masih bisa
+              review dan verifikasi pembayaran jika diperlukan.
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full bg-[#EDE7FF] px-3 py-1 text-xs font-semibold text-[#5D3FD3]">
+            {isMidtransBooking ? "Midtrans" : "Manual"}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-3">
+        {canDirectConfirm ? (
           <button
             type="button"
             onClick={handleDirectConfirm}
             disabled={isLoading}
-            className="rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white disabled:bg-slate-300"
+            className="rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {isLoading ? "Memproses..." : "Konfirmasi Booking Langsung"}
           </button>
-        )}
+        ) : null}
 
-        {status === "PENDING_VERIFICATION" ? (
+        {canManualProofReview ? (
           <>
             <button
               type="button"
               onClick={handleConfirm}
               disabled={isLoading}
-              className="rounded-2xl bg-green-600 px-5 py-3 font-bold text-white disabled:bg-slate-300"
+              className="rounded-2xl bg-green-600 px-5 py-3 font-bold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               {isLoading ? "Memproses..." : "Konfirmasi Pembayaran"}
             </button>
@@ -193,19 +225,19 @@ export default function AdminBookingActions({
               type="button"
               onClick={handleRejectProof}
               disabled={isLoading}
-              className="rounded-2xl bg-orange-500 px-5 py-3 font-bold text-white disabled:bg-slate-300"
+              className="rounded-2xl bg-orange-500 px-5 py-3 font-bold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               {isLoading ? "Memproses..." : "Tolak Bukti Pembayaran"}
             </button>
           </>
         ) : null}
 
-        {status !== "CANCELLED" && status !== "EXPIRED" ? (
+        {canCancel ? (
           <button
             type="button"
             onClick={handleCancel}
             disabled={isLoading}
-            className="rounded-2xl bg-red-600 px-5 py-3 font-bold text-white disabled:bg-slate-300"
+            className="rounded-2xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {isLoading ? "Memproses..." : "Batalkan Booking"}
           </button>
@@ -213,7 +245,7 @@ export default function AdminBookingActions({
       </div>
 
       {message ? (
-        <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
           {message}
         </div>
       ) : null}

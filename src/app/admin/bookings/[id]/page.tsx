@@ -5,10 +5,13 @@ import {
   formatDateDisplay,
   formatHourLabel,
   formatRupiah,
+  getAdminPaymentActionLabel,
   getBookingStatusColor,
   getBookingStatusLabel,
+  getPaymentGatewayStatusLabel,
   getPaymentProofStatusColor,
   getPaymentProofStatusLabel,
+  getPaymentProviderLabel,
 } from "../../../../lib/utils";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 
@@ -54,6 +57,8 @@ export default async function AdminBookingDetailPage({
     notFound();
   }
 
+  const isMidtransBooking = booking.paymentGatewayProvider === "MIDTRANS";
+
   return (
     <main className="min-h-screen bg-[#F8F4FF] px-6 py-16 text-slate-800">
       <div className="mx-auto max-w-5xl space-y-8">
@@ -98,7 +103,9 @@ export default async function AdminBookingDetailPage({
 
             <div>
               <p className="text-sm text-slate-500">Tanggal</p>
-              <p className="font-semibold">{formatDateDisplay(booking.bookingDate)}</p>
+              <p className="font-semibold">
+                {formatDateDisplay(booking.bookingDate)}
+              </p>
             </div>
 
             <div>
@@ -124,7 +131,61 @@ export default async function AdminBookingDetailPage({
           </div>
         </div>
 
-        <AdminBookingActions bookingId={booking.id} status={booking.status} />
+        <div className="rounded-3xl bg-white p-8 shadow-sm">
+          <p className="text-sm font-black uppercase tracking-widest text-[#C77A00]">
+            Payment Source
+          </p>
+          <h2 className="mt-2 text-2xl font-black text-[#5D3FD3]">
+            {getPaymentProviderLabel(booking.paymentGatewayProvider)}
+          </h2>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="rounded-full bg-[#EDE7FF] px-3 py-1 text-xs font-semibold text-[#5D3FD3]">
+              {getAdminPaymentActionLabel(booking)}
+            </span>
+
+            {isMidtransBooking ? (
+              <span className="rounded-full bg-[#FFF4DB] px-3 py-1 text-xs font-semibold text-[#C77A00]">
+                {getPaymentGatewayStatusLabel(booking.paymentGatewayStatus)}
+              </span>
+            ) : null}
+          </div>
+
+          {isMidtransBooking ? (
+            <div className="mt-4 space-y-2 text-sm text-slate-700">
+              <p>Provider: Midtrans</p>
+              <p>Reference: {booking.paymentReferenceId || "-"}</p>
+              <p>
+                Gateway status:{" "}
+                {getPaymentGatewayStatusLabel(booking.paymentGatewayStatus)}
+              </p>
+              {booking.paymentSucceededAt ? (
+                <p>Pembayaran berhasil tercatat otomatis oleh sistem.</p>
+              ) : null}
+              {booking.paymentCheckoutUrl ? (
+                <a
+                  href={booking.paymentCheckoutUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex rounded-2xl border border-[#5D3FD3] px-4 py-2 font-semibold text-[#5D3FD3]"
+                >
+                  Buka Payment Page
+                </a>
+              ) : null}
+            </div>
+          ) : (
+            <div className="mt-4 space-y-2 text-sm text-slate-700">
+              <p>Booking ini memakai pembayaran manual fallback.</p>
+              <p>Admin masih bisa review bukti pembayaran jika diperlukan.</p>
+            </div>
+          )}
+        </div>
+
+        <AdminBookingActions
+          bookingId={booking.id}
+          status={booking.status}
+          paymentGatewayProvider={booking.paymentGatewayProvider}
+        />
 
         {booking.paymentProofs.length > 0 ? (
           <div className="rounded-3xl bg-white p-8 shadow-sm">
@@ -141,7 +202,9 @@ export default async function AdminBookingDetailPage({
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="font-semibold text-slate-800">
-                        {index === 0 ? "Bukti Terbaru" : proof.fileName || "Bukti Pembayaran"}
+                        {index === 0
+                          ? "Bukti Terbaru"
+                          : proof.fileName || "Bukti Pembayaran"}
                       </p>
                       <p className="text-sm text-slate-500">
                         {new Intl.DateTimeFormat("id-ID", {
@@ -162,7 +225,9 @@ export default async function AdminBookingDetailPage({
                           proof.verificationStatus
                         )}`}
                       >
-                        {getPaymentProofStatusLabel(proof.verificationStatus)}
+                        {getPaymentProofStatusLabel(
+                          proof.verificationStatus
+                        )}
                       </span>
 
                       <a
@@ -193,7 +258,9 @@ export default async function AdminBookingDetailPage({
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
               >
                 <p className="font-semibold text-slate-800">
-                  {log.oldStatus ? `${log.oldStatus} → ${log.newStatus}` : log.newStatus}
+                  {log.oldStatus
+                    ? `${log.oldStatus} → ${log.newStatus}`
+                    : log.newStatus}
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
                   {log.note ?? "-"}

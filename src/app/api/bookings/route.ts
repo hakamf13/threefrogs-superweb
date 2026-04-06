@@ -13,9 +13,11 @@ import {
 import { createBookingSchema } from "../../../lib/validations";
 import { getBookingWindow, isDateWithinBookingWindow } from "@/lib/booking-window";
 import { getCurrentHourInJakarta, getTodayDateStringInJakarta } from "@/lib/booking-window";
-import { generatePaymentReference } from "@/features/payments/generate-payment-reference";
-import { createXenditPaymentRequest } from "@/features/payments/create-xendit-payment-request";
-import { extractXenditPaymentAction } from "@/features/payments/extract-xendit-payment-action";
+
+
+import { isMidtransConfigured } from "@/lib/midtrans";
+import { generateMidtransOrderId } from "@/features/payments/generate-midtrans-order-id";
+import { createMidtransSnapTransaction } from "@/features/payments/create-midtrans-snap-transaction";
 import { updateBookingPaymentRequest } from "@/features/payments/update-booking-payment-request";
 
 function isSequential(slots: number[]) {
@@ -266,39 +268,48 @@ export async function POST(request: Request) {
       }
     );
 
-    const paymentReferenceId = generatePaymentReference(booking.bookingCode);
+    let paymentResult: {
+      checkoutUrl: string | null;
+      gatewayToken: string | null;
+      gatewayStatus: string | null;
+    } | null = null;
 
-    try {
-      const paymentRequest = await createXenditPaymentRequest({
-        referenceId: paymentReferenceId,
-        amount: booking.totalPrice,
-        bookingCode: booking.bookingCode,
-        customer: {
-          givenNames: booking.customerName,
-          email: booking.customerEmail,
-          mobileNumber: booking.customerPhone,
-        },
-      });
+    if (isMidtransConfigured()) {
+      try {
+        const orderId = generateMidtransOrderId(booking.bookingCode);
 
-      const action = extractXenditPaymentAction(paymentRequest);
+        const snapTransaction = await createMidtransSnapTransaction({
+          orderId,
+          grossAmount: booking.totalPrice,
+          bookingCode: booking.bookingCode,
+          customer: {
+            firstName: booking.customerName,
+            email: booking.customerEmail,
+            phone: booking.customerPhone,
+          },
+        });
 
-      await updateBookingPaymentRequest({
-        bookingId: booking.id,
-        paymentReferenceId:
-          paymentRequest.payment_request_id ?? paymentReferenceId,
-        paymentMethodCode: "QRIS",
-        gatewayStatus: paymentRequest.status ?? null,
-        checkoutUrl: action.checkoutUrl,
-        actionType: action.type,
-        actionDescriptor: action.descriptor,
-        actionValue: action.value,
-        payload: paymentRequest,
-      });
-    } catch (paymentError) {
-      console.error("Create Xendit payment request error:", paymentError);
+        await updateBookingPaymentRequest({
+          bookingId: booking.id,
+          paymentReferenceId: orderId,
+          paymentMethodCode: "MIDTRANS_SNAP",
+          gatewayStatus: "TOKEN_CREATED",
+          gatewayToken: snapTransaction.token ?? null,
+          checkoutUrl: snapTransaction.redirect_url ?? null,
+          actionType: "REDIRECT_CUSTOMER",
+          actionDescriptor: "SNAP_REDIRECT",
+          actionValue: snapTransaction.redirect_url ?? null,
+          payload: snapTransaction,
+        });
 
-      // booking tetap dibuat supaya user tidak kehilangan slot,
-      // tapi status payment gateway belum terhubung sempurna
+        paymentResult = {
+          checkoutUrl: snapTransaction.redirect_url ?? null,
+          gatewayToken: snapTransaction.token ?? null,
+          gatewayStatus: "TOKEN_CREATED",
+        };
+      } catch (paymentError) {
+        console.error("Create Midtrans Snap transaction error:", paymentError);
+      }
     }
       
     const updatedBooking = await prisma.booking.findUnique({
@@ -318,15 +329,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       bookingCode: booking.bookingCode,
-      payment: updatedBooking
-        ? {
-            checkoutUrl: updatedBooking.paymentCheckoutUrl,
-            actionType: updatedBooking.paymentActionType,
-            actionDescriptor: updatedBooking.paymentActionDescriptor,
-            actionValue: updatedBooking.paymentActionValue,
-            gatewayStatus: updatedBooking.paymentGatewayStatus,
-          }
-        : null,
+      payment: paymentResult,
     });
   } catch (error) {
     console.error("Create booking error:", error);

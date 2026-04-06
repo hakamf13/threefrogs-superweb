@@ -10,6 +10,7 @@ import {
   formatRupiah,
   getBookingStatusColor,
   getBookingStatusLabel,
+  getPaymentGatewayStatusLabel,
 } from "../../lib/utils";
 import EmptyStateCard from "@/components/ui/empty-state-card";
 
@@ -88,17 +89,17 @@ export default async function MyBookingsPage({
 
       <main className="px-6 py-16">
         <div className="mx-auto max-w-6xl space-y-8">
-            <div>
-                <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
-                    My Reservations
-                </p>
-                <h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
-                    Booking Saya
-                </h1>
-                <p className="mt-2 text-slate-600">
-                    Semua booking yang kamu buat saat login akan tampil di sini.
-                </p>
-            </div>
+          <div>
+            <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
+              My Reservations
+            </p>
+            <h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
+              Booking Saya
+            </h1>
+            <p className="mt-2 text-slate-600">
+              Semua booking yang kamu buat saat login akan tampil di sini.
+            </p>
+          </div>
 
           <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
             <form className="grid gap-4 lg:grid-cols-4">
@@ -147,7 +148,7 @@ export default async function MyBookingsPage({
                 </select>
               </div>
 
-              <div className="lg:col-span-4 flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 lg:col-span-4">
                 <button
                   type="submit"
                   className="rounded-2xl bg-[#5D3FD3] px-5 py-3 font-bold text-white"
@@ -167,63 +168,92 @@ export default async function MyBookingsPage({
 
           <div className="space-y-4">
             {bookings.length === 0 ? (
-            <EmptyStateCard
+              <EmptyStateCard
                 eyebrow="No Results"
                 title="Belum ada booking yang cocok"
                 description="Coba ubah filter pencarianmu, atau buat reservasi baru kalau kamu belum punya jadwal main."
                 actionHref="/reserve"
                 actionLabel="Buat Reservasi"
-            />
+              />
             ) : (
-              bookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]"
-                >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-2xl font-black text-[var(--tf-purple)]">
-                          {booking.bookingCode}
-                        </h2>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getBookingStatusColor(
-                            booking.status
-                          )}`}
-                        >
-                          {getBookingStatusLabel(booking.status)}
-                        </span>
+              bookings.map((booking) => {
+                const showMidtransPayButton =
+                  booking.paymentGatewayProvider === "MIDTRANS" &&
+                  booking.status === "AWAITING_PAYMENT" &&
+                  !!booking.paymentCheckoutUrl;
+
+                return (
+                  <div
+                    key={booking.id}
+                    className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]"
+                  >
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <h2 className="text-2xl font-black text-[var(--tf-purple)]">
+                            {booking.bookingCode}
+                          </h2>
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-bold ${getBookingStatusColor(
+                              booking.status
+                            )}`}
+                          >
+                            {getBookingStatusLabel(booking.status)}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <span className="rounded-full bg-[var(--tf-lavender)] px-3 py-1 text-xs font-semibold text-[var(--tf-purple-dark)]">
+                            {booking.store.name}
+                          </span>
+                          <span className="rounded-full bg-[var(--tf-cream)] px-3 py-1 text-xs font-semibold text-[var(--tf-orange-dark)]">
+                            Meja {booking.table.tableNumber}
+                          </span>
+                        </div>
+
+                        <p className="text-sm text-slate-600">
+                          {formatDateDisplay(booking.bookingDate)}
+                        </p>
+
+                        <p className="text-sm font-semibold text-slate-700">
+                          {formatRupiah(booking.totalPrice)}
+                        </p>
+
+                        {booking.paymentGatewayProvider === "MIDTRANS" ? (
+                          <div className="flex flex-wrap gap-2">
+                            <span className="rounded-full bg-[var(--tf-lavender)] px-3 py-1 text-xs font-semibold text-[var(--tf-purple-dark)]">
+                              Midtrans
+                            </span>
+                            <span className="rounded-full bg-[var(--tf-cream)] px-3 py-1 text-xs font-semibold text-[var(--tf-orange-dark)]">
+                              {getPaymentGatewayStatusLabel(booking.paymentGatewayStatus)}
+                            </span>
+                          </div>
+                        ) : null}
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        <span className="rounded-full bg-[var(--tf-lavender)] px-3 py-1 text-xs font-semibold text-[var(--tf-purple-dark)]">
-                          {booking.store.name}
-                        </span>
-                        <span className="rounded-full bg-[var(--tf-cream)] px-3 py-1 text-xs font-semibold text-[var(--tf-orange-dark)]">
-                          Meja {booking.table.tableNumber}
-                        </span>
-                      </div>
-
-                      <p className="text-sm text-slate-600">
-                        {formatDateDisplay(booking.bookingDate)}
-                      </p>
-
-                      <p className="text-sm font-semibold text-slate-700">
-                        {formatRupiah(booking.totalPrice)}
-                      </p>
-                    </div>
-
-                    <div>
-                        <Link
-                            href={`/my-bookings/${booking.bookingCode}`}
+                      <div className="flex flex-wrap gap-3">
+                        {showMidtransPayButton ? (
+                          <a
+                            href={booking.paymentCheckoutUrl!}
+                            target="_blank"
+                            rel="noreferrer"
                             className="rounded-2xl bg-[var(--tf-purple)] px-4 py-2 font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
-                            >
-                            Lihat Detail
+                          >
+                            Bayar Sekarang
+                          </a>
+                        ) : null}
+
+                        <Link
+                          href={`/my-bookings/${booking.bookingCode}`}
+                          className="rounded-2xl border border-[var(--tf-purple)] px-4 py-2 font-semibold text-[var(--tf-purple)] transition hover:bg-[var(--tf-lavender)]"
+                        >
+                          Lihat Detail
                         </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

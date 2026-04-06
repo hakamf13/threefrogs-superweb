@@ -144,6 +144,8 @@ model Booking {
   cancelledAt      DateTime?
   graceMinutesUsed Int               @default(0)
 
+  paymentGatewayToken       String?
+
   paymentReferenceId        String?   @unique
   paymentGatewayProvider    String?
   paymentGatewayStatus      String?

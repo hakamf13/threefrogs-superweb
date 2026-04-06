@@ -5,6 +5,7 @@ type UpdateBookingPaymentRequestParams = {
   paymentReferenceId: string;
   paymentMethodCode: string;
   gatewayStatus: string | null;
+  gatewayToken: string | null;
   checkoutUrl: string | null;
   actionType: string | null;
   actionDescriptor: string | null;
@@ -17,6 +18,7 @@ export async function updateBookingPaymentRequest({
   paymentReferenceId,
   paymentMethodCode,
   gatewayStatus,
+  gatewayToken,
   checkoutUrl,
   actionType,
   actionDescriptor,
@@ -29,9 +31,10 @@ export async function updateBookingPaymentRequest({
     },
     data: {
       paymentReferenceId,
-      paymentGatewayProvider: "XENDIT",
+      paymentGatewayProvider: "MIDTRANS",
       paymentGatewayStatus: gatewayStatus,
       paymentMethodCode,
+      paymentGatewayToken: gatewayToken,
       paymentCheckoutUrl: checkoutUrl,
       paymentActionType: actionType,
       paymentActionDescriptor: actionDescriptor,

@@ -165,3 +165,86 @@ export function formatBilledHours(hours?: number | null) {
 
   return `${hours} jam`;
 }
+
+export function getPaymentGatewayStatusLabel(status?: string | null) {
+  if (!status) return "Belum Dibuat";
+
+  switch (status.toLowerCase()) {
+    case "token_created":
+      return "Siap Dibayar";
+    case "pending":
+      return "Menunggu Pembayaran";
+    case "settlement":
+      return "Pembayaran Berhasil";
+    case "capture":
+      return "Pembayaran Berhasil";
+    case "expire":
+      return "Kadaluarsa";
+    case "cancel":
+      return "Dibatalkan";
+    case "deny":
+      return "Ditolak";
+    case "failure":
+      return "Gagal";
+    default:
+      return status;
+  }
+}
+
+export function getPaymentProviderLabel(provider?: string | null) {
+  if (provider === "MIDTRANS") return "Midtrans";
+  return "Manual";
+}
+
+export function isManualPaymentFallbackBooking(booking: {
+  paymentGatewayProvider?: string | null;
+}) {
+  return !booking.paymentGatewayProvider;
+}
+
+export function isBookingNeedingAdminPaymentAction(booking: {
+  paymentGatewayProvider?: string | null;
+  status: string;
+}) {
+  return (
+    !booking.paymentGatewayProvider &&
+    (booking.status === "AWAITING_PAYMENT" ||
+      booking.status === "PENDING_VERIFICATION")
+  );
+}
+
+export function getAdminPaymentActionLabel(booking: {
+  paymentGatewayProvider?: string | null;
+  status: string;
+  paymentGatewayStatus?: string | null;
+}) {
+  if (booking.paymentGatewayProvider === "MIDTRANS") {
+    if (booking.status === "CONFIRMED") return "Auto-confirmed";
+    if (booking.status === "AWAITING_PAYMENT") return "Menunggu customer bayar";
+    if (booking.status === "EXPIRED") return "Gateway expired";
+    if (booking.status === "CANCELLED") return "Dibatalkan";
+    return "Gateway";
+  }
+
+  if (booking.status === "PENDING_VERIFICATION") {
+    return "Perlu verifikasi admin";
+  }
+
+  if (booking.status === "AWAITING_PAYMENT") {
+    return "Menunggu bukti bayar";
+  }
+
+  if (booking.status === "CONFIRMED") {
+    return "Sudah dikonfirmasi";
+  }
+
+  if (booking.status === "EXPIRED") {
+    return "Kadaluarsa";
+  }
+
+  if (booking.status === "CANCELLED") {
+    return "Dibatalkan";
+  }
+
+  return booking.status;
+}
