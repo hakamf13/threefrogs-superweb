@@ -30,6 +30,8 @@ export async function getAvailabilityByStoreAndDate(
 			tableNumber: true,
 			tableCode: true,
 			capacity: true,
+			displayLabel: true,
+			note: true,
 		},
 	});
 
