@@ -242,7 +242,7 @@ export async function POST(request: Request) {
             status: "AWAITING_PAYMENT",
             source: "ONLINE",
             customerName: currentUser.name,
-            customerPhone: currentUser.phone,
+            customerPhone: currentUser.phone || null,
             customerEmail: currentUser.email || null,
             bookingDate: bookingDateValue,
             startHour: firstSlot,
