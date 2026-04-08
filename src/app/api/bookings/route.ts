@@ -11,10 +11,14 @@ import {
   PRICE_PER_HOUR,
 } from "../../../lib/constants";
 import { createBookingSchema } from "../../../lib/validations";
-import { getBookingWindow, isDateWithinBookingWindow } from "@/lib/booking-window";
-import { getCurrentHourInJakarta, getTodayDateStringInJakarta } from "@/lib/booking-window";
-
-
+import {
+  getBookingWindow,
+  isDateWithinBookingWindow,
+  getCurrentHourInJakarta,
+  getTodayDateStringInJakarta,
+} from "@/lib/booking-window";
+import { notifyAdminsBookingCreated } from "@/lib/admin-notifications";
+import { enforceRouteRateLimit } from "@/lib/rate-limit";
 import { isMidtransConfigured } from "@/lib/midtrans";
 import { generateMidtransOrderId } from "@/features/payments/generate-midtrans-order-id";
 import { createMidtransSnapTransaction } from "@/features/payments/create-midtrans-snap-transaction";
@@ -56,6 +60,16 @@ export async function POST(request: Request) {
         { error: "Kamu harus login dulu." },
         { status: 401 }
       );
+    }
+
+    const rateLimitResponse = await enforceRouteRateLimit({
+      request,
+      scope: "bookingCreate",
+      identifier: session.user.id,
+    });
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     await expireOverdueBookings();
@@ -102,16 +116,16 @@ export async function POST(request: Request) {
     const { storeId, tableId, bookingDate, selectedSlots, notes } = parsed.data;
 
     if (!isDateWithinBookingWindow(bookingDate)) {
-        const { minDate, maxDate } = getBookingWindow();
+      const { minDate, maxDate } = getBookingWindow();
 
-        return NextResponse.json(
-            {
-            error: `Reservasi hanya bisa dibuat untuk tanggal ${minDate} sampai ${maxDate}.`,
-            },
-            { status: 400 }
-        );
+      return NextResponse.json(
+        {
+          error: `Reservasi hanya bisa dibuat untuk tanggal ${minDate} sampai ${maxDate}.`,
+        },
+        { status: 400 }
+      );
     }
-    
+
     const normalizedSlots = [...new Set(selectedSlots)].sort((a, b) => a - b);
 
     if (!isSequential(normalizedSlots)) {
@@ -172,6 +186,7 @@ export async function POST(request: Request) {
       select: {
         id: true,
         tableNumber: true,
+        displayLabel: true,
       },
     });
 
@@ -311,20 +326,23 @@ export async function POST(request: Request) {
         console.error("Create Midtrans Snap transaction error:", paymentError);
       }
     }
-      
-    const updatedBooking = await prisma.booking.findUnique({
-      where: {
-        id: booking.id,
-      },
-      select: {
-        bookingCode: true,
-        paymentCheckoutUrl: true,
-        paymentActionType: true,
-        paymentActionDescriptor: true,
-        paymentActionValue: true,
-        paymentGatewayStatus: true,
-      },
-    });
+
+    try {
+      await notifyAdminsBookingCreated({
+        bookingCode: booking.bookingCode,
+        customerName: booking.customerName,
+        customerPhone: booking.customerPhone,
+        customerEmail: booking.customerEmail,
+        storeName: store.name,
+        tableLabel: table.displayLabel || `Meja ${table.tableNumber}`,
+        bookingDate: booking.bookingDate,
+        slotHours: normalizedSlots,
+        totalPrice: booking.totalPrice,
+        paymentMode: paymentResult ? "MIDTRANS" : "MANUAL",
+      });
+    } catch (error) {
+      console.error("Notify admins booking created error:", error);
+    }
 
     return NextResponse.json({
       success: true,

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BookingStatus, Prisma } from "@prisma/client";
 import { prisma } from "../../lib/prisma";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 import {
@@ -35,6 +36,14 @@ function getDateRange(dateString: string) {
   return { start, end };
 }
 
+const BOOKING_STATUS_VALUES: BookingStatus[] = [
+  "AWAITING_PAYMENT",
+  "PENDING_VERIFICATION",
+  "CONFIRMED",
+  "CANCELLED",
+  "EXPIRED",
+];
+
 export default async function AdminBookingsPage({
   searchParams,
 }: AdminBookingsPageProps) {
@@ -62,7 +71,7 @@ export default async function AdminBookingsPage({
     },
   });
 
-  const whereClause: any = {};
+  const whereClause: Prisma.BookingWhereInput = {};
 
   if (q) {
     whereClause.OR = [
@@ -87,8 +96,8 @@ export default async function AdminBookingsPage({
     ];
   }
 
-  if (status) {
-    whereClause.status = status;
+  if (status && BOOKING_STATUS_VALUES.includes(status as BookingStatus)) {
+    whereClause.status = status as BookingStatus;
   }
 
   if (storeId) {

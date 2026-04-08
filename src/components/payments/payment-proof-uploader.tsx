@@ -56,9 +56,15 @@ export default function PaymentProofUploader({
         }
 
         if (result?.event === "success") {
-          try {
-            const info = result.info;
+          const info = result.info;
 
+          if (!info || typeof info.secure_url !== "string") {
+            setErrorMessage("Upload berhasil, tapi data file tidak lengkap.");
+            setIsUploading(false);
+            return;
+          }
+
+          try {
             const response = await fetch("/api/upload/payment-proof", {
               method: "POST",
               headers: {
@@ -67,9 +73,15 @@ export default function PaymentProofUploader({
               body: JSON.stringify({
                 bookingCode,
                 fileUrl: info.secure_url,
-                fileName: info.original_filename,
-                fileSize: info.bytes,
-                mimeType: info.format ? `image/${info.format}` : "image/*",
+                fileName:
+                  typeof info.original_filename === "string"
+                    ? info.original_filename
+                    : null,
+                fileSize: typeof info.bytes === "number" ? info.bytes : null,
+                mimeType:
+                  typeof info.format === "string"
+                    ? `image/${info.format}`
+                    : "image/*",
               }),
             });
 
