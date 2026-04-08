@@ -161,6 +161,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Test 
     const store = await prisma.store.findFirst({
       where: {
         id: storeId,
