@@ -130,7 +130,7 @@ model Booking {
   source           BookingSource     @default(ONLINE)
 
   customerName     String
-  customerPhone    String
+  customerPhone    String?
   customerEmail    String?
 
   bookingDate      DateTime

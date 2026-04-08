@@ -101,6 +101,9 @@ export async function POST(request: Request) {
       );
     }
 
+    const customerName = currentUser.name;
+    const customerPhone = currentUser.phone;
+
     const body = await request.json();
     const parsed = createBookingSchema.safeParse(body);
 
@@ -241,8 +244,8 @@ export async function POST(request: Request) {
             bookingType: "MAHJONG",
             status: "AWAITING_PAYMENT",
             source: "ONLINE",
-            customerName: currentUser.name,
-            customerPhone: currentUser.phone || null,
+            customerName,
+            customerPhone,
             customerEmail: currentUser.email || null,
             bookingDate: bookingDateValue,
             startHour: firstSlot,
