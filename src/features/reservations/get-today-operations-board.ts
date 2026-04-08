@@ -198,7 +198,7 @@ export async function getTodayOperationsBoard(): Promise<TodayOperationsBoardDat
 					bookingId: slot.booking.id,
 					bookingCode: slot.booking.bookingCode,
 					customerName: slot.booking.customerName,
-					customerPhone: slot.booking.customerPhone,
+					customerPhone: slot.booking.customerPhone ?? "-",
 					slotHour: slot.slotHour,
 					slotEndHour: slot.slotEndHour,
 				});
