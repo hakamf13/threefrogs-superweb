@@ -172,7 +172,7 @@ export async function getTodayOperationsBoard(): Promise<TodayOperationsBoardDat
 			slotEndHour: number;
 		}
 	>();
-
+// Test
 	for (const slot of bookingSlots) {
 		const isCurrent =
 			slot.slotHour <= currentHour && slot.slotEndHour > currentHour;
