@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Loader2, ShieldCheck, XCircle, TriangleAlert } from "lucide-react";
 
 type AdminBookingActionsProps = {
   bookingId: string;
@@ -15,8 +16,18 @@ export default function AdminBookingActions({
   paymentGatewayProvider,
 }: AdminBookingActionsProps) {
   const router = useRouter();
+
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  const [directConfirmNote, setDirectConfirmNote] = useState(
+    "Booking dikonfirmasi langsung oleh admin."
+  );
+  const [rejectReason, setRejectReason] = useState(
+    "Bukti pembayaran kurang jelas."
+  );
+  const [showDirectConfirmForm, setShowDirectConfirmForm] = useState(false);
+  const [showRejectProofForm, setShowRejectProofForm] = useState(false);
 
   const isMidtransBooking = paymentGatewayProvider === "MIDTRANS";
   const canDirectConfirm =
@@ -52,13 +63,8 @@ export default function AdminBookingActions({
   };
 
   const handleDirectConfirm = async () => {
-    const note =
-      window.prompt(
-        "Masukkan catatan konfirmasi langsung:",
-        "Booking dikonfirmasi langsung oleh admin."
-      ) || "";
-
-    if (!note.trim()) {
+    if (!directConfirmNote.trim()) {
+      setMessage("Catatan konfirmasi langsung wajib diisi.");
       return;
     }
 
@@ -73,7 +79,9 @@ export default function AdminBookingActions({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ note }),
+          body: JSON.stringify({
+            note: directConfirmNote.trim(),
+          }),
         }
       );
 
@@ -85,6 +93,7 @@ export default function AdminBookingActions({
       }
 
       setMessage("Booking berhasil dikonfirmasi langsung.");
+      setShowDirectConfirmForm(false);
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -95,13 +104,8 @@ export default function AdminBookingActions({
   };
 
   const handleRejectProof = async () => {
-    const reason =
-      window.prompt(
-        "Masukkan alasan penolakan bukti pembayaran:",
-        "Bukti pembayaran kurang jelas."
-      ) || "";
-
-    if (!reason.trim()) {
+    if (!rejectReason.trim()) {
+      setMessage("Alasan penolakan wajib diisi.");
       return;
     }
 
@@ -117,7 +121,7 @@ export default function AdminBookingActions({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            reason,
+            reason: rejectReason.trim(),
           }),
         }
       );
@@ -133,6 +137,7 @@ export default function AdminBookingActions({
       }
 
       setMessage("Bukti pembayaran berhasil ditolak.");
+      setShowRejectProofForm(false);
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -172,41 +177,48 @@ export default function AdminBookingActions({
   };
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-[#5D3FD3]">Aksi Admin</h2>
+    <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)] sm:p-8">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="max-w-2xl">
+          <h2 className="text-2xl font-black text-[var(--tf-purple)]">
+            Aksi Admin
+          </h2>
 
           {isMidtransBooking ? (
-            <p className="mt-2 text-sm text-slate-600">
-              Booking ini memakai Midtrans. Pembayaran normal akan terkonfirmasi
-              otomatis via webhook, jadi admin tidak perlu verifikasi bukti
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              Booking ini memakai Midtrans. Pembayaran normal akan tercatat
+              otomatis lewat webhook, jadi admin biasanya tidak perlu cek bukti
               pembayaran manual.
             </p>
           ) : (
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-3 text-sm leading-7 text-slate-600">
               Booking ini memakai flow manual fallback, jadi admin masih bisa
-              review dan verifikasi pembayaran jika diperlukan.
+              review, konfirmasi, atau menolak bukti pembayaran jika diperlukan.
             </p>
           )}
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <span className="rounded-full bg-[#EDE7FF] px-3 py-1 text-xs font-semibold text-[#5D3FD3]">
-            {isMidtransBooking ? "Midtrans" : "Manual"}
+          <span className="rounded-full bg-[var(--tf-lavender)] px-3 py-1 text-xs font-semibold text-[var(--tf-purple-dark)]">
+            {isMidtransBooking ? "Midtrans" : "Manual Fallback"}
           </span>
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-3">
+      <div className="mt-6 flex flex-wrap gap-3">
         {canDirectConfirm ? (
           <button
             type="button"
-            onClick={handleDirectConfirm}
+            onClick={() => {
+              setShowDirectConfirmForm((value) => !value);
+              setShowRejectProofForm(false);
+              setMessage("");
+            }}
             disabled={isLoading}
-            className="rounded-2xl bg-blue-600 px-5 py-3 font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
-            {isLoading ? "Memproses..." : "Konfirmasi Booking Langsung"}
+            <ShieldCheck className="h-4 w-4" />
+            Konfirmasi Booking Langsung
           </button>
         ) : null}
 
@@ -216,18 +228,28 @@ export default function AdminBookingActions({
               type="button"
               onClick={handleConfirm}
               disabled={isLoading}
-              className="rounded-2xl bg-green-600 px-5 py-3 font-bold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="inline-flex items-center gap-2 rounded-2xl bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
-              {isLoading ? "Memproses..." : "Konfirmasi Pembayaran"}
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ShieldCheck className="h-4 w-4" />
+              )}
+              Konfirmasi Pembayaran
             </button>
 
             <button
               type="button"
-              onClick={handleRejectProof}
+              onClick={() => {
+                setShowRejectProofForm((value) => !value);
+                setShowDirectConfirmForm(false);
+                setMessage("");
+              }}
               disabled={isLoading}
-              className="rounded-2xl bg-orange-500 px-5 py-3 font-bold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="inline-flex items-center gap-2 rounded-2xl bg-orange-500 px-5 py-3 font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
-              {isLoading ? "Memproses..." : "Tolak Bukti Pembayaran"}
+              <XCircle className="h-4 w-4" />
+              Tolak Bukti Pembayaran
             </button>
           </>
         ) : null}
@@ -237,18 +259,87 @@ export default function AdminBookingActions({
             type="button"
             onClick={handleCancel}
             disabled={isLoading}
-            className="rounded-2xl bg-red-600 px-5 py-3 font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="inline-flex items-center gap-2 rounded-2xl bg-red-600 px-5 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
+            <TriangleAlert className="h-4 w-4" />
             {isLoading ? "Memproses..." : "Batalkan Booking"}
           </button>
         ) : null}
       </div>
 
+      {showDirectConfirmForm ? (
+        <div className="mt-6 rounded-[1.5rem] border border-blue-200 bg-blue-50 p-5">
+          <label className="mb-2 block text-sm font-semibold text-blue-800">
+            Catatan konfirmasi langsung
+          </label>
+          <textarea
+            value={directConfirmNote}
+            onChange={(e) => setDirectConfirmNote(e.target.value)}
+            rows={4}
+            className="w-full rounded-2xl border border-blue-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-400"
+          />
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={handleDirectConfirm}
+              disabled={isLoading}
+              className="rounded-2xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              {isLoading ? "Memproses..." : "Simpan Konfirmasi Langsung"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowDirectConfirmForm(false)}
+              disabled={isLoading}
+              className="rounded-2xl border border-blue-200 px-5 py-3 font-semibold text-blue-700"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {showRejectProofForm ? (
+        <div className="mt-6 rounded-[1.5rem] border border-orange-200 bg-orange-50 p-5">
+          <label className="mb-2 block text-sm font-semibold text-orange-800">
+            Alasan penolakan bukti pembayaran
+          </label>
+          <textarea
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            rows={4}
+            className="w-full rounded-2xl border border-orange-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-400"
+          />
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={handleRejectProof}
+              disabled={isLoading}
+              className="rounded-2xl bg-orange-500 px-5 py-3 font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              {isLoading ? "Memproses..." : "Simpan Penolakan"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowRejectProofForm(false)}
+              disabled={isLoading}
+              className="rounded-2xl border border-orange-200 px-5 py-3 font-semibold text-orange-700"
+            >
+              Batal
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {message ? (
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
           {message}
         </div>
       ) : null}
-    </div>
+    </section>
   );
 }

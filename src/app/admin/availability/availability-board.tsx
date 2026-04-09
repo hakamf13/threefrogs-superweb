@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CalendarDays, Loader2, Store } from "lucide-react";
 import { formatHourLabel } from "../../../lib/utils";
 
 type StoreOption = {
@@ -36,6 +37,9 @@ type AdminAvailabilityBoardProps = {
   defaultDate: string;
 };
 
+const panelClass =
+  "rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]";
+
 function getCellClasses(status: string) {
   switch (status) {
     case "AWAITING_PAYMENT":
@@ -55,11 +59,11 @@ function getCellClasses(status: string) {
 function getCellLabel(status: string) {
   switch (status) {
     case "AWAITING_PAYMENT":
-      return "Menunggu Bayar";
+      return "Menunggu bayar";
     case "PENDING_VERIFICATION":
-      return "Menunggu Verif";
+      return "Menunggu verifikasi";
     case "CONFIRMED":
-      return "Confirmed";
+      return "Terkonfirmasi";
     case "OPEN_TABLE":
       return "Open Table";
     case "AVAILABLE":
@@ -119,111 +123,132 @@ export default function AdminAvailabilityBoard({
   }, [selectedStoreId, selectedDate]);
 
   return (
-    <main className="min-h-screen bg-[#F8F4FF] px-6 py-16 text-slate-800">
+    <main className="min-h-screen bg-[var(--tf-bg)] px-4 py-12 text-slate-800 sm:px-6 sm:py-16">
       <div className="mx-auto max-w-7xl space-y-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h1 className="text-4xl font-black text-[#5D3FD3]">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
               Availability Admin
+            </p>
+            <h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
+              Availability Meja
             </h1>
-            <p className="mt-2 text-slate-600">
-              Lihat ketersediaan meja dan slot per store secara visual.
+            <p className="mt-2 max-w-2xl text-slate-600">
+              Lihat status slot per meja secara visual untuk membantu operasional
+              harian dan menghindari konflik availability.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Link
               href="/admin/manual-booking"
-              className="rounded-2xl bg-[#5D3FD3] px-5 py-3 font-bold text-white"
+              className="rounded-2xl bg-[var(--tf-purple)] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)]"
             >
               Manual Booking
             </Link>
             <Link
-              href="/admin/bookings"
-              className="rounded-2xl border border-[#5D3FD3] px-5 py-3 font-bold text-[#5D3FD3]"
+              href="/admin"
+              className="rounded-2xl border border-[var(--tf-purple)] px-5 py-3 font-bold text-[var(--tf-purple)]"
             >
-              Semua Booking
+              Dashboard
             </Link>
           </div>
         </div>
 
-        <section className="rounded-3xl bg-white p-6 shadow-sm">
+        <section className={panelClass}>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Store
               </label>
-              <select
-                value={selectedStoreId}
-                onChange={(e) => setSelectedStoreId(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
-              >
-                {stores.map((store) => (
-                  <option key={store.id} value={store.id}>
-                    {store.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <Store className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <select
+                  value={selectedStoreId}
+                  onChange={(e) => setSelectedStoreId(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-300 py-3 pl-11 pr-4 outline-none focus:border-[var(--tf-purple)]"
+                >
+                  {stores.map((store) => (
+                    <option key={store.id} value={store.id}>
+                      {store.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
                 Tanggal
               </label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
-              />
+              <div className="relative">
+                <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-300 py-3 pl-11 pr-4 outline-none focus:border-[var(--tf-purple)]"
+                />
+              </div>
             </div>
           </div>
+
+          {selectedStore ? (
+            <div className="mt-5 rounded-2xl bg-[var(--tf-surface-muted)] px-4 py-4 text-sm text-slate-600">
+              Store aktif:{" "}
+              <span className="font-semibold text-[var(--tf-purple)]">
+                {selectedStore.name}
+              </span>
+            </div>
+          ) : null}
         </section>
 
-        <section className="rounded-3xl bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">Legenda</h2>
+        <section className={panelClass}>
+          <h2 className="mb-4 text-xl font-bold text-[var(--tf-purple)]">
+            Legenda
+          </h2>
 
           <div className="flex flex-wrap gap-3 text-sm font-semibold">
             <div className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-slate-700">
               Kosong
             </div>
             <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-2 text-orange-700">
-              Menunggu Bayar
+              Menunggu bayar
             </div>
             <div className="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-2 text-yellow-700">
-              Menunggu Verif
+              Menunggu verifikasi
             </div>
             <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-2 text-green-700">
-              Confirmed
+              Terkonfirmasi
             </div>
             <div className="rounded-2xl border border-[var(--tf-purple)] bg-[var(--tf-lavender)] px-4 py-2 text-[var(--tf-purple-dark)]">
               Open Table
-          </div>
+            </div>
           </div>
         </section>
 
         {errorMessage ? (
-          <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
             {errorMessage}
           </div>
         ) : null}
 
         {isLoading ? (
-          <div className="rounded-3xl bg-white p-8 shadow-sm">
-            <p className="text-slate-500">Memuat availability...</p>
+          <div className={panelClass}>
+            <div className="flex items-center gap-2 text-slate-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Memuat availability...
+            </div>
           </div>
         ) : null}
 
         {!isLoading && selectedStore ? (
           <div className="space-y-6">
             {tables.map((table) => (
-              <section
-                key={table.id}
-                className="rounded-3xl bg-white p-6 shadow-sm"
-              >
+              <section key={table.id} className={panelClass}>
                 <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <h3 className="text-2xl font-bold text-[#5D3FD3]">
+                    <h3 className="text-2xl font-bold text-[var(--tf-purple)]">
                       Meja {table.tableNumber}
                     </h3>
                     <p className="text-sm text-slate-500">
@@ -234,7 +259,8 @@ export default function AdminAvailabilityBoard({
 
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   {table.slots.map((slot) => {
-                    const clickable = !!slot.bookingId || !!slot.openTableSessionId;
+                    const clickable =
+                      !!slot.bookingId || !!slot.openTableSessionId;
 
                     return (
                       <button
@@ -254,9 +280,7 @@ export default function AdminAvailabilityBoard({
                         className={`rounded-2xl border p-4 text-left transition ${getCellClasses(
                           slot.status
                         )} ${
-                          clickable
-                            ? "hover:shadow-sm"
-                            : "cursor-default"
+                          clickable ? "hover:shadow-sm" : "cursor-default"
                         } disabled:opacity-100`}
                       >
                         <p className="font-bold">{formatHourLabel(slot.hour)}</p>

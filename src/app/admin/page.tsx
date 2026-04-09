@@ -6,9 +6,9 @@ import {
   formatDateDisplay,
   formatHourLabel,
   formatRupiah,
-  getBookingStatusColor,
-  getBookingStatusLabel,
 } from "../../lib/utils";
+import EmptyStateCard from "@/components/ui/empty-state-card";
+import BookingStatusChip from "@/components/bookings/booking-status-chip";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +42,7 @@ const BOOKING_STATUS_VALUES: BookingStatus[] = [
   "CONFIRMED",
   "CANCELLED",
   "EXPIRED",
+  // "COMPLETED",
 ];
 
 export default async function AdminBookingsPage({
@@ -125,36 +126,42 @@ export default async function AdminBookingsPage({
 
   const summary = {
     total: bookings.length,
-    awaitingPayment: bookings.filter((b) => b.status === "AWAITING_PAYMENT").length,
-    pendingVerification: bookings.filter((b) => b.status === "PENDING_VERIFICATION").length,
+    awaitingPayment: bookings.filter((b) => b.status === "AWAITING_PAYMENT")
+      .length,
+    pendingVerification: bookings.filter(
+      (b) => b.status === "PENDING_VERIFICATION"
+    ).length,
     confirmed: bookings.filter((b) => b.status === "CONFIRMED").length,
     cancelled: bookings.filter((b) => b.status === "CANCELLED").length,
     expired: bookings.filter((b) => b.status === "EXPIRED").length,
   };
 
   return (
-    <main className="min-h-screen bg-[#F8F4FF] px-6 py-16 text-slate-800">
+    <main className="min-h-screen bg-[var(--tf-bg)] px-4 py-12 text-slate-800 sm:px-6 sm:py-16">
       <div className="mx-auto max-w-7xl space-y-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h1 className="text-4xl font-black text-[#5D3FD3]">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              Admin Dashboard
+            </p>
+            <h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
               Daftar Booking
             </h1>
-            <p className="mt-2 text-slate-600">
-              Cari dan filter booking untuk operasional harian.
+            <p className="mt-2 max-w-2xl text-slate-600">
+              Cari, filter, dan pantau semua booking untuk operasional harian.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Link
               href="/admin/manual-booking"
-              className="rounded-2xl bg-[#5D3FD3] px-5 py-3 font-bold text-white"
+              className="rounded-2xl bg-[var(--tf-purple)] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)]"
             >
               Manual Booking
             </Link>
             <Link
               href="/admin/availability"
-              className="rounded-2xl border border-[#5D3FD3] px-5 py-3 font-bold text-[#5D3FD3]"
+              className="rounded-2xl border border-[var(--tf-purple)] px-5 py-3 font-bold text-[var(--tf-purple)]"
             >
               Availability
             </Link>
@@ -162,61 +169,61 @@ export default async function AdminBookingsPage({
         </div>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
+          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
             <p className="text-sm text-slate-500">Total</p>
-            <p className="mt-2 text-3xl font-black text-[#5D3FD3]">
+            <p className="mt-2 text-3xl font-black text-[var(--tf-purple)]">
               {summary.total}
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Menunggu Bayar</p>
+          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
+            <p className="text-sm text-slate-500">Menunggu bayar</p>
             <p className="mt-2 text-3xl font-black text-orange-600">
               {summary.awaitingPayment}
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Menunggu Verif</p>
+          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
+            <p className="text-sm text-slate-500">Menunggu verifikasi</p>
             <p className="mt-2 text-3xl font-black text-yellow-600">
               {summary.pendingVerification}
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Confirmed</p>
+          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
+            <p className="text-sm text-slate-500">Terkonfirmasi</p>
             <p className="mt-2 text-3xl font-black text-green-600">
               {summary.confirmed}
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Cancelled</p>
+          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
+            <p className="text-sm text-slate-500">Dibatalkan</p>
             <p className="mt-2 text-3xl font-black text-red-600">
               {summary.cancelled}
             </p>
           </div>
 
-          <div className="rounded-3xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-slate-500">Expired</p>
+          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
+            <p className="text-sm text-slate-500">Kedaluwarsa</p>
             <p className="mt-2 text-3xl font-black text-slate-600">
               {summary.expired}
             </p>
           </div>
         </section>
 
-        <section className="rounded-3xl bg-white p-6 shadow-sm">
+        <section className="rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
           <form className="grid gap-4 lg:grid-cols-5">
             <div className="lg:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Cari Booking
+                Cari booking
               </label>
               <input
                 type="text"
                 name="q"
                 defaultValue={q}
                 placeholder="Kode booking / nama / no. HP"
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
               />
             </div>
 
@@ -227,14 +234,15 @@ export default async function AdminBookingsPage({
               <select
                 name="status"
                 defaultValue={status}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
               >
-                <option value="">Semua Status</option>
-                <option value="AWAITING_PAYMENT">Menunggu Bayar</option>
-                <option value="PENDING_VERIFICATION">Menunggu Verif</option>
-                <option value="CONFIRMED">Confirmed</option>
-                <option value="CANCELLED">Cancelled</option>
-                <option value="EXPIRED">Expired</option>
+                <option value="">Semua status</option>
+                <option value="AWAITING_PAYMENT">Menunggu bayar</option>
+                <option value="PENDING_VERIFICATION">Menunggu verifikasi</option>
+                <option value="CONFIRMED">Terkonfirmasi</option>
+                <option value="CANCELLED">Dibatalkan</option>
+                <option value="EXPIRED">Kedaluwarsa</option>
+                <option value="COMPLETED">Selesai</option>
               </select>
             </div>
 
@@ -245,9 +253,9 @@ export default async function AdminBookingsPage({
               <select
                 name="storeId"
                 defaultValue={storeId}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
               >
-                <option value="">Semua Store</option>
+                <option value="">Semua store</option>
                 {stores.map((store) => (
                   <option key={store.id} value={store.id}>
                     {store.name}
@@ -258,14 +266,14 @@ export default async function AdminBookingsPage({
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Tanggal Main
+                Tanggal main
               </label>
               <input
                 type="date"
                 name="date"
                 defaultValue={date}
                 max={getTodayDateString()}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
               />
             </div>
 
@@ -276,7 +284,7 @@ export default async function AdminBookingsPage({
               <select
                 name="sort"
                 defaultValue={sort}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
               >
                 <option value="newest">Terbaru</option>
                 <option value="oldest">Terlama</option>
@@ -286,13 +294,13 @@ export default async function AdminBookingsPage({
             <div className="lg:col-span-5 flex flex-wrap gap-3">
               <button
                 type="submit"
-                className="rounded-2xl bg-[#5D3FD3] px-5 py-3 font-bold text-white"
+                className="rounded-2xl bg-[var(--tf-purple)] px-5 py-3 font-bold text-white"
               >
                 Terapkan Filter
               </button>
 
               <Link
-                href="/admin/bookings"
+                href="/admin"
                 className="rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-700"
               >
                 Reset
@@ -303,30 +311,26 @@ export default async function AdminBookingsPage({
 
         <div className="space-y-4">
           {bookings.length === 0 ? (
-            <div className="rounded-3xl bg-white p-8 shadow-sm">
-              <p className="text-slate-500">
-                Tidak ada booking yang cocok dengan filter ini.
-              </p>
-            </div>
+            <EmptyStateCard
+              eyebrow="Booking"
+              title="Tidak ada booking yang cocok"
+              description="Coba ubah keyword, status, store, atau tanggal supaya hasil pencarian lebih sesuai."
+              actionHref="/admin"
+              actionLabel="Tampilkan semua"
+            />
           ) : (
             bookings.map((booking) => (
               <div
                 key={booking.id}
-                className="rounded-3xl bg-white p-6 shadow-sm"
+                className="rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <div className="flex flex-wrap items-center gap-3">
-                      <h2 className="text-2xl font-bold text-[#5D3FD3]">
+                      <h2 className="text-2xl font-bold text-[var(--tf-purple)]">
                         {booking.bookingCode}
                       </h2>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-bold ${getBookingStatusColor(
-                          booking.status
-                        )}`}
-                      >
-                        {getBookingStatusLabel(booking.status)}
-                      </span>
+                      <BookingStatusChip status={booking.status} />
                     </div>
 
                     <p className="font-semibold text-slate-800">
@@ -353,7 +357,7 @@ export default async function AdminBookingsPage({
                   <div className="flex flex-wrap gap-3">
                     <Link
                       href={`/admin/bookings/${booking.id}`}
-                      className="rounded-2xl border border-[#5D3FD3] px-4 py-2 font-semibold text-[#5D3FD3]"
+                      className="rounded-2xl border border-[var(--tf-purple)] px-4 py-2 font-semibold text-[var(--tf-purple)]"
                     >
                       Lihat Detail
                     </Link>

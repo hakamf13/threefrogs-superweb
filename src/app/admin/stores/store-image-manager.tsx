@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -101,7 +102,7 @@ export default function AdminStoreImageManager({
 	};
 
 	return (
-		<main className="min-h-screen bg-[var(--tf-bg)] px-6 py-16 text-slate-800">
+		<main className="min-h-screen bg-[var(--tf-bg)] px-4 py-12 text-slate-800 sm:px-6 sm:py-16">
 			<div className="mx-auto max-w-6xl space-y-8">
 				<div>
 					<p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
@@ -110,9 +111,9 @@ export default function AdminStoreImageManager({
 					<h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
 						Kelola Foto Store
 					</h1>
-					<p className="mt-2 text-slate-600">
-						Upload cover image utama untuk tiap store. Nanti gambar ini akan tampil
-						di homepage dan halaman stores.
+					<p className="mt-2 max-w-3xl text-slate-600">
+						Upload cover image utama untuk tiap store. Gambar ini akan dipakai
+						di homepage carousel, halaman stores, dan kartu store di reservasi.
 					</p>
 				</div>
 
@@ -129,21 +130,35 @@ export default function AdminStoreImageManager({
 							className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]"
 						>
 							{store.coverImageUrl ? (
-								<img
-									src={store.coverImageUrl}
-									alt={store.name}
-									className="mb-5 h-52 w-full rounded-[1.5rem] object-cover"
-								/>
+								<div className="relative mb-5 h-52 overflow-hidden rounded-[1.5rem]">
+									<Image
+										src={store.coverImageUrl}
+										alt={store.name}
+										fill
+										className="object-cover"
+										sizes="(max-width: 768px) 100vw, 50vw"
+									/>
+								</div>
 							) : (
-								<div className="mb-5 h-52 rounded-[1.5rem] bg-gradient-to-br from-[var(--tf-lavender)] to-[var(--tf-cream)]" />
+								<div className="mb-5 flex h-52 items-center justify-center rounded-[1.5rem] bg-gradient-to-br from-[var(--tf-lavender)] to-[var(--tf-cream)] text-center text-slate-500">
+									<div>
+										<p className="text-lg font-semibold">Belum ada cover image</p>
+										<p className="mt-2 text-sm">
+											Upload foto agar tampil di homepage dan halaman store.
+										</p>
+									</div>
+								</div>
 							)}
 
-							<h2 className="text-2xl font-black text-[var(--tf-purple)]">
-								{store.name}
-							</h2>
-							<p className="mt-2 text-sm text-slate-600">
-								{store.city || "Surabaya"}
-							</p>
+							<div className="space-y-2">
+								<h2 className="text-2xl font-black text-[var(--tf-purple)]">
+									{store.name}
+								</h2>
+								<p className="text-sm text-slate-600">
+									{store.city || "Surabaya"}
+								</p>
+								<p className="text-xs text-slate-400">Slug: {store.slug}</p>
+							</div>
 
 							<button
 								type="button"
@@ -151,7 +166,11 @@ export default function AdminStoreImageManager({
 								disabled={loadingStoreId === store.id}
 								className="mt-5 rounded-2xl bg-[var(--tf-purple)] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)] disabled:cursor-not-allowed disabled:bg-slate-300"
 							>
-								{loadingStoreId === store.id ? "Mengupload..." : "Upload / Ganti Foto"}
+								{loadingStoreId === store.id
+									? "Mengupload..."
+									: store.coverImageUrl
+									? "Ganti Foto"
+									: "Upload Foto"}
 							</button>
 						</div>
 					))}

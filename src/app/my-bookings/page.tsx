@@ -15,7 +15,7 @@ import {
 import EmptyStateCard from "@/components/ui/empty-state-card";
 import CancelBookingButton from "@/components/reservations/cancel-booking-button";
 import { BookingStatus, Prisma } from "@prisma/client";
-import BookingStatusChip from "@/components/bookings/bookings-status-chip";
+import BookingStatusChip from "@/components/bookings/booking-status-chip";
 
 export const dynamic = "force-dynamic";
 

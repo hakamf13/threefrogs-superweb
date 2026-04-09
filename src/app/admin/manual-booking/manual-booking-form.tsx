@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { PRICE_PER_HOUR } from "../../../lib/constants";
 import { formatHourLabel, formatRupiah } from "../../../lib/utils";
 
@@ -37,13 +38,8 @@ type AdminManualBookingFormProps = {
   maxDate: string;
 };
 
-// function getTodayDateString() {
-//   const date = new Date();
-//   const year = date.getFullYear();
-//   const month = `${date.getMonth() + 1}`.padStart(2, "0");
-//   const day = `${date.getDate()}`.padStart(2, "0");
-//   return `${year}-${month}-${day}`;
-// }
+const panelClass =
+  "rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]";
 
 export default function AdminManualBookingForm({
   stores,
@@ -67,7 +63,9 @@ export default function AdminManualBookingForm({
     "CONFIRMED" | "AWAITING_PAYMENT"
   >("CONFIRMED");
 
-  const [availabilityTables, setAvailabilityTables] = useState<AvailabilityTable[]>([]);
+  const [availabilityTables, setAvailabilityTables] = useState<
+    AvailabilityTable[]
+  >([]);
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -134,7 +132,10 @@ export default function AdminManualBookingForm({
   const handleToggleSlot = (hour: number) => {
     if (!selectedTableId || !selectedTable) return;
 
-    const selectedTableSlot = selectedTable.slots.find((slot) => slot.hour === hour);
+    const selectedTableSlot = selectedTable.slots.find(
+      (slot) => slot.hour === hour
+    );
+
     if (!selectedTableSlot?.isAvailable && !selectedSlots.includes(hour)) {
       return;
     }
@@ -142,7 +143,9 @@ export default function AdminManualBookingForm({
     let nextSlots: number[] = [];
 
     if (selectedSlots.includes(hour)) {
-      nextSlots = selectedSlots.filter((slot) => slot !== hour).sort((a, b) => a - b);
+      nextSlots = selectedSlots
+        .filter((slot) => slot !== hour)
+        .sort((a, b) => a - b);
     } else {
       nextSlots = [...selectedSlots, hour].sort((a, b) => a - b);
     }
@@ -153,7 +156,7 @@ export default function AdminManualBookingForm({
     });
 
     if (!isSequential) {
-      alert("Slot jam harus berurutan ya.");
+      setErrorMessage("Slot jam harus dipilih berurutan.");
       return;
     }
 
@@ -163,7 +166,7 @@ export default function AdminManualBookingForm({
     });
 
     if (!allStillAvailable) {
-      alert("Ada slot yang tidak tersedia.");
+      setErrorMessage("Ada slot yang tidak tersedia.");
       return;
     }
 
@@ -222,19 +225,27 @@ export default function AdminManualBookingForm({
   };
 
   return (
-    <main className="min-h-screen bg-[#F8F4FF] px-6 py-16 text-slate-800">
+    <main className="min-h-screen bg-[var(--tf-bg)] px-4 py-12 text-slate-800 sm:px-6 sm:py-16">
       <div className="mx-auto max-w-6xl space-y-10">
         <div>
-          <h1 className="text-4xl font-black text-[#5D3FD3]">Manual Booking</h1>
+          <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+            Manual Booking
+          </p>
+          <h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
+            Buat Booking Manual
+          </h1>
           <p className="mt-2 text-slate-600">
-            Buat booking manual untuk walk-in atau input admin.
+            Dipakai untuk walk-in atau input admin, dengan flow yang tetap aman
+            terhadap availability.
           </p>
         </div>
 
-        <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="grid gap-8 xl:grid-cols-[1.08fr_0.92fr]">
           <div className="space-y-8">
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">1. Pilih Store</h2>
+            <div className={panelClass}>
+              <h2 className="mb-4 text-xl font-bold text-[var(--tf-purple)]">
+                1. Pilih Store
+              </h2>
 
               <div className="grid gap-4 md:grid-cols-2">
                 {stores.map((store) => {
@@ -247,11 +258,13 @@ export default function AdminManualBookingForm({
                       onClick={() => handleSelectStore(store.id)}
                       className={`rounded-2xl border p-4 text-left transition ${
                         isActive
-                          ? "border-[#5D3FD3] bg-[#F3EEFF]"
+                          ? "border-[var(--tf-purple)] bg-[#F3EEFF]"
                           : "border-slate-200 bg-white hover:border-slate-300"
                       }`}
                     >
-                      <p className="text-lg font-bold text-[#5D3FD3]">{store.name}</p>
+                      <p className="text-lg font-bold text-[var(--tf-purple)]">
+                        {store.name}
+                      </p>
                       <p className="mt-1 text-sm text-slate-500">
                         {store.tables.length} meja aktif
                       </p>
@@ -261,8 +274,10 @@ export default function AdminManualBookingForm({
               </div>
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">2. Pilih Tanggal</h2>
+            <div className={panelClass}>
+              <h2 className="mb-4 text-xl font-bold text-[var(--tf-purple)]">
+                2. Pilih Tanggal
+              </h2>
 
               <input
                 type="date"
@@ -270,64 +285,83 @@ export default function AdminManualBookingForm({
                 min={defaultDate}
                 max={maxDate}
                 onChange={(e) => {
-                    setSelectedDate(e.target.value);
-                    setSelectedTableId("");
-                    setSelectedSlots([]);
+                  setSelectedDate(e.target.value);
+                  setSelectedTableId("");
+                  setSelectedSlots([]);
+                  setErrorMessage("");
                 }}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
-                />
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
+              />
 
-                <p className="mt-2 text-sm text-slate-500">
-                Booking hanya bisa dibuat untuk tanggal {defaultDate} sampai {maxDate}.
-                </p>
+              <p className="mt-2 text-sm text-slate-500">
+                Booking hanya bisa dibuat untuk tanggal {defaultDate} sampai{" "}
+                {maxDate}.
+              </p>
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">3. Pilih Meja</h2>
+            <div className={panelClass}>
+              <h2 className="mb-4 text-xl font-bold text-[var(--tf-purple)]">
+                3. Pilih Meja
+              </h2>
 
               {isLoadingAvailability ? (
-                <p className="text-slate-500">Memuat meja...</p>
+                <div className="flex items-center gap-2 text-slate-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Memuat meja...
+                </div>
               ) : availabilityTables.length === 0 ? (
                 <p className="text-slate-500">Belum ada meja tersedia.</p>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
                   {availabilityTables.map((table) => {
                     const isActive = table.id === selectedTableId;
-                    const availableCount = table.slots.filter((slot) => slot.isAvailable).length;
+                    const availableCount = table.slots.filter(
+                      (slot) => slot.isAvailable
+                    ).length;
                     const isFullyBooked = availableCount === 0;
 
                     return (
-                        <button
+                      <button
                         key={table.id}
                         type="button"
                         onClick={() => !isFullyBooked && handleSelectTable(table.id)}
                         disabled={isFullyBooked}
                         className={`rounded-2xl border p-4 text-left transition ${
-                            isActive
-                            ? "border-[#5D3FD3] bg-[#F3EEFF]"
+                          isActive
+                            ? "border-[var(--tf-purple)] bg-[#F3EEFF]"
                             : isFullyBooked
                             ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
                             : "border-slate-200 bg-white hover:border-slate-300"
                         }`}
+                      >
+                        <p
+                          className={`font-bold ${
+                            isFullyBooked
+                              ? "text-slate-500"
+                              : "text-[var(--tf-purple)]"
+                          }`}
                         >
-                        <p className={`font-bold ${isFullyBooked ? "text-slate-500" : "text-[#5D3FD3]"}`}>
-                            Meja {table.tableNumber}
+                          Meja {table.tableNumber}
                         </p>
                         <p className="text-sm text-slate-500">
-                            Kapasitas: {table.capacity ?? "-"} orang
+                          Kapasitas: {table.capacity ?? "-"} orang
                         </p>
                         <p className="mt-2 text-xs">
-                            {isFullyBooked ? "Full booked hari ini" : `Slot tersedia: ${availableCount}`}
+                          {isFullyBooked
+                            ? "Full booked hari ini"
+                            : `Slot tersedia: ${availableCount}`}
                         </p>
-                        </button>
-                        );
-                    })}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">4. Pilih Slot</h2>
+            <div className={panelClass}>
+              <h2 className="mb-4 text-xl font-bold text-[var(--tf-purple)]">
+                4. Pilih Slot
+              </h2>
 
               {!selectedTableId ? (
                 <p className="text-slate-500">Pilih meja dulu.</p>
@@ -347,7 +381,7 @@ export default function AdminManualBookingForm({
                         disabled={disabled}
                         className={`rounded-2xl border px-4 py-3 text-left transition ${
                           selected
-                            ? "border-[#5D3FD3] bg-[#5D3FD3] text-white"
+                            ? "border-[var(--tf-purple)] bg-[var(--tf-purple)] text-white"
                             : disabled
                             ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
                             : "border-slate-200 bg-white hover:border-slate-300"
@@ -370,8 +404,10 @@ export default function AdminManualBookingForm({
               )}
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">5. Data Customer</h2>
+            <div className={panelClass}>
+              <h2 className="mb-4 text-xl font-bold text-[var(--tf-purple)]">
+                5. Data Customer
+              </h2>
 
               <div className="grid gap-4">
                 <input
@@ -379,7 +415,7 @@ export default function AdminManualBookingForm({
                   placeholder="Nama customer"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
                 />
 
                 <input
@@ -387,7 +423,7 @@ export default function AdminManualBookingForm({
                   placeholder="Nomor HP customer"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
                 />
 
                 <input
@@ -395,7 +431,7 @@ export default function AdminManualBookingForm({
                   placeholder="Email (opsional)"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
                 />
 
                 <textarea
@@ -403,13 +439,15 @@ export default function AdminManualBookingForm({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={4}
-                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
                 />
               </div>
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">6. Pengaturan Booking</h2>
+            <div className={panelClass}>
+              <h2 className="mb-4 text-xl font-bold text-[var(--tf-purple)]">
+                6. Pengaturan Booking
+              </h2>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
@@ -418,8 +456,10 @@ export default function AdminManualBookingForm({
                   </label>
                   <select
                     value={source}
-                    onChange={(e) => setSource(e.target.value as "WALK_IN" | "ADMIN")}
-                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                    onChange={(e) =>
+                      setSource(e.target.value as "WALK_IN" | "ADMIN")
+                    }
+                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
                   >
                     <option value="WALK_IN">Walk-in</option>
                     <option value="ADMIN">Input Admin</option>
@@ -437,94 +477,105 @@ export default function AdminManualBookingForm({
                         e.target.value as "CONFIRMED" | "AWAITING_PAYMENT"
                       )
                     }
-                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[#5D3FD3]"
+                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
                   >
-                    <option value="CONFIRMED">Langsung Confirmed</option>
-                    <option value="AWAITING_PAYMENT">Menunggu Pembayaran</option>
+                    <option value="CONFIRMED">Langsung terkonfirmasi</option>
+                    <option value="AWAITING_PAYMENT">
+                      Menunggu pembayaran
+                    </option>
                   </select>
                 </div>
               </div>
             </div>
           </div>
 
-          <aside className="h-fit rounded-3xl bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">
-              Ringkasan Manual Booking
-            </h2>
+          <aside className="xl:sticky xl:top-24">
+            <div className={`${panelClass} space-y-4`}>
+              <h2 className="text-xl font-bold text-[var(--tf-purple)]">
+                Ringkasan Manual Booking
+              </h2>
 
-            <div className="space-y-3 text-sm text-slate-700">
-              <div>
-                <p className="text-slate-500">Store</p>
-                <p className="font-semibold">{selectedStore?.name ?? "-"}</p>
+              <div className="space-y-3 text-sm text-slate-700">
+                <div>
+                  <p className="text-slate-500">Store</p>
+                  <p className="font-semibold">{selectedStore?.name ?? "-"}</p>
+                </div>
+
+                <div>
+                  <p className="text-slate-500">Tanggal</p>
+                  <p className="font-semibold">{selectedDate || "-"}</p>
+                </div>
+
+                <div>
+                  <p className="text-slate-500">Meja</p>
+                  <p className="font-semibold">
+                    {selectedTable ? `Meja ${selectedTable.tableNumber}` : "-"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-slate-500">Slot</p>
+                  {selectedSlots.length === 0 ? (
+                    <p className="font-semibold">-</p>
+                  ) : (
+                    <ul className="list-inside list-disc space-y-1">
+                      {selectedSlots.map((hour) => (
+                        <li key={hour}>{formatHourLabel(hour)}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-slate-500">Durasi</p>
+                  <p className="font-semibold">{totalHours} jam</p>
+                </div>
+
+                <div>
+                  <p className="text-slate-500">Total</p>
+                  <p className="text-2xl font-black text-[var(--tf-purple)]">
+                    {formatRupiah(totalPrice)}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-slate-500">Source</p>
+                  <p className="font-semibold">{source}</p>
+                </div>
+
+                <div>
+                  <p className="text-slate-500">Status Awal</p>
+                  <p className="font-semibold">{initialStatus}</p>
+                </div>
               </div>
 
-              <div>
-                <p className="text-slate-500">Tanggal</p>
-                <p className="font-semibold">{selectedDate || "-"}</p>
-              </div>
+              {errorMessage ? (
+                <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+                  {errorMessage}
+                </div>
+              ) : null}
 
-              <div>
-                <p className="text-slate-500">Meja</p>
-                <p className="font-semibold">
-                  {selectedTable ? `Meja ${selectedTable.tableNumber}` : "-"}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-slate-500">Slot</p>
-                {selectedSlots.length === 0 ? (
-                  <p className="font-semibold">-</p>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={
+                  isSubmitting ||
+                  !selectedStoreId ||
+                  !selectedTableId ||
+                  selectedSlots.length === 0
+                }
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--tf-purple)] px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Menyimpan...
+                  </>
                 ) : (
-                  <ul className="list-inside list-disc space-y-1">
-                    {selectedSlots.map((hour) => (
-                      <li key={hour}>{formatHourLabel(hour)}</li>
-                    ))}
-                  </ul>
+                  "Buat Manual Booking"
                 )}
-              </div>
-
-              <div>
-                <p className="text-slate-500">Durasi</p>
-                <p className="font-semibold">{totalHours} jam</p>
-              </div>
-
-              <div>
-                <p className="text-slate-500">Total</p>
-                <p className="text-2xl font-black text-[#5D3FD3]">
-                  {formatRupiah(totalPrice)}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-slate-500">Source</p>
-                <p className="font-semibold">{source}</p>
-              </div>
-
-              <div>
-                <p className="text-slate-500">Status Awal</p>
-                <p className="font-semibold">{initialStatus}</p>
-              </div>
+              </button>
             </div>
-
-            {errorMessage ? (
-              <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
-                {errorMessage}
-              </div>
-            ) : null}
-
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={
-                isSubmitting ||
-                !selectedStoreId ||
-                !selectedTableId ||
-                selectedSlots.length === 0
-              }
-              className="mt-6 w-full rounded-2xl bg-[#5D3FD3] px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
-            >
-              {isSubmitting ? "Menyimpan..." : "Buat Manual Booking"}
-            </button>
           </aside>
         </section>
       </div>

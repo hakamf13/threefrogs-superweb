@@ -2,16 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatDateDisplay, formatDateTimeDisplay, formatHourLabel } from "@/lib/utils";
+import {
+	formatDateDisplay,
+	formatDateTimeDisplay,
+	formatHourLabel,
+} from "@/lib/utils";
 import type {
-  TodayOperationsBoardData,
-  TodayTableBoardStatus,
+	TodayOperationsBoardData,
+	TodayTableBoardStatus,
 } from "@/features/reservations/get-today-operations-board";
 
 type TableStatus = TodayTableBoardStatus;
 
 type TodayOperationsBoardProps = {
-  data: TodayOperationsBoardData;
+	data: TodayOperationsBoardData;
 };
 
 function getStatusCardClass(status: TableStatus) {
@@ -33,9 +37,9 @@ function getStatusLabel(status: TableStatus) {
 		case "OPEN_TABLE":
 			return "Open Table";
 		case "BOOKED_NOW":
-			return "Sedang Dipakai Booking";
+			return "Sedang dipakai";
 		case "UPCOMING_BOOKING":
-			return "Ada Booking Berikutnya";
+			return "Booking berikutnya";
 		case "FREE":
 		default:
 			return "Kosong";
@@ -62,18 +66,19 @@ export default function TodayOperationsBoard({
 	const router = useRouter();
 
 	return (
-		<main className="min-h-screen bg-[var(--tf-bg)] px-6 py-16 text-slate-800">
+		<main className="min-h-screen bg-[var(--tf-bg)] px-4 py-12 text-slate-800 sm:px-6 sm:py-16">
 			<div className="mx-auto max-w-7xl space-y-8">
 				<div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
 					<div>
-						<p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
+						<p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
 							Today Operations
 						</p>
 						<h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
 							Operasional Meja Hari Ini
 						</h1>
 						<p className="mt-2 text-slate-600">
-							Tanggal {formatDateDisplay(new Date(`${data.today}T00:00:00.000Z`))} •
+							Tanggal{" "}
+							{formatDateDisplay(new Date(`${data.today}T00:00:00.000Z`))} •
 							Jam sekarang {String(data.currentHour).padStart(2, "0")}:00 WIB
 						</p>
 					</div>
@@ -104,7 +109,7 @@ export default function TodayOperationsBoard({
 
 				<section className="grid gap-4 md:grid-cols-5">
 					<div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-						<p className="text-sm text-slate-500">Total Meja</p>
+						<p className="text-sm text-slate-500">Total meja</p>
 						<p className="mt-2 text-3xl font-black text-[var(--tf-purple)]">
 							{data.summary.totalTables}
 						</p>
@@ -118,14 +123,14 @@ export default function TodayOperationsBoard({
 					</div>
 
 					<div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-						<p className="text-sm text-slate-500">Booking Aktif</p>
+						<p className="text-sm text-slate-500">Booking aktif</p>
 						<p className="mt-2 text-3xl font-black text-green-600">
 							{data.summary.bookedNowCount}
 						</p>
 					</div>
 
 					<div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-						<p className="text-sm text-slate-500">Booking Berikutnya</p>
+						<p className="text-sm text-slate-500">Booking berikutnya</p>
 						<p className="mt-2 text-3xl font-black text-orange-500">
 							{data.summary.upcomingCount}
 						</p>
@@ -182,7 +187,8 @@ export default function TodayOperationsBoard({
 														Customer: {table.openTable.customerName}
 													</p>
 													<p>
-														Dibuka: {formatDateTimeDisplay(table.openTable.openedAt)}
+														Dibuka:{" "}
+														{formatDateTimeDisplay(table.openTable.openedAt)}
 													</p>
 													{table.openTable.customerPhone ? (
 														<p>HP: {table.openTable.customerPhone}</p>
@@ -190,14 +196,16 @@ export default function TodayOperationsBoard({
 												</>
 											) : null}
 
-											{table.currentStatus === "BOOKED_NOW" && table.currentBooking ? (
+											{table.currentStatus === "BOOKED_NOW" &&
+											table.currentBooking ? (
 												<>
 													<p className="font-semibold">
 														Customer: {table.currentBooking.customerName}
 													</p>
 													<p>Kode: {table.currentBooking.bookingCode}</p>
 													<p>
-														Slot aktif: {formatHourLabel(table.currentBooking.slotHour)}
+														Slot aktif:{" "}
+														{formatHourLabel(table.currentBooking.slotHour)}
 													</p>
 												</>
 											) : null}
@@ -236,11 +244,14 @@ export default function TodayOperationsBoard({
 												</button>
 											) : null}
 
-											{table.currentStatus === "BOOKED_NOW" && table.currentBooking ? (
+											{table.currentStatus === "BOOKED_NOW" &&
+											table.currentBooking ? (
 												<button
 													type="button"
 													onClick={() =>
-														router.push(`/admin/bookings/${table.currentBooking?.bookingId}`)
+														router.push(
+															`/admin/bookings/${table.currentBooking?.bookingId}`
+														)
 													}
 													className="rounded-2xl bg-green-600 px-4 py-2 font-bold text-white"
 												>
@@ -268,11 +279,14 @@ export default function TodayOperationsBoard({
 												</>
 											) : null}
 
-											{table.currentStatus === "UPCOMING_BOOKING" && table.nextBooking ? (
+											{table.currentStatus === "UPCOMING_BOOKING" &&
+											table.nextBooking ? (
 												<button
 													type="button"
 													onClick={() =>
-														router.push(`/admin/bookings/${table.nextBooking?.bookingId}`)
+														router.push(
+															`/admin/bookings/${table.nextBooking?.bookingId}`
+														)
 													}
 													className="rounded-2xl border border-orange-300 px-4 py-2 font-bold text-orange-700"
 												>
