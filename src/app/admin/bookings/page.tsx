@@ -14,6 +14,8 @@ import {
 } from "../../../lib/utils";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 import EmptyStateCard from "@/components/ui/empty-state-card";
+import BookingStatusChip from "@/components/bookings/bookings-status-chip";
+
 
 export default async function AdminBookingsPage() {
   await expireOverdueBookings();
@@ -67,13 +69,7 @@ export default async function AdminBookingsPage() {
                         <h2 className="text-2xl font-bold text-[#5D3FD3]">
                           {booking.bookingCode}
                         </h2>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getBookingStatusColor(
-                            booking.status
-                          )}`}
-                        >
-                          {getBookingStatusLabel(booking.status)}
-                        </span>
+                        <BookingStatusChip status={booking.status} />
 
                         {needsAdminPaymentAction ? (
                           <span className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-bold text-red-700">

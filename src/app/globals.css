@@ -1,49 +1,63 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --tf-purple: #7b2cbf;
-  --tf-purple-dark: #5a189a;
-  --tf-lavender: #f4ebff;
+	--background: #ffffff;
+	--foreground: #171717;
 
-  --tf-green: #9ddc34;
-  --tf-green-dark: #6ea91f;
+	--tf-purple: #6f2dbd;
+	--tf-purple-dark: #53208c;
+	--tf-lavender: #f4ebff;
 
-  --tf-orange: #f39c12;
-  --tf-orange-dark: #e67e22;
+	--tf-green: #b7de53;
+	--tf-green-dark: #6b9a1f;
 
-  --tf-cream: #fff8e7;
-  --tf-card: #ffffff;
-  --tf-bg: #fbf7ff;
+	--tf-orange: #f39c12;
+	--tf-orange-dark: #e67e22;
 
-  --tf-text: #1f2937;
-  --tf-muted: #64748b;
+	--tf-cream: #fff6df;
+	--tf-card: #ffffff;
+	--tf-bg: #f8f4ff;
+	--tf-surface: #ffffff;
+	--tf-surface-muted: #f7f1ff;
+	--tf-border: #eadffd;
 
-  --tf-radius-xl: 1.5rem;
-  --tf-radius-2xl: 2rem;
-  --tf-radius-3xl: 2.5rem;
+	--tf-text: #1f2937;
+	--tf-muted: #64748b;
 
-  --tf-shadow-soft: 0 10px 30px rgba(91, 24, 154, 0.08);
-  --tf-shadow-card: 0 12px 32px rgba(123, 44, 191, 0.08);
+	--tf-radius-xl: 1.5rem;
+	--tf-radius-2xl: 2rem;
+	--tf-radius-3xl: 2.5rem;
+
+	--tf-shadow-soft: 0 10px 30px rgba(91, 24, 154, 0.08);
+	--tf-shadow-card: 0 14px 34px rgba(111, 45, 189, 0.09);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--font-sans: var(--font-geist-sans);
+	--font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+	box-sizing: border-box;
+}
+
+html {
+	scroll-behavior: smooth;
 }
 
 body {
-  background: var(--tf-bg);
-  color: var(--tf-text);
-  font-family: Arial, Helvetica, sans-serif;
+	min-height: 100vh;
+	background:
+		radial-gradient(circle at top left, rgba(123, 44, 191, 0.08), transparent 30%),
+		radial-gradient(circle at top right, rgba(243, 156, 18, 0.08), transparent 25%),
+		linear-gradient(180deg, #fcf9ff 0%, #f8f4ff 100%);
+	color: var(--tf-text);
+	font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+	background: rgba(243, 156, 18, 0.28);
+	color: var(--tf-purple-dark);
 }

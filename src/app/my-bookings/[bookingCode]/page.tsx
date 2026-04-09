@@ -20,6 +20,7 @@ import {
   getPaymentProofStatusLabel,
 } from "@/lib/utils";
 import CancelBookingButton from "./cancel-booking-button";
+import BookingStatusChip from "@/components/bookings/bookings-status-chip";
 
 export const dynamic = "force-dynamic";
 
@@ -102,13 +103,8 @@ export default async function MyBookingDetailPage({
               </h1>
             </div>
 
-            <span
-              className={`rounded-full px-4 py-2 text-sm font-bold ${getBookingStatusColor(
-                booking.status
-              )}`}
-            >
-              {getBookingStatusLabel(booking.status)}
-            </span>
+            <BookingStatusChip status={booking.status} />
+
           </div>
 
           <div

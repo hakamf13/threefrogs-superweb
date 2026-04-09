@@ -1,71 +1,87 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Loader2, TriangleAlert } from "lucide-react";
 
 type CancelBookingButtonProps = {
-	bookingCode: string;
-	className?: string;
-	label?: string;
+  bookingCode: string;
+  label?: string;
+  disabled?: boolean;
+  redirectTo?: string;
+  confirmMessage?: string;
 };
 
 export default function CancelBookingButton({
-	bookingCode,
-	className,
-	label = "Batalkan Booking",
+  bookingCode,
+  label = "Batalkan booking",
+  disabled = false,
+  redirectTo,
+  confirmMessage = "Yakin ingin membatalkan booking ini?",
 }: CancelBookingButtonProps) {
-	const router = useRouter();
-	const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-	async function handleCancel() {
-		const confirmed = window.confirm(
-			"Yakin ingin membatalkan booking ini?"
-		);
+  const handleCancel = async () => {
+    const confirmed = window.confirm(confirmMessage);
+    if (!confirmed) return;
 
-		if (!confirmed) return;
+    try {
+      setIsSubmitting(true);
+      setErrorMessage("");
 
-		setIsSubmitting(true);
+      const response = await fetch(`/api/bookings/${bookingCode}/cancel`, {
+        method: "POST",
+      });
 
-		try {
-			const response = await fetch(`/api/bookings/${bookingCode}/cancel`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({}),
-			});
+      const result = await response.json();
 
-			const result = await response.json();
+      if (!response.ok) {
+        setErrorMessage(result.error ?? "Gagal membatalkan booking.");
+        setIsSubmitting(false);
+        return;
+      }
 
-			if (!response.ok) {
-				throw new Error(result?.error || "Gagal membatalkan booking.");
-			}
+      if (redirectTo) {
+        router.push(redirectTo);
+        return;
+      }
 
-			router.refresh();
-		} catch (error) {
-			const message =
-				error instanceof Error
-					? error.message
-					: "Gagal membatalkan booking.";
-			window.alert(message);
-		} finally {
-			setIsSubmitting(false);
-		}
-	}
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("Terjadi kesalahan saat membatalkan booking.");
+      setIsSubmitting(false);
+    }
+  };
 
-	return (
-		<button
-			type="button"
-			onClick={handleCancel}
-			disabled={isSubmitting}
-			className={
-				className ??
-				"rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-			}
-		>
-			{isSubmitting ? "Membatalkan..." : label}
-		</button>
-	);
+  return (
+    <div className="space-y-3">
+      <button
+        type="button"
+        onClick={handleCancel}
+        disabled={disabled || isSubmitting}
+        className="inline-flex items-center gap-2 rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Membatalkan...
+          </>
+        ) : (
+          <>
+            <TriangleAlert className="h-4 w-4" />
+            {label}
+          </>
+        )}
+      </button>
+
+      {errorMessage ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
+          {errorMessage}
+        </div>
+      ) : null}
+    </div>
+  );
 }
-
-

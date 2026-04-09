@@ -1,9 +1,14 @@
+import Link from "next/link";
+import { Sparkles } from "lucide-react";
+
 type EmptyStateCardProps = {
   eyebrow?: string;
   title: string;
   description: string;
   actionHref?: string;
   actionLabel?: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
 };
 
 export default function EmptyStateCard({
@@ -12,31 +17,50 @@ export default function EmptyStateCard({
   description,
   actionHref,
   actionLabel,
+  secondaryHref,
+  secondaryLabel,
 }: EmptyStateCardProps) {
   return (
-    <div className="rounded-[2rem] border border-slate-200 bg-white p-8 text-center shadow-[var(--tf-shadow-card)]">
-      {eyebrow ? (
-        <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
-          {eyebrow}
+    <div className="rounded-[1.75rem] border border-[var(--tf-border)] bg-white p-6 shadow-[var(--tf-shadow-card)] sm:p-8">
+      <div className="mx-auto max-w-2xl text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--tf-lavender)] text-[var(--tf-purple)]">
+          <Sparkles className="h-6 w-6" />
+        </div>
+
+        {eyebrow ? (
+          <p className="mt-5 text-sm font-bold uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+            {eyebrow}
+          </p>
+        ) : null}
+
+        <h2 className="mt-3 text-2xl font-black tracking-tight text-[var(--tf-purple)] sm:text-3xl">
+          {title}
+        </h2>
+
+        <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+          {description}
         </p>
-      ) : null}
 
-      <h3 className="mt-3 text-2xl font-black text-[var(--tf-purple)]">
-        {title}
-      </h3>
+        {actionHref && actionLabel ? (
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href={actionHref}
+              className="inline-flex items-center rounded-2xl bg-[var(--tf-purple)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
+            >
+              {actionLabel}
+            </Link>
 
-      <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-600">
-        {description}
-      </p>
-
-      {actionHref && actionLabel ? (
-        <a
-          href={actionHref}
-          className="mt-6 inline-flex rounded-2xl bg-[var(--tf-purple)] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)]"
-        >
-          {actionLabel}
-        </a>
-      ) : null}
+            {secondaryHref && secondaryLabel ? (
+              <Link
+                href={secondaryHref}
+                className="inline-flex items-center rounded-2xl border border-[var(--tf-border)] bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                {secondaryLabel}
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

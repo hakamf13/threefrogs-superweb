@@ -14,6 +14,7 @@ import {
   getPaymentProviderLabel,
 } from "../../../../lib/utils";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
+import BookingStatusChip from "@/components/bookings/bookings-status-chip";
 
 export const dynamic = "force-dynamic";
 
@@ -71,13 +72,8 @@ export default async function AdminBookingDetailPage({
               </h1>
             </div>
 
-            <span
-              className={`h-fit rounded-full px-4 py-2 text-sm font-bold ${getBookingStatusColor(
-                booking.status
-              )}`}
-            >
-              {getBookingStatusLabel(booking.status)}
-            </span>
+            <BookingStatusChip status={booking.status} />
+
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">

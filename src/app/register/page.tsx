@@ -8,21 +8,24 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-[var(--tf-bg)] text-slate-800">
       <SiteHeader />
 
-      <main className="px-6 py-16">
-        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
+      <main className="px-4 py-12 sm:px-6 sm:py-16">
+        <div className="mx-auto grid max-w-[1140px] gap-8 xl:grid-cols-[1.08fr_0.92fr] xl:items-stretch">
           <AuthShowcasePanel mode="register" />
 
-          <div className="rounded-[2.5rem] border border-slate-200 bg-white p-8 shadow-[var(--tf-shadow-card)]">
+          <div className="rounded-[1.9rem] border border-[var(--tf-border)] bg-white p-6 shadow-[var(--tf-shadow-card)] sm:p-8">
             <div className="mb-8">
-              <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
                 Register
               </p>
-              <h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
+
+              <h1 className="mt-3 text-3xl font-black tracking-tight text-[var(--tf-purple)] sm:text-4xl">
                 Buat akun Threefrogs
               </h1>
-              <p className="mt-3 text-slate-600">
+
+              <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
                 Nomor HP wajib, email opsional. Setelah punya akun, flow booking
-                akan terasa jauh lebih ringkas.
+                akan terasa jauh lebih ringkas karena data pemesan bisa langsung
+                terisi dari akunmu.
               </p>
             </div>
 
