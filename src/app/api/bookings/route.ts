@@ -19,12 +19,16 @@ import {
   getCurrentHourInJakarta,
   getTodayDateStringInJakarta,
 } from "@/lib/booking-window";
-import { notifyAdminsBookingCreated } from "@/lib/admin-notifications";
 import { enforceRouteRateLimit } from "@/lib/rate-limit";
 import { isMidtransConfigured } from "@/lib/midtrans";
 import { generateMidtransOrderId } from "@/features/payments/generate-midtrans-order-id";
 import { createMidtransSnapTransaction } from "@/features/payments/create-midtrans-snap-transaction";
 import { updateBookingPaymentRequest } from "@/features/payments/update-booking-payment-request";
+import { assertBookingAntiAbuse } from "@/lib/bookings/booking-anti-abuse";
+import {
+  sendAdminBookingCreatedNotification,
+  sendCustomerBookingCreatedNotification,
+} from "@/lib/notifications/booking-notifications";
 
 function isSequential(slots: number[]) {
   const sorted = [...slots].sort((a, b) => a - b);
@@ -103,8 +107,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const customerName = currentUser.name;
-    const customerPhone = currentUser.phone;
+    
+
+    // const customerName = currentUser.name;
+    // const customerPhone = currentUser.phone;
 
     const body = await request.json();
     const parsed = createBookingSchema.safeParse(body);
@@ -205,6 +211,12 @@ export async function POST(request: Request) {
 
     const bookingDateValue = new Date(`${bookingDate}T00:00:00.000Z`);
 
+    await assertBookingAntiAbuse({
+      customerPhone: currentUser.phone,
+      bookingDate: bookingDateValue,
+    });
+
+    
     const conflicts = await prisma.bookingSlot.findMany({
       where: {
         tableId,
@@ -333,22 +345,48 @@ export async function POST(request: Request) {
       }
     }
 
-    try {
-      await notifyAdminsBookingCreated({
-        bookingCode: booking.bookingCode,
-        customerName: booking.customerName,
-        customerPhone: booking.customerPhone,
-        customerEmail: booking.customerEmail,
-        storeName: store.name,
-        tableLabel: table.displayLabel || `Meja ${table.tableNumber}`,
-        bookingDate: booking.bookingDate,
-        slotHours: normalizedSlots,
-        totalPrice: booking.totalPrice,
-        paymentMode: paymentResult ? "MIDTRANS" : "MANUAL",
-      });
-    } catch (error) {
-      console.error("Notify admins booking created error:", error);
-    }
+    void sendAdminBookingCreatedNotification({
+      bookingId: booking.id,
+      bookingCode: booking.bookingCode,
+      customerName: booking.customerName,
+      customerPhone: booking.customerPhone,
+      customerEmail: booking.customerEmail,
+      storeName: store.name,
+      bookingDate: booking.bookingDate,
+      startHour: booking.startHour,
+      endHour: booking.endHour,
+      totalPrice: booking.totalPrice,
+    }).catch(console.error);
+
+    void sendCustomerBookingCreatedNotification({
+      bookingId: booking.id,
+      bookingCode: booking.bookingCode,
+      customerName: booking.customerName,
+      customerPhone: booking.customerPhone,
+      customerEmail: booking.customerEmail,
+      storeName: store.name,
+      bookingDate: booking.bookingDate,
+      startHour: booking.startHour,
+      endHour: booking.endHour,
+      totalPrice: booking.totalPrice,
+    }).catch(console.error);
+
+    // try {
+    //   await notifyAdminsBookingCreated({
+    //     bookingCode: booking.bookingCode,
+    //     customerName: booking.customerName,
+    //     customerPhone: booking.customerPhone,
+    //     customerEmail: booking.customerEmail,
+    //     storeName: store.name,
+    //     tableLabel: table.displayLabel || `Meja ${table.tableNumber}`,
+    //     bookingDate: booking.bookingDate,
+    //     slotHours: normalizedSlots,
+    //     totalPrice: booking.totalPrice,
+    //     paymentMode: paymentResult ? "MIDTRANS" : "MANUAL",
+    //   });
+    // } catch (error) {
+    //   console.error("Notify admins booking created error:", error);
+    // }
 
     return NextResponse.json({
       success: true,

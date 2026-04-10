@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { prisma } from "../../../../../../lib/prisma";
+import { sendCustomerBookingStatusChangedNotification } from "@/lib/notifications/booking-notifications";
 
 type RouteContext = {
   params: Promise<{
@@ -7,9 +9,21 @@ type RouteContext = {
   }>;
 };
 
-export async function PATCH(_request: Request, context: RouteContext) {
+export async function PATCH(request: Request, context: RouteContext) {
   try {
+    const session = await auth();
+
+    if (!session?.user || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Akses ditolak." }, { status: 403 });
+    }
+
     const { id } = await context.params;
+    const body = await request.json().catch(() => ({}));
+
+    const note =
+      typeof body?.note === "string" && body.note.trim().length > 0
+        ? body.note.trim()
+        : "Booking dikonfirmasi langsung oleh admin.";
 
     const booking = await prisma.booking.findUnique({
       where: { id },
@@ -29,9 +43,12 @@ export async function PATCH(_request: Request, context: RouteContext) {
       );
     }
 
-    if (booking.status !== "PENDING_VERIFICATION") {
+    if (
+      booking.status !== "AWAITING_PAYMENT" &&
+      booking.status !== "PENDING_VERIFICATION"
+    ) {
       return NextResponse.json(
-        { error: "Booking ini belum siap dikonfirmasi." },
+        { error: "Booking ini tidak bisa dikonfirmasi langsung." },
         { status: 400 }
       );
     }
@@ -43,6 +60,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
           status: "CONFIRMED",
           confirmedAt: new Date(),
           cancelledAt: null,
+          expiresAt: null,
         },
       });
 
@@ -70,21 +88,31 @@ export async function PATCH(_request: Request, context: RouteContext) {
       await tx.bookingStatusLog.create({
         data: {
           bookingId: booking.id,
-          oldStatus: "PENDING_VERIFICATION",
+          oldStatus: booking.status,
           newStatus: "CONFIRMED",
-          note: "Booking dikonfirmasi admin.",
+          changedByUserId: session.user.id,
+          note,
         },
       });
     });
+
+    void sendCustomerBookingStatusChangedNotification({
+      bookingId: booking.id,
+      bookingCode: booking.bookingCode,
+      customerName: booking.customerName,
+      customerEmail: booking.customerEmail,
+      statusLabel: "Booking terkonfirmasi",
+      note,
+    }).catch(console.error);
 
     return NextResponse.json({
       success: true,
     });
   } catch (error) {
-    console.error("Confirm booking error:", error);
+    console.error("Direct confirm booking error:", error);
 
     return NextResponse.json(
-      { error: "Gagal mengonfirmasi booking." },
+      { error: "Gagal mengonfirmasi booking langsung." },
       { status: 500 }
     );
   }

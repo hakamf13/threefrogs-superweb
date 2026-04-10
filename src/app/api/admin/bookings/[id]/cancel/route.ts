@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { prisma } from "../../../../../../lib/prisma";
+import { sendCustomerBookingStatusChangedNotification } from "@/lib/notifications/booking-notifications";
 
 type RouteContext = {
   params: Promise<{
@@ -9,6 +11,12 @@ type RouteContext = {
 
 export async function PATCH(_request: Request, context: RouteContext) {
   try {
+    const session = await auth();
+
+    if (!session?.user || session.user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Akses ditolak." }, { status: 403 });
+    }
+
     const { id } = await context.params;
 
     const booking = await prisma.booking.findUnique({
@@ -16,6 +24,9 @@ export async function PATCH(_request: Request, context: RouteContext) {
       select: {
         id: true,
         status: true,
+        bookingCode: true,
+        customerName: true,
+        customerEmail: true,
       },
     });
 
@@ -68,10 +79,20 @@ export async function PATCH(_request: Request, context: RouteContext) {
           bookingId: booking.id,
           oldStatus: booking.status,
           newStatus: "CANCELLED",
+          changedByUserId: session.user.id,
           note: "Booking dibatalkan admin.",
         },
       });
     });
+
+    void sendCustomerBookingStatusChangedNotification({
+      bookingId: booking.id,
+      bookingCode: booking.bookingCode,
+      customerName: booking.customerName,
+      customerEmail: booking.customerEmail,
+      statusLabel: "Booking dibatalkan",
+      note: "Booking dibatalkan oleh admin.",
+    }).catch(console.error);
 
     return NextResponse.json({
       success: true,

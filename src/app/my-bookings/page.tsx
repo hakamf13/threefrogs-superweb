@@ -8,8 +8,6 @@ import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bo
 import {
   formatDateDisplay,
   formatRupiah,
-  getBookingStatusColor,
-  getBookingStatusLabel,
   getPaymentGatewayStatusLabel,
 } from "../../lib/utils";
 import EmptyStateCard from "@/components/ui/empty-state-card";
@@ -33,7 +31,11 @@ const BOOKING_STATUS_VALUES: BookingStatus[] = [
   "CONFIRMED",
   "CANCELLED",
   "EXPIRED",
+  // "COMPLETED",
 ];
+
+const summaryCardClass =
+  "rounded-[1.6rem] border border-[var(--tf-border)] bg-white p-5 shadow-[var(--tf-shadow-card)]";
 
 export default async function MyBookingsPage({
   searchParams,
@@ -78,9 +80,9 @@ export default async function MyBookingsPage({
     ];
   }
 
-if (status && BOOKING_STATUS_VALUES.includes(status as BookingStatus)) {
-  whereClause.status = status as BookingStatus;
-}
+  if (status && BOOKING_STATUS_VALUES.includes(status as BookingStatus)) {
+    whereClause.status = status as BookingStatus;
+  }
 
   const bookings = await prisma.booking.findMany({
     where: whereClause,
@@ -93,39 +95,83 @@ if (status && BOOKING_STATUS_VALUES.includes(status as BookingStatus)) {
     },
   });
 
+  const summary = {
+    total: bookings.length,
+    awaitingPayment: bookings.filter((b) => b.status === "AWAITING_PAYMENT")
+      .length,
+    pendingVerification: bookings.filter(
+      (b) => b.status === "PENDING_VERIFICATION"
+    ).length,
+    confirmed: bookings.filter((b) => b.status === "CONFIRMED").length,
+  };
+
   return (
-    <>
+    <div className="min-h-screen bg-[var(--tf-bg)] text-slate-800">
       <SiteHeader />
 
-      <main className="min-h-screen bg-slate-50">
-        <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mb-6">
-            <p className="text-sm font-medium text-slate-500">
+      <main className="px-4 py-10 sm:px-6 lg:px-8">
+        <section className="mx-auto max-w-6xl space-y-8">
+          <div className="space-y-3">
+            <p className="inline-flex rounded-full bg-[var(--tf-cream)] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
               My Reservations
             </p>
-            <h1 className="mt-1 text-3xl font-bold text-slate-900">
-              Booking Saya
-            </h1>
-            <p className="mt-2 text-slate-600">
-              Semua booking yang kamu buat saat login akan tampil di sini.
-            </p>
+            <div>
+              <h1 className="text-3xl font-black tracking-tight text-[var(--tf-purple)] md:text-5xl">
+                Booking Saya
+              </h1>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+                Semua booking yang kamu buat saat login akan muncul di sini.
+                Kamu bisa cek status, lanjut bayar, lihat bukti pembayaran, atau
+                membatalkan booking yang masih aktif.
+              </p>
+            </div>
           </div>
 
-          <form className="mb-6 rounded-3xl border bg-white p-4 shadow-sm">
-            <div className="grid gap-4 md:grid-cols-4">
-              <div className="md:col-span-2">
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className={summaryCardClass}>
+              <p className="text-sm text-slate-500">Total booking</p>
+              <p className="mt-2 text-3xl font-black text-[var(--tf-purple)]">
+                {summary.total}
+              </p>
+            </div>
+
+            <div className={summaryCardClass}>
+              <p className="text-sm text-slate-500">Menunggu bayar</p>
+              <p className="mt-2 text-3xl font-black text-orange-600">
+                {summary.awaitingPayment}
+              </p>
+            </div>
+
+            <div className={summaryCardClass}>
+              <p className="text-sm text-slate-500">Menunggu verifikasi</p>
+              <p className="mt-2 text-3xl font-black text-yellow-600">
+                {summary.pendingVerification}
+              </p>
+            </div>
+
+            <div className={summaryCardClass}>
+              <p className="text-sm text-slate-500">Terkonfirmasi</p>
+              <p className="mt-2 text-3xl font-black text-green-600">
+                {summary.confirmed}
+              </p>
+            </div>
+          </section>
+
+          <form className="rounded-[1.9rem] border border-[var(--tf-border)] bg-white p-5 shadow-[var(--tf-shadow-card)]">
+            <div className="grid gap-4 lg:grid-cols-4">
+              <div className="lg:col-span-2">
                 <label
                   htmlFor="q"
                   className="mb-2 block text-sm font-medium text-slate-700"
                 >
-                  Cari Booking
+                  Cari booking
                 </label>
                 <input
                   id="q"
                   name="q"
                   defaultValue={q}
                   placeholder="Kode booking, nama, atau nomor HP"
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[var(--tf-purple)]"
                 />
               </div>
 
@@ -140,16 +186,17 @@ if (status && BOOKING_STATUS_VALUES.includes(status as BookingStatus)) {
                   id="status"
                   name="status"
                   defaultValue={status}
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[var(--tf-purple)]"
                 >
-                  <option value="">Semua Status</option>
-                  <option value="AWAITING_PAYMENT">Menunggu Bayar</option>
+                  <option value="">Semua status</option>
+                  <option value="AWAITING_PAYMENT">Menunggu bayar</option>
                   <option value="PENDING_VERIFICATION">
-                    Menunggu Verif
+                    Menunggu verifikasi
                   </option>
-                  <option value="CONFIRMED">Confirmed</option>
-                  <option value="CANCELLED">Cancelled</option>
-                  <option value="EXPIRED">Expired</option>
+                  <option value="CONFIRMED">Terkonfirmasi</option>
+                  <option value="CANCELLED">Dibatalkan</option>
+                  <option value="EXPIRED">Kedaluwarsa</option>
+                  {/* <option value="COMPLETED">Selesai</option> */}
                 </select>
               </div>
 
@@ -164,7 +211,7 @@ if (status && BOOKING_STATUS_VALUES.includes(status as BookingStatus)) {
                   id="sort"
                   name="sort"
                   defaultValue={sort}
-                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-slate-400"
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[var(--tf-purple)]"
                 >
                   <option value="newest">Terbaru</option>
                   <option value="oldest">Terlama</option>
@@ -175,29 +222,30 @@ if (status && BOOKING_STATUS_VALUES.includes(status as BookingStatus)) {
             <div className="mt-4 flex flex-wrap gap-3">
               <button
                 type="submit"
-                className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+                className="rounded-2xl bg-[var(--tf-purple)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
               >
-                Terapkan Filter
+                Terapkan filter
               </button>
 
               <Link
                 href="/my-bookings"
-                className="rounded-2xl border bg-white px-4 py-3 text-sm font-semibold text-slate-900"
+                className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700"
               >
-                Tampilkan Semua
+                Tampilkan semua
               </Link>
             </div>
           </form>
 
           {bookings.length === 0 ? (
             <EmptyStateCard
+              eyebrow="Booking"
               title="Belum ada booking"
               description="Booking yang kamu buat akan muncul di halaman ini."
               actionHref="/reserve"
-              actionLabel="Reserve Sekarang"
+              actionLabel="Reservasi sekarang"
             />
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-5">
               {bookings.map((booking) => {
                 const showMidtransPayButton =
                   booking.paymentGatewayProvider === "MIDTRANS" &&
@@ -212,61 +260,83 @@ if (status && BOOKING_STATUS_VALUES.includes(status as BookingStatus)) {
                 return (
                   <div
                     key={booking.id}
-                    className="rounded-3xl border bg-white p-5 shadow-sm"
+                    className="rounded-[1.9rem] border border-[var(--tf-border)] bg-white p-5 shadow-[var(--tf-shadow-card)]"
                   >
-                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <h2 className="text-xl font-bold text-slate-900">
-                          {booking.bookingCode}
-                        </h2>
-
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="space-y-4">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <h2 className="text-2xl font-black text-[var(--tf-purple)]">
+                            {booking.bookingCode}
+                          </h2>
                           <BookingStatusChip status={booking.status} />
                         </div>
 
-                        <div className="mt-4 space-y-1 text-sm text-slate-600">
-                          <p>
-                            {booking.store.name} • Meja{" "}
-                            {booking.table.displayLabel ||
-                              booking.table.tableNumber}
-                          </p>
-                          <p>{formatDateDisplay(booking.bookingDate)}</p>
-                          <p>{formatRupiah(booking.totalPrice)}</p>
-
-                          {booking.paymentGatewayProvider === "MIDTRANS" ? (
-                            <p>
-                              Midtrans •{" "}
-                              {getPaymentGatewayStatusLabel(
-                                booking.paymentGatewayStatus
-                              )}
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
+                            <p className="text-sm text-slate-500">Store</p>
+                            <p className="mt-1 font-semibold text-slate-900">
+                              {booking.store.name}
                             </p>
-                          ) : null}
+                          </div>
+
+                          <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
+                            <p className="text-sm text-slate-500">Meja</p>
+                            <p className="mt-1 font-semibold text-slate-900">
+                              {booking.table.displayLabel ||
+                                `Meja ${booking.table.tableNumber}`}
+                            </p>
+                          </div>
+
+                          <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
+                            <p className="text-sm text-slate-500">Tanggal</p>
+                            <p className="mt-1 font-semibold text-slate-900">
+                              {formatDateDisplay(booking.bookingDate)}
+                            </p>
+                          </div>
+
+                          <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
+                            <p className="text-sm text-slate-500">Total</p>
+                            <p className="mt-1 font-semibold text-slate-900">
+                              {formatRupiah(booking.totalPrice)}
+                            </p>
+                          </div>
                         </div>
+
+                        {booking.paymentGatewayProvider === "MIDTRANS" ? (
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                            Midtrans •{" "}
+                            {getPaymentGatewayStatusLabel(
+                              booking.paymentGatewayStatus
+                            )}
+                          </div>
+                        ) : (
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                            Transfer manual / upload bukti pembayaran
+                          </div>
+                        )}
                       </div>
 
-                      <div className="flex flex-wrap gap-3">
+                      <div className="flex flex-wrap gap-3 lg:max-w-[280px] lg:justify-end">
                         {showMidtransPayButton ? (
                           <a
                             href={booking.paymentCheckoutUrl!}
                             target="_blank"
                             rel="noreferrer"
-                            className="rounded-2xl border bg-white px-4 py-3 text-sm font-semibold text-slate-900"
+                            className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900"
                           >
-                            Bayar Sekarang
+                            Bayar sekarang
                           </a>
                         ) : null}
 
                         <Link
                           href={`/booking/${booking.bookingCode}`}
-                          className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white"
+                          className="rounded-2xl bg-[var(--tf-purple)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
                         >
-                          Lihat Detail
+                          Lihat detail
                         </Link>
 
                         {canCancel ? (
-                          <CancelBookingButton
-                            bookingCode={booking.bookingCode}
-                          />
+                          <CancelBookingButton bookingCode={booking.bookingCode} />
                         ) : null}
                       </div>
                     </div>
@@ -279,6 +349,6 @@ if (status && BOOKING_STATUS_VALUES.includes(status as BookingStatus)) {
       </main>
 
       <SiteFooter />
-    </>
+    </div>
   );
 }

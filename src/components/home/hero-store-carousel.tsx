@@ -36,12 +36,6 @@ export default function HeroStoreCarousel({
     return () => window.clearInterval(interval);
   }, [items.length]);
 
-  useEffect(() => {
-    if (activeIndex > items.length - 1) {
-      setActiveIndex(0);
-    }
-  }, [activeIndex, items.length]);
-
   if (items.length === 0) {
     return (
       <div className="w-full max-w-[380px] rounded-[1.8rem] border border-white/14 bg-white/10 p-5 backdrop-blur-sm">
@@ -49,7 +43,8 @@ export default function HeroStoreCarousel({
           <div>
             <p className="text-lg font-semibold">Foto store belum tersedia</p>
             <p className="mt-2 text-sm">
-              Nanti carousel ini akan otomatis menampilkan cover store yang sudah diisi.
+              Nanti carousel ini akan otomatis menampilkan cover store yang
+              sudah diisi.
             </p>
           </div>
         </div>
@@ -57,7 +52,8 @@ export default function HeroStoreCarousel({
     );
   }
 
-  const activeStore = items[activeIndex];
+  const safeActiveIndex = activeIndex >= items.length ? 0 : activeIndex;
+  const activeStore = items[safeActiveIndex];
 
   return (
     <div className="w-full max-w-[380px] rounded-[1.8rem] border border-white/14 bg-white/10 p-5 backdrop-blur-sm">
@@ -67,7 +63,9 @@ export default function HeroStoreCarousel({
             key={store.id}
             className={[
               "absolute inset-0 transition-opacity duration-700",
-              index === activeIndex ? "opacity-100" : "opacity-0 pointer-events-none",
+              index === safeActiveIndex
+                ? "opacity-100"
+                : "pointer-events-none opacity-0",
             ].join(" ")}
           >
             <Image
@@ -109,7 +107,7 @@ export default function HeroStoreCarousel({
                 aria-label={`Lihat ${store.name}`}
                 className={[
                   "h-2.5 rounded-full transition-all",
-                  index === activeIndex
+                  index === safeActiveIndex
                     ? "w-8 bg-[#FFD23F]"
                     : "w-2.5 bg-white/40 hover:bg-white/60",
                 ].join(" ")}
