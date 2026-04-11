@@ -29,6 +29,8 @@ export type TodayOperationsBoardData = {
 			id: string;
 			tableNumber: number;
 			tableCode: string | null;
+			tableDisplay: string | null;
+			displayLabel: string | null;
 			capacity: number | null;
 			currentStatus: TodayTableBoardStatus;
 			openTable: {
@@ -36,6 +38,8 @@ export type TodayOperationsBoardData = {
 				customerName: string;
 				customerPhone: string | null;
 				openedAt: Date;
+				estimatedEndAt: Date;
+				paymentStatus: "UNPAID" | "PARTIAL" | "PAID";
 			} | null;
 			currentBooking: {
 				bookingId: string;
@@ -57,14 +61,46 @@ export type TodayOperationsBoardData = {
 	}>;
 };
 
+function pad(value: number) {
+	return String(value).padStart(2, "0");
+}
+
+function buildSlotDate(dateText: string, hour: number) {
+	return new Date(`${dateText}T${pad(hour)}:00:00+07:00`);
+}
+
+function getNowInJakartaDate() {
+	const parts = new Intl.DateTimeFormat("en-CA", {
+		timeZone: "Asia/Jakarta",
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+		hour: "2-digit",
+		minute: "2-digit",
+		second: "2-digit",
+		hour12: false,
+	}).formatToParts(new Date());
+
+	const map = Object.fromEntries(
+		parts
+			.filter((part) => part.type !== "literal")
+			.map((part) => [part.type, part.value])
+	) as Record<string, string>;
+
+	return new Date(
+		`${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}:${map.second}+07:00`
+	);
+}
+
 export async function getTodayOperationsBoard(): Promise<TodayOperationsBoardData> {
 	await expireOverdueBookings();
 
 	const today = getTodayDateStringInJakarta();
 	const currentHour = getCurrentHourInJakarta();
 	const bookingDateValue = new Date(`${today}T00:00:00.000Z`);
+	const nowInJakarta = getNowInJakartaDate();
 
-	const [stores, bookingSlots, openSessions] = await Promise.all([
+	const [stores, bookingSlots, activeWalkInSessions] = await Promise.all([
 		prisma.store.findMany({
 			where: {
 				isActive: true,
@@ -85,6 +121,7 @@ export async function getTodayOperationsBoard(): Promise<TodayOperationsBoardDat
 						id: true,
 						tableNumber: true,
 						tableCode: true,
+						displayLabel: true,
 						capacity: true,
 					},
 				},
@@ -111,21 +148,22 @@ export async function getTodayOperationsBoard(): Promise<TodayOperationsBoardDat
 			},
 		}),
 
-		prisma.openTableSession.findMany({
+		prisma.walkInSession.findMany({
 			where: {
-				status: "OPEN",
+				bookingDate: bookingDateValue,
+				status: "ACTIVE",
 			},
-			include: {
-				store: {
-					select: {
-						id: true,
-					},
-				},
-				table: {
-					select: {
-						id: true,
-					},
-				},
+			orderBy: {
+				startedAt: "asc",
+			},
+			select: {
+				id: true,
+				tableId: true,
+				customerName: true,
+				customerPhone: true,
+				startedAt: true,
+				estimatedEndAt: true,
+				paymentStatus: true,
 			},
 		}),
 	]);
@@ -137,15 +175,25 @@ export async function getTodayOperationsBoard(): Promise<TodayOperationsBoardDat
 			customerName: string;
 			customerPhone: string | null;
 			openedAt: Date;
+			estimatedEndAt: Date;
+			paymentStatus: "UNPAID" | "PARTIAL" | "PAID";
 		}
 	>();
 
-	for (const session of openSessions) {
+	for (const session of activeWalkInSessions) {
+		const isCurrentlyActive =
+			session.startedAt <= nowInJakarta && session.estimatedEndAt > nowInJakarta;
+
+		if (!isCurrentlyActive) continue;
+		if (openTableMap.has(session.tableId)) continue;
+
 		openTableMap.set(session.tableId, {
 			sessionId: session.id,
 			customerName: session.customerName,
 			customerPhone: session.customerPhone,
-			openedAt: session.openedAt,
+			openedAt: session.startedAt,
+			estimatedEndAt: session.estimatedEndAt,
+			paymentStatus: session.paymentStatus,
 		});
 	}
 
@@ -172,11 +220,13 @@ export async function getTodayOperationsBoard(): Promise<TodayOperationsBoardDat
 			slotEndHour: number;
 		}
 	>();
-// Test
+
 	for (const slot of bookingSlots) {
-		const isCurrent =
-			slot.slotHour <= currentHour && slot.slotEndHour > currentHour;
-		const isUpcoming = slot.slotHour > currentHour;
+		const slotStart = buildSlotDate(today, slot.slotHour);
+		const slotEnd = buildSlotDate(today, slot.slotEndHour);
+
+		const isCurrent = slotStart <= nowInJakarta && slotEnd > nowInJakarta;
+		const isUpcoming = slotStart > nowInJakarta;
 
 		if (isCurrent) {
 			currentBookingMap.set(slot.tableId, {

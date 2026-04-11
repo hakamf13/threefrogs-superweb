@@ -22,6 +22,7 @@ type AvailabilityCell = {
   customerPhone: string | null;
   source: string | null;
   openTableSessionId: string | null;
+  walkInSessionId?: string | null;
 };
 
 type AvailabilityTable = {
@@ -29,6 +30,7 @@ type AvailabilityTable = {
   tableNumber: number;
   tableCode: string | null;
   capacity: number | null;
+  displayLabel?: string | null;
   slots: AvailabilityCell[];
 };
 
@@ -48,7 +50,7 @@ function getCellClasses(status: string) {
       return "border-yellow-200 bg-yellow-50 text-yellow-700";
     case "CONFIRMED":
       return "border-green-200 bg-green-50 text-green-700";
-    case "OPEN_TABLE":
+    case "WALK_IN":
       return "border-[var(--tf-purple)] bg-[var(--tf-lavender)] text-[var(--tf-purple-dark)]";
     case "AVAILABLE":
     default:
@@ -64,8 +66,8 @@ function getCellLabel(status: string) {
       return "Menunggu verifikasi";
     case "CONFIRMED":
       return "Terkonfirmasi";
-    case "OPEN_TABLE":
-      return "Open Table";
+    case "WALK_IN":
+      return "Walk-in aktif";
     case "AVAILABLE":
     default:
       return "Kosong";
@@ -134,8 +136,8 @@ export default function AdminAvailabilityBoard({
               Availability Meja
             </h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Lihat status slot per meja secara visual untuk membantu operasional
-              harian dan menghindari konflik availability.
+              Lihat status meja per slot untuk membantu booking terjadwal dan
+              walk-in session.
             </p>
           </div>
 
@@ -147,8 +149,14 @@ export default function AdminAvailabilityBoard({
               Manual Booking
             </Link>
             <Link
-              href="/admin"
+              href="/admin/walk-in"
               className="rounded-2xl border border-[var(--tf-purple)] px-5 py-3 font-bold text-[var(--tf-purple)]"
+            >
+              Walk-in
+            </Link>
+            <Link
+              href="/admin"
+              className="rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-700"
             >
               Dashboard
             </Link>
@@ -222,7 +230,7 @@ export default function AdminAvailabilityBoard({
               Terkonfirmasi
             </div>
             <div className="rounded-2xl border border-[var(--tf-purple)] bg-[var(--tf-lavender)] px-4 py-2 text-[var(--tf-purple-dark)]">
-              Open Table
+              Walk-in aktif
             </div>
           </div>
         </section>
@@ -249,7 +257,7 @@ export default function AdminAvailabilityBoard({
                 <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
                   <div>
                     <h3 className="text-2xl font-bold text-[var(--tf-purple)]">
-                      Meja {table.tableNumber}
+                      {table.displayLabel || `Meja ${table.tableNumber}`}
                     </h3>
                     <p className="text-sm text-slate-500">
                       Kapasitas: {table.capacity ?? "-"} orang
@@ -259,39 +267,49 @@ export default function AdminAvailabilityBoard({
 
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   {table.slots.map((slot) => {
-                    const clickable =
-                      !!slot.bookingId || !!slot.openTableSessionId;
+                    const isBookingSlot = !!slot.bookingId;
+                    const isWalkInSlot =
+                      slot.status === "WALK_IN" || !!slot.walkInSessionId;
+                    const isEmptySlot = slot.status === "AVAILABLE";
+
+                    const isClickable =
+                      isBookingSlot || isWalkInSlot || isEmptySlot;
 
                     return (
                       <button
                         key={slot.hour}
                         type="button"
-                        disabled={!clickable}
                         onClick={() => {
                           if (slot.bookingId) {
                             router.push(`/admin/bookings/${slot.bookingId}`);
                             return;
                           }
 
-                          if (slot.openTableSessionId) {
-                            router.push(`/admin/open-tables`);
+                          if (slot.walkInSessionId) {
+                            router.push("/admin/walk-in");
+                            return;
                           }
+
+                          router.push(
+                            `/admin/walk-in?storeId=${selectedStoreId}&tableId=${table.id}&date=${selectedDate}&hour=${slot.hour}`
+                          );
                         }}
                         className={`rounded-2xl border p-4 text-left transition ${getCellClasses(
                           slot.status
                         )} ${
-                          clickable ? "hover:shadow-sm" : "cursor-default"
-                        } disabled:opacity-100`}
+                          isClickable ? "hover:-translate-y-[1px] hover:shadow-sm" : ""
+                        }`}
                       >
                         <p className="font-bold">{formatHourLabel(slot.hour)}</p>
                         <p className="mt-2 text-sm font-semibold">
                           {getCellLabel(slot.status)}
                         </p>
 
-                        {slot.status === "OPEN_TABLE" ? (
+                        {isWalkInSlot ? (
                           <div className="mt-3 space-y-1 text-xs">
-                            <p>Mode: Open Table</p>
-                            <p>Nama: {slot.customerName}</p>
+                            <p>Mode: Walk-in</p>
+                            <p>Nama: {slot.customerName || "-"}</p>
+                            <p>Klik untuk buka halaman walk-in</p>
                           </div>
                         ) : slot.bookingCode ? (
                           <div className="mt-3 space-y-1 text-xs">
@@ -300,9 +318,10 @@ export default function AdminAvailabilityBoard({
                             <p>Source: {slot.source}</p>
                           </div>
                         ) : (
-                          <p className="mt-3 text-xs text-slate-500">
-                            Tersedia untuk booking
-                          </p>
+                          <div className="mt-3 space-y-1 text-xs">
+                            <p>Tersedia untuk booking</p>
+                            <p>Klik untuk buat walk-in dari slot ini</p>
+                          </div>
                         )}
                       </button>
                     );

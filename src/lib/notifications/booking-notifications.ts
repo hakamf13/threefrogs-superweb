@@ -23,7 +23,7 @@ type BookingCreatedNotificationArgs = {
 	bookingId: string;
 	bookingCode: string;
 	customerName: string;
-	customerPhone: string;
+	customerPhone: string | null;
 	customerEmail?: string | null;
 	storeName: string;
 	bookingDate: Date;

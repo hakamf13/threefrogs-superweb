@@ -341,7 +341,7 @@ export default async function MyBookingDetailPage({
                 <div className="rounded-2xl bg-slate-50 p-4 text-xs leading-6 text-slate-600">
                   <p>• Simpan kode booking untuk memudahkan pengecekan.</p>
                   <p>• Kalau bukti bayar ditolak, kamu bisa upload ulang.</p>
-                  <p>• Booking yang belum dibayar akan otomatis kadaluwarsa.</p>
+                  <p>• Booking yang belum dibayar akan otomatis kedaluwarsa.</p>
                 </div>
               </div>
             </aside>

@@ -42,11 +42,10 @@ export default async function AdminLayout({
                 <AdminNavLink href="/admin/today-operations" label="Today Ops" />
                 <AdminNavLink href="/admin/health-check" label="Health Check" />
                 <AdminNavLink href="/admin" label="Dashboard" />
-                {/* <AdminNavLink href="/admin/bookings" label="Semua Booking" /> */}
                 <AdminNavLink href="/admin/manual-booking" label="Manual Booking" />
+                <AdminNavLink href="/admin/walk-in" label="Walk-in" />
                 <AdminNavLink href="/admin/availability" label="Availability" />
-                {/* <AdminNavLink href="/admin/open-tables" label="Open Tables" /> */}
-                <AdminNavLink href="/admin/stores" label="Store Images" />
+                <AdminNavLink href="/admin/stores" label="Store Management" />
                 <LogoutButton />
               </nav>
             </div>

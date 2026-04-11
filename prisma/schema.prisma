@@ -94,6 +94,7 @@ model Store {
   tables       Table[]
   bookings     Booking[]
   bookingSlots BookingSlot[]
+  walkInSessions  WalkInSession[]
 }
 
 model Table {
@@ -115,6 +116,7 @@ model Table {
   store        Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
   bookings     Booking[]
   bookingSlots BookingSlot[]
+  walkInSessions WalkInSession[]
 
   @@unique([storeId, tableNumber])
 }
@@ -259,4 +261,53 @@ model OpenTableSession {
 
   @@index([storeId, status])
   @@index([tableId, status])
+}
+
+enum WalkInSessionStatus {
+  ACTIVE
+  CLOSED
+  CANCELLED
+}
+
+enum WalkInPaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+model WalkInSession {
+  id                String              @id @default(cuid())
+  storeId           String
+  tableId           String
+
+  customerName      String
+  customerPhone     String?
+  notes             String?
+
+  startedAt         DateTime
+  estimatedEndAt    DateTime
+  actualEndedAt     DateTime?
+
+  bookingDate       DateTime
+
+  status            WalkInSessionStatus @default(ACTIVE)
+  paymentStatus     WalkInPaymentStatus @default(UNPAID)
+  paymentNote       String?
+
+  createdByAdminId  String?
+  closedByAdminId   String?
+
+  durationMinutes   Int?
+  billedMinutes     Int?
+  totalPrice        Int?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  store             Store               @relation(fields: [storeId], references: [id])
+  table             Table               @relation(fields: [tableId], references: [id])
+
+  @@index([storeId, bookingDate, status])
+  @@index([tableId, bookingDate, status])
+  @@index([startedAt, estimatedEndAt])
 }

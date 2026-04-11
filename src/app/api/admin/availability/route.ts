@@ -29,6 +29,7 @@ export async function GET(request: Request) {
       where: {
         id: storeId,
         isActive: true,
+        category: "MAHJONG",
       },
       select: {
         id: true,

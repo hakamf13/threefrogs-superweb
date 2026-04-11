@@ -1,5 +1,26 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+
+export async function POST() {
+  const session = await auth();
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+	return NextResponse.json({ error: "Akses ditolak." }, { status: 403 });
+  }
+
+  return NextResponse.json(
+	{
+	  error:
+		"Fitur Open Table sudah dinonaktifkan. Gunakan Walk-in Session di /admin/walk-in.",
+	},
+	{ status: 410 }
+  );
+}
+
+
+/*
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { prisma } from "../../../../lib/prisma";
 import { ACTIVE_BOOKING_STATUSES, PRICE_PER_HOUR } from "../../../../lib/constants";
 import {
@@ -149,3 +170,4 @@ export async function POST(request: Request) {
 		);
 	}
 }
+*/

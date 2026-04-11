@@ -78,10 +78,10 @@ export default function HealthCheckBoard({
 							Today Ops
 						</Link>
 						<Link
-							href="/admin/open-tables"
+							href="/admin/walk-in"
 							className="rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-700"
 						>
-							Open Tables
+							Walk-in
 						</Link>
 						<Link
 							href="/admin"
@@ -108,7 +108,7 @@ export default function HealthCheckBoard({
 					</div>
 
 					<div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-						<p className="text-sm text-slate-500">Open session</p>
+						<p className="text-sm text-slate-500">Walk-in aktif</p>
 						<p className="mt-2 text-3xl font-black text-[var(--tf-purple)]">
 							{data.summary.openSessions}
 						</p>
@@ -136,14 +136,14 @@ export default function HealthCheckBoard({
 					</div>
 
 					<div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-						<p className="text-sm text-slate-500">Duplicate open</p>
+						<p className="text-sm text-slate-500">Duplicate walk-in</p>
 						<p className="mt-2 text-3xl font-black text-red-600">
 							{data.summary.duplicateOpenTables}
 						</p>
 					</div>
 
 					<div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-						<p className="text-sm text-slate-500">Open vs booking</p>
+						<p className="text-sm text-slate-500">Walk-in vs booking</p>
 						<p className="mt-2 text-3xl font-black text-orange-600">
 							{data.summary.openTableConflictsWithBooking}
 						</p>
@@ -196,7 +196,7 @@ export default function HealthCheckBoard({
 									4. Admin direct confirm dan manual booking aman
 								</div>
 								<div className="rounded-[1.25rem] bg-slate-50 p-4">
-									5. Open Table buka → blok meja → close → tagihan benar
+									5. Walk-in buka → extend → close → tagihan benar
 								</div>
 								<div className="rounded-[1.25rem] bg-slate-50 p-4">
 									6. Today Ops menampilkan status meja dengan benar
@@ -207,7 +207,7 @@ export default function HealthCheckBoard({
 						{data.details.duplicateOpenTables.length > 0 ? (
 							<section className="rounded-[2rem] border border-red-200 bg-red-50 p-6 shadow-[var(--tf-shadow-card)]">
 								<h2 className="text-2xl font-black text-red-700">
-									Duplicate Open Table
+									Duplicate Walk-in Session
 								</h2>
 
 								<div className="mt-4 space-y-3 text-sm text-red-700">
@@ -228,7 +228,7 @@ export default function HealthCheckBoard({
 						{data.details.openTableConflictsWithBooking.length > 0 ? (
 							<section className="rounded-[2rem] border border-orange-200 bg-orange-50 p-6 shadow-[var(--tf-shadow-card)]">
 								<h2 className="text-2xl font-black text-orange-700">
-									Open Table vs Booking Conflict
+									Walk-in vs Booking Conflict
 								</h2>
 
 								<div className="mt-4 space-y-3 text-sm text-orange-700">

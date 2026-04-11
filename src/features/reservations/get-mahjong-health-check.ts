@@ -6,6 +6,23 @@ import {
 } from "@/lib/booking-window";
 import { expireOverdueBookings } from "./expire-overdue-bookings";
 
+function pad(value: number) {
+	return String(value).padStart(2, "0");
+}
+
+function buildSlotDate(dateText: string, hour: number) {
+	return new Date(`${dateText}T${pad(hour)}:00:00+07:00`);
+}
+
+function isOverlap(
+	startA: Date,
+	endA: Date,
+	startB: Date,
+	endB: Date
+) {
+	return startA < endB && endA > startB;
+}
+
 export async function getMahjongHealthCheck() {
 	await expireOverdueBookings();
 
@@ -17,7 +34,7 @@ export async function getMahjongHealthCheck() {
 	const [
 		activeStores,
 		activeTables,
-		openSessions,
+		activeWalkInSessions,
 		overdueAwaitingPayment,
 		bookingsWithoutSlots,
 		confirmedWithoutConfirmedAt,
@@ -40,15 +57,17 @@ export async function getMahjongHealthCheck() {
 			},
 		}),
 
-		prisma.openTableSession.findMany({
+		prisma.walkInSession.findMany({
 			where: {
-				status: "OPEN",
+				bookingDate: todayDateValue,
+				status: "ACTIVE",
 			},
 			select: {
 				id: true,
 				tableId: true,
 				storeId: true,
-				openedAt: true,
+				startedAt: true,
+				estimatedEndAt: true,
 				customerName: true,
 			},
 		}),
@@ -104,8 +123,8 @@ export async function getMahjongHealthCheck() {
 		}),
 	]);
 
-	const openTableByTable = new Map<string, typeof openSessions>();
-	for (const session of openSessions) {
+	const openTableByTable = new Map<string, typeof activeWalkInSessions>();
+	for (const session of activeWalkInSessions) {
 		const existing = openTableByTable.get(session.tableId) ?? [];
 		existing.push(session);
 		openTableByTable.set(session.tableId, existing);
@@ -126,16 +145,26 @@ export async function getMahjongHealthCheck() {
 			booking.slots.length === 0
 	).length;
 
-	const openTableConflictsWithBooking = openSessions.filter((session) =>
-		todayBookingSlots.some(
-			(slot) => slot.tableId === session.tableId && slot.slotEndHour > currentHour
-		)
+	const openTableConflictsWithBooking = activeWalkInSessions.filter((session) =>
+		todayBookingSlots.some((slot) => {
+			if (slot.tableId !== session.tableId) return false;
+
+			const slotStart = buildSlotDate(today, slot.slotHour);
+			const slotEnd = buildSlotDate(today, slot.slotEndHour);
+
+			return isOverlap(
+				session.startedAt,
+				session.estimatedEndAt,
+				slotStart,
+				slotEnd
+			);
+		})
 	);
 
 	const summary = {
 		activeStores,
 		activeTables,
-		openSessions: openSessions.length,
+		openSessions: activeWalkInSessions.length,
 		overdueAwaitingPayment,
 		bookingsWithoutSlots: bookingsWithoutSlotsCount,
 		confirmedWithoutConfirmedAt,
@@ -191,21 +220,21 @@ export async function getMahjongHealthCheck() {
 		},
 		{
 			key: "no_duplicate_open_table",
-			label: "Tidak ada double open table di meja yang sama",
+			label: "Tidak ada walk-in ganda di meja yang sama",
 			status: duplicateOpenTables.length === 0 ? "PASS" : "FAIL",
 			detail:
 				duplicateOpenTables.length === 0
-					? "Tidak ada meja dengan lebih dari satu open table aktif."
-					: `${duplicateOpenTables.length} meja punya open table ganda.`,
+					? "Tidak ada meja dengan lebih dari satu walk-in aktif."
+					: `${duplicateOpenTables.length} meja punya walk-in ganda.`,
 		},
 		{
 			key: "no_open_table_booking_conflict",
-			label: "Open table tidak bentrok dengan booking sisa hari ini",
+			label: "Walk-in tidak bentrok dengan booking terjadwal",
 			status: openTableConflictsWithBooking.length === 0 ? "PASS" : "WARN",
 			detail:
 				openTableConflictsWithBooking.length === 0
-					? "Tidak ada bentrok open table dengan booking aktif/berikutnya."
-					: `${openTableConflictsWithBooking.length} open table bentrok dengan booking hari ini.`,
+					? "Tidak ada bentrok walk-in dengan booking aktif/berikutnya."
+					: `${openTableConflictsWithBooking.length} walk-in bentrok dengan booking hari ini.`,
 		},
 	] as const;
 
@@ -217,12 +246,14 @@ export async function getMahjongHealthCheck() {
 		checks,
 		details: {
 			duplicateOpenTables,
-			openTableConflictsWithBooking: openTableConflictsWithBooking.map((session) => ({
-				sessionId: session.id,
-				tableId: session.tableId,
-				customerName: session.customerName,
-				openedAt: session.openedAt,
-			})),
+			openTableConflictsWithBooking: openTableConflictsWithBooking.map(
+				(session) => ({
+					sessionId: session.id,
+					tableId: session.tableId,
+					customerName: session.customerName,
+					openedAt: session.startedAt,
+				})
+			),
 		},
 	};
 }

@@ -1,5 +1,25 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+
+export async function PATCH() {
+  const session = await auth();
+
+  if (!session?.user || session.user.role !== "ADMIN") {
+	return NextResponse.json({ error: "Akses ditolak." }, { status: 403 });
+  }
+
+  return NextResponse.json(
+	{
+	  error:
+		"Fitur Open Table sudah dinonaktifkan. Gunakan Walk-in Session di /admin/walk-in.",
+	},
+	{ status: 410 }
+  );
+}
+
+/*
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { prisma } from "../../../../../../lib/prisma";
 import { calculateOpenTableBilling } from "../../../../../../features/open-tables/calculate-open-table-billing";
 
@@ -73,3 +93,4 @@ export async function PATCH(_request: Request, context: RouteContext) {
 		);
 	}
 }
+*/

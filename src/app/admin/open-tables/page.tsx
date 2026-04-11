@@ -1,3 +1,12 @@
+import { redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+
+export default function AdminOpenTablesPage() {
+  redirect("/admin/walk-in");
+}
+
+/*
 import { prisma } from "../../../lib/prisma";
 import OpenTableManager from "./open-table-manager";
 
@@ -65,3 +74,4 @@ export default async function AdminOpenTablesPage() {
 		/>
 	);
 }
+	*/

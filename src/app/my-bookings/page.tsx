@@ -31,7 +31,6 @@ const BOOKING_STATUS_VALUES: BookingStatus[] = [
   "CONFIRMED",
   "CANCELLED",
   "EXPIRED",
-  // "COMPLETED",
 ];
 
 const summaryCardClass =
@@ -196,7 +195,6 @@ export default async function MyBookingsPage({
                   <option value="CONFIRMED">Terkonfirmasi</option>
                   <option value="CANCELLED">Dibatalkan</option>
                   <option value="EXPIRED">Kedaluwarsa</option>
-                  {/* <option value="COMPLETED">Selesai</option> */}
                 </select>
               </div>
 
