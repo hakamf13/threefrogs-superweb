@@ -77,8 +77,8 @@ export default async function AdminStoreDetailPage({
 							address: store.address,
 							locationHint: store.locationHint ?? null,
 							description: store.description,
-							openingHour: store.openingHour ?? 11,
-							closingHour: store.closingHour ?? 22,
+							openingHour: store.openHour ?? 11,
+							closingHour: store.closeHour ?? 22,
 							isActive: store.isActive,
 							coverImageUrl: store.coverImageUrl,
 						}}
