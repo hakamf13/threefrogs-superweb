@@ -90,6 +90,8 @@ model Store {
   updatedAt               DateTime      @updatedAt
   openTableSessions       OpenTableSession[]
   locationHint            String?
+  openingHour             Int?          @default(11)
+  closingHour             Int?          @default(22)
 
   tables       Table[]
   bookings     Booking[]
@@ -112,6 +114,8 @@ model Table {
   openTableSessions       OpenTableSession[]
   displayLabel            String?
   note                    String?
+  notes                   String?
+  sortOrder               Int?          @default(0)
 
   store        Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
   bookings     Booking[]

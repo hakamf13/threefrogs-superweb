@@ -29,7 +29,7 @@ export type TodayOperationsBoardData = {
 			id: string;
 			tableNumber: number;
 			tableCode: string | null;
-			tableDisplay: string | null;
+			// tableDisplay: string | null;
 			displayLabel: string | null;
 			capacity: number | null;
 			currentStatus: TodayTableBoardStatus;
@@ -274,6 +274,7 @@ export async function getTodayOperationsBoard(): Promise<TodayOperationsBoardDat
 
 			return {
 				...table,
+				tableDisplay: table.displayLabel ?? null,
 				currentStatus,
 				openTable,
 				currentBooking,

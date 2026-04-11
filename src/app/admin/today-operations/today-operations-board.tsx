@@ -164,7 +164,7 @@ export default function TodayOperationsBoard({
 										<div className="flex items-start justify-between gap-3">
 											<div>
 												<h3 className="text-2xl font-black text-[var(--tf-purple)]">
-													{table.tableDisplay || `Meja ${table.tableNumber}`}
+													{`Meja ${table.tableNumber}`}
 												</h3>
 												<p className="text-sm text-slate-600">
 													Kapasitas: {table.capacity ?? "-"} orang
