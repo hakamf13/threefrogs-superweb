@@ -9,8 +9,8 @@ type RouteContext = {
 	}>;
 };
 
-function roundUpTo30Minutes(value: number) {
-	return Math.ceil(value / 30) * 30;
+function roundUpTo60Minutes(value: number) {
+	return Math.ceil(value / 60) * 60;
 }
 
 export async function PATCH(_request: Request, context: RouteContext) {
@@ -51,7 +51,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
 			1,
 			Math.ceil((actualEndedAt.getTime() - walkIn.startedAt.getTime()) / 60000)
 		);
-		const billedMinutes = roundUpTo30Minutes(durationMinutes);
+		const billedMinutes = roundUpTo60Minutes(durationMinutes);
 		const totalPrice = Math.ceil((billedMinutes / 60) * PRICE_PER_HOUR);
 
 		await prisma.walkInSession.update({

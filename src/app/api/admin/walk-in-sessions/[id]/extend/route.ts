@@ -45,7 +45,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 		const body = await request.json().catch(() => ({}));
 		const extendMinutes = Number(body?.extendMinutes ?? 0);
 
-		if (![30, 60, 90, 120].includes(extendMinutes)) {
+		if (![60, 120].includes(extendMinutes)) {
 			return NextResponse.json(
 				{ error: "Durasi extend tidak valid." },
 				{ status: 400 }
