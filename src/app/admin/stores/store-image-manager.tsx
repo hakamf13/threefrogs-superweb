@@ -108,6 +108,7 @@ export default function AdminStoreImageManager({
 					<p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
 						Admin Stores
 					</p>
+					
 					<h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
 						Kelola Foto Store
 					</h1>
@@ -172,6 +173,8 @@ export default function AdminStoreImageManager({
 									? "Ganti Foto"
 									: "Upload Foto"}
 							</button>
+
+							
 						</div>
 					))}
 				</div>

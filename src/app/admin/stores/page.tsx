@@ -21,6 +21,7 @@ export default async function AdminStoresPage() {
       coverImagePublicId: true,
     },
   });
+  
 
   return <AdminStoreImageManager stores={stores} />;
 }
