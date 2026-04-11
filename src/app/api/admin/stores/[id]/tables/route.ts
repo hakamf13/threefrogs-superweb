@@ -29,10 +29,10 @@ export async function POST(request: Request, context: RouteContext) {
 				? null
 				: Number(body.capacity);
 		const notes = typeof body?.notes === "string" ? body.notes.trim() : "";
-		const sortOrder =
-			body?.sortOrder === null || body?.sortOrder === undefined
-				? 0
-				: Number(body.sortOrder);
+		// const sortOrder =
+		// 	body?.sortOrder === null || body?.sortOrder === undefined
+		// 		? 0
+		// 		: Number(body.sortOrder);
 		const isActive =
 			typeof body?.isActive === "boolean" ? body.isActive : true;
 
@@ -80,7 +80,7 @@ export async function POST(request: Request, context: RouteContext) {
 				displayLabel: displayLabel || null,
 				capacity,
 				notes: notes || null,
-				sortOrder,
+				// sortOrder,
 				isActive,
 			},
 			select: {

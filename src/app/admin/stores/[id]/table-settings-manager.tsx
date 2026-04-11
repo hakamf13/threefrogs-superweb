@@ -10,7 +10,7 @@ type TableItem = {
 	displayLabel: string | null;
 	capacity: number | null;
 	notes: string | null;
-	sortOrder: number;
+	// sortOrder: number;
 	isActive: boolean;
 };
 
@@ -25,7 +25,7 @@ type DraftTableForm = {
 	displayLabel: string;
 	capacity: string;
 	notes: string;
-	sortOrder: number;
+	// sortOrder: number;
 	isActive: boolean;
 };
 
@@ -36,7 +36,7 @@ function makeDefaultDraft(nextTableNumber: number): DraftTableForm {
 		displayLabel: "",
 		capacity: "",
 		notes: "",
-		sortOrder: 0,
+		// sortOrder: 0,
 		isActive: true,
 	};
 }
@@ -70,7 +70,7 @@ export default function TableSettingsManager({
 					displayLabel: table.displayLabel ?? "",
 					capacity: table.capacity != null ? String(table.capacity) : "",
 					notes: table.notes ?? "",
-					sortOrder: table.sortOrder ?? 0,
+					// sortOrder: table.sortOrder ?? 0,
 					isActive: table.isActive,
 				},
 			])
@@ -93,7 +93,7 @@ export default function TableSettingsManager({
 					displayLabel: newTable.displayLabel,
 					capacity: newTable.capacity ? Number(newTable.capacity) : null,
 					notes: newTable.notes,
-					sortOrder: newTable.sortOrder,
+					// sortOrder: newTable.sortOrder,
 					isActive: newTable.isActive,
 				}),
 			});
@@ -134,7 +134,7 @@ export default function TableSettingsManager({
 					displayLabel: draft.displayLabel,
 					capacity: draft.capacity ? Number(draft.capacity) : null,
 					notes: draft.notes,
-					sortOrder: draft.sortOrder,
+					// sortOrder: draft.sortOrder,
 					isActive: draft.isActive,
 				}),
 			});
@@ -212,7 +212,7 @@ export default function TableSettingsManager({
 						className="rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
 					/>
 
-					<input
+					{/* <input
 						type="number"
 						value={newTable.sortOrder}
 						onChange={(e) =>
@@ -223,7 +223,7 @@ export default function TableSettingsManager({
 						}
 						placeholder="Urutan"
 						className="rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
-					/>
+					/> */}
 
 					<label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
 						<input
@@ -373,7 +373,7 @@ export default function TableSettingsManager({
 											className="rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
 										/>
 
-										<input
+										{/* <input
 											type="number"
 											value={draft.sortOrder}
 											onChange={(e) =>
@@ -387,7 +387,7 @@ export default function TableSettingsManager({
 											}
 											placeholder="Urutan"
 											className="rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
-										/>
+										/> */}
 
 										<label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
 											<input
@@ -440,9 +440,9 @@ export default function TableSettingsManager({
 										<span className="rounded-full bg-white px-3 py-1">
 											Kapasitas: {table.capacity ?? "-"}
 										</span>
-										<span className="rounded-full bg-white px-3 py-1">
+										{/* <span className="rounded-full bg-white px-3 py-1">
 											Urutan: {table.sortOrder ?? 0}
-										</span>
+										</span> */}
 										{table.notes ? (
 											<span className="rounded-full bg-white px-3 py-1">
 												{table.notes}

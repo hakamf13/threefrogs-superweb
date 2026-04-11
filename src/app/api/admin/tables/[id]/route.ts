@@ -29,10 +29,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 				? null
 				: Number(body.capacity);
 		const notes = typeof body?.notes === "string" ? body.notes.trim() : "";
-		const sortOrder =
-			body?.sortOrder === null || body?.sortOrder === undefined
-				? 0
-				: Number(body.sortOrder);
+		// const sortOrder =
+		// 	body?.sortOrder === null || body?.sortOrder === undefined
+		// 		? 0
+		// 		: Number(body.sortOrder);
 		const isActive = Boolean(body?.isActive);
 
 		if (!Number.isFinite(tableNumber) || tableNumber <= 0) {
@@ -85,7 +85,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 				displayLabel: displayLabel || null,
 				capacity,
 				notes: notes || null,
-				sortOrder,
+				// sortOrder,
 				isActive,
 			},
 		});

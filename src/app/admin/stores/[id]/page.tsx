@@ -29,7 +29,6 @@ export default async function AdminStoreDetailPage({
 		include: {
 			tables: {
 				orderBy: [
-					{ sortOrder: "asc" },
 					{ tableNumber: "asc" },
 				],
 			},
@@ -90,8 +89,7 @@ export default async function AdminStoreDetailPage({
 							tableCode: table.tableCode,
 							displayLabel: table.displayLabel ?? null,
 							capacity: table.capacity,
-							notes: table.notes ?? null,
-							sortOrder: table.sortOrder ?? 0,
+							notes: table.note ?? null,
 							isActive: table.isActive,
 						}))}
 					/>
