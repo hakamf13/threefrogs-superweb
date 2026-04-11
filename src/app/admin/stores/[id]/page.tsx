@@ -23,7 +23,9 @@ export default async function AdminStoreDetailPage({
 	}
 
 	const { id } = await params;
-// TEST
+// TESTING
+// testing
+
 	const store = await prisma.store.findUnique({
 		where: { id },
 		include: {
