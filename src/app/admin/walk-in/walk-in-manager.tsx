@@ -206,6 +206,11 @@ function getProgressPercent(session: SessionItem) {
   return Math.max(0, Math.min(100, Math.round((elapsed / total) * 100)));
 }
 
+function getCompactNotePreview(text: string, maxLength = 84) {
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength).trim()}...`;
+}
+
 export default function WalkInManager({
   stores,
   activeSessions,
@@ -260,6 +265,9 @@ export default function WalkInManager({
     useState<string>(initialMonitorStore);
   const [sessionQuery, setSessionQuery] = useState(initialSessionQuery);
   const [historyStoreFilter, setHistoryStoreFilter] = useState<string>("ALL");
+  const [expandedNotesSessionId, setExpandedNotesSessionId] = useState<
+    string | null
+  >(focusedSessionId || null);
 
   const selectedStore = useMemo(
     () => stores.find((store) => store.id === selectedStoreId),
@@ -282,7 +290,9 @@ export default function WalkInManager({
       params.set("date", availabilityDate);
     }
 
-    return `/admin/availability${params.toString() ? `?${params.toString()}` : ""}`;
+    return `/admin/availability${
+      params.toString() ? `?${params.toString()}` : ""
+    }`;
   }, [selectedStoreId, availabilityDate]);
 
   const estimatedEndPreview = useMemo(() => {
@@ -376,6 +386,7 @@ export default function WalkInManager({
   const storeQuickFilters = useMemo(() => {
     return stores
       .map((store) => ({
+        id: store.id,
         name: store.name,
         activeCount: activeSessions.filter(
           (session) => session.store.name === store.name
@@ -391,6 +402,10 @@ export default function WalkInManager({
       (session) => session.store.name === historyStoreFilter
     );
   }, [recentSessions, historyStoreFilter]);
+
+  const storeIdByName = useMemo(() => {
+    return new Map(stores.map((store) => [store.name, store.id]));
+  }, [stores]);
 
   useEffect(() => {
     if (!focusedSessionId) return;
@@ -561,6 +576,8 @@ export default function WalkInManager({
     const isClosing = closingSessionId === session.id;
     const progressPercent = getProgressPercent(session);
     const isFocused = focusedSessionId === session.id;
+    const hasNotes = Boolean(session.paymentNote || session.notes);
+    const isExpanded = expandedNotesSessionId === session.id;
 
     return (
       <div
@@ -568,7 +585,7 @@ export default function WalkInManager({
         key={session.id}
         className={`rounded-[1.5rem] border bg-slate-50 p-5 transition ${
           isFocused
-            ? "border-[var(--tf-purple)] ring-2 ring-[var(--tf-lavender)]"
+            ? "border-[var(--tf-purple)] bg-[var(--tf-lavender)]/30 ring-2 ring-[var(--tf-lavender)]"
             : "border-slate-200"
         }`}
       >
@@ -621,7 +638,7 @@ export default function WalkInManager({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-2xl bg-white p-4">
               <p className="text-sm text-slate-500">Mulai</p>
               <p className="mt-1 font-semibold text-slate-900">
@@ -644,27 +661,79 @@ export default function WalkInManager({
             </div>
           </div>
 
-          {session.paymentNote || session.notes ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {session.paymentNote ? (
-                <div className="rounded-2xl bg-white p-4 text-sm text-slate-700">
-                  <p className="font-semibold text-slate-900">
-                    Catatan pembayaran
-                  </p>
-                  <p className="mt-1">{session.paymentNote}</p>
-                </div>
-              ) : null}
+          {hasNotes ? (
+            <div className="rounded-2xl bg-white p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-slate-900">
+                  Catatan sesi & pembayaran
+                </p>
 
-              {session.notes ? (
-                <div className="rounded-2xl bg-white p-4 text-sm text-slate-700">
-                  <p className="font-semibold text-slate-900">Catatan sesi</p>
-                  <p className="mt-1">{session.notes}</p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setExpandedNotesSessionId((current) =>
+                      current === session.id ? null : session.id
+                    )
+                  }
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--tf-purple)]"
+                >
+                  {isExpanded ? (
+                    <>
+                      <ChevronUp className="h-4 w-4" />
+                      Sembunyikan
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="h-4 w-4" />
+                      Lihat catatan
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {isExpanded ? (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {session.paymentNote ? (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                      <p className="font-semibold text-slate-900">
+                        Catatan pembayaran
+                      </p>
+                      <p className="mt-1">{session.paymentNote}</p>
+                    </div>
+                  ) : null}
+
+                  {session.notes ? (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                      <p className="font-semibold text-slate-900">
+                        Catatan sesi
+                      </p>
+                      <p className="mt-1">{session.notes}</p>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
+              ) : (
+                <div className="mt-3 space-y-2 text-sm text-slate-600">
+                  {session.paymentNote ? (
+                    <p>
+                      <span className="font-semibold text-slate-800">
+                        Pembayaran:
+                      </span>{" "}
+                      {getCompactNotePreview(session.paymentNote)}
+                    </p>
+                  ) : null}
+
+                  {session.notes ? (
+                    <p>
+                      <span className="font-semibold text-slate-800">Sesi:</span>{" "}
+                      {getCompactNotePreview(session.notes)}
+                    </p>
+                  ) : null}
+                </div>
+              )}
             </div>
           ) : null}
 
-          <div className="flex flex-wrap gap-3">
+          <div className="grid gap-3 sm:grid-cols-2 xl:flex xl:flex-wrap">
             <button
               type="button"
               onClick={() => handleExtend(session.id, 60)}
@@ -687,7 +756,7 @@ export default function WalkInManager({
               type="button"
               onClick={() => handleOpenPaymentEditor(session)}
               disabled={busyId === session.id}
-              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--tf-purple)] px-4 py-2.5 font-semibold text-[var(--tf-purple)]"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--tf-purple)] px-4 py-2.5 font-semibold text-[var(--tf-purple)]"
             >
               <CreditCard className="h-4 w-4" />
               Pembayaran
@@ -703,7 +772,7 @@ export default function WalkInManager({
                 setMessage("");
               }}
               disabled={busyId === session.id}
-              className="inline-flex items-center gap-2 rounded-2xl border border-red-200 px-4 py-2.5 font-semibold text-red-700 transition hover:bg-red-50"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 px-4 py-2.5 font-semibold text-red-700 transition hover:bg-red-50"
             >
               <ReceiptText className="h-4 w-4" />
               Tutup sesi
@@ -810,6 +879,40 @@ export default function WalkInManager({
       </div>
     );
   };
+
+  function buildAvailabilityHrefForStore(storeId: string, date: string) {
+    const params = new URLSearchParams();
+
+    if (storeId) {
+      params.set("storeId", storeId);
+    }
+
+    if (date) {
+      params.set("date", date);
+    }
+
+    return `/admin/availability?${params.toString()}`;
+  }
+
+  function buildWalkInHrefForStore(
+    storeId: string,
+    storeName: string,
+    date: string
+  ) {
+    const params = new URLSearchParams();
+
+    if (storeId) {
+      params.set("storeId", storeId);
+    }
+
+    params.set("monitorStore", storeName);
+
+    if (date) {
+      params.set("availabilityDate", date);
+    }
+
+    return `/admin/walk-in?${params.toString()}`;
+  }
 
   return (
     <main className="min-h-screen bg-[var(--tf-bg)] px-4 py-10 text-slate-800 sm:px-6 sm:py-14">
@@ -1231,32 +1334,59 @@ export default function WalkInManager({
                       return diffMinutes >= 0 && diffMinutes <= 30;
                     }).length;
 
+                    const storeId = storeIdByName.get(group.storeName) ?? "";
+
                     return (
                       <div key={group.storeName} className="space-y-4">
                         <div className="rounded-[1.4rem] border border-slate-200 bg-[var(--tf-surface-muted)] px-4 py-4">
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                              <p className="text-lg font-black text-[var(--tf-purple)]">
-                                {group.storeName}
-                              </p>
-                              <p className="text-sm text-slate-600">
-                                {group.sessions.length} sesi aktif
-                              </p>
+                          <div className="flex flex-col gap-4">
+                            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                              <div>
+                                <p className="text-lg font-black text-[var(--tf-purple)]">
+                                  {group.storeName}
+                                </p>
+                                <p className="text-sm text-slate-600">
+                                  {group.sessions.length} sesi aktif
+                                </p>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                                  Aktif {group.sessions.length}
+                                </span>
+                                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                                  Belum bayar {unpaidCount}
+                                </span>
+                                <span className="rounded-full bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700">
+                                  DP {dpCount}
+                                </span>
+                                <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+                                  Hampir selesai {endingSoonCount}
+                                </span>
+                              </div>
                             </div>
 
-                            <div className="flex flex-wrap gap-2">
-                              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-                                Aktif {group.sessions.length}
-                              </span>
-                              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-                                Belum bayar {unpaidCount}
-                              </span>
-                              <span className="rounded-full bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700">
-                                DP {dpCount}
-                              </span>
-                              <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
-                                Hampir selesai {endingSoonCount}
-                              </span>
+                            <div className="flex flex-wrap gap-3">
+                              <a
+                                href={buildAvailabilityHrefForStore(
+                                  storeId,
+                                  availabilityDate
+                                )}
+                                className="rounded-2xl border border-[var(--tf-purple)] px-4 py-2 text-sm font-semibold text-[var(--tf-purple)]"
+                              >
+                                Availability store ini
+                              </a>
+
+                              <a
+                                href={buildWalkInHrefForStore(
+                                  storeId,
+                                  group.storeName,
+                                  availabilityDate
+                                )}
+                                className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+                              >
+                                Buka walk-in baru
+                              </a>
                             </div>
                           </div>
                         </div>
