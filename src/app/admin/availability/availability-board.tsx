@@ -23,6 +23,8 @@ type AvailabilityCell = {
   source: string | null;
   openTableSessionId: string | null;
   walkInSessionId?: string | null;
+  walkInEstimatedEndAt?: string | null;
+  walkInPaymentStatus?: "UNPAID" | "PARTIAL" | "PAID" | null;
 };
 
 type AvailabilityTable = {
@@ -74,6 +76,28 @@ function getCellLabel(status: string) {
   }
 }
 
+function formatWalkInEnd(value: string | null | undefined) {
+  if (!value) return "-";
+
+  return new Intl.DateTimeFormat("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function getPaymentLabel(status: "UNPAID" | "PARTIAL" | "PAID" | null | undefined) {
+  switch (status) {
+    case "PAID":
+      return "Lunas";
+    case "PARTIAL":
+      return "DP";
+    case "UNPAID":
+      return "Belum bayar";
+    default:
+      return "-";
+  }
+}
+
 export default function AdminAvailabilityBoard({
   stores,
   defaultDate,
@@ -96,7 +120,9 @@ export default function AdminAvailabilityBoard({
 
     if (selectedStoreId) {
       params.set("storeId", selectedStoreId);
-      params.set("monitorStore", selectedStore?.name ?? "");
+      if (selectedStore?.name) {
+        params.set("monitorStore", selectedStore.name);
+      }
     }
 
     if (selectedDate) {
@@ -163,12 +189,12 @@ export default function AdminAvailabilityBoard({
             >
               Manual Booking
             </Link>
-            <Link
+            <a
               href={walkInPageBaseHref}
               className="rounded-2xl border border-[var(--tf-purple)] px-5 py-3 font-bold text-[var(--tf-purple)]"
             >
               Walk-in
-            </Link>
+            </a>
             <Link
               href="/admin"
               className="rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-700"
@@ -287,9 +313,6 @@ export default function AdminAvailabilityBoard({
                       slot.status === "WALK_IN" || !!slot.walkInSessionId;
                     const isEmptySlot = slot.status === "AVAILABLE";
 
-                    const isClickable =
-                      isBookingSlot || isWalkInSlot || isEmptySlot;
-
                     return (
                       <button
                         key={slot.hour}
@@ -311,7 +334,10 @@ export default function AdminAvailabilityBoard({
                             if (slot.customerName) {
                               params.set("q", slot.customerName);
                             } else {
-                              params.set("q", table.displayLabel || `Meja ${table.tableNumber}`);
+                              params.set(
+                                "q",
+                                table.displayLabel || `Meja ${table.tableNumber}`
+                              );
                             }
 
                             router.push(`/admin/walk-in?${params.toString()}`);
@@ -331,11 +357,9 @@ export default function AdminAvailabilityBoard({
 
                           router.push(`/admin/walk-in?${params.toString()}`);
                         }}
-                        className={`rounded-2xl border p-4 text-left transition ${getCellClasses(
+                        className={`rounded-2xl border p-4 text-left transition hover:-translate-y-[1px] hover:shadow-sm ${getCellClasses(
                           slot.status
-                        )} ${
-                          isClickable ? "hover:-translate-y-[1px] hover:shadow-sm" : ""
-                        }`}
+                        )}`}
                       >
                         <p className="font-bold">{formatHourLabel(slot.hour)}</p>
                         <p className="mt-2 text-sm font-semibold">
@@ -344,20 +368,25 @@ export default function AdminAvailabilityBoard({
 
                         {isWalkInSlot ? (
                           <div className="mt-3 space-y-1 text-xs">
-                            <p>Mode: Walk-in</p>
                             <p>Nama: {slot.customerName || "-"}</p>
+                            <p>Selesai: {formatWalkInEnd(slot.walkInEstimatedEndAt)}</p>
+                            <p>Bayar: {getPaymentLabel(slot.walkInPaymentStatus)}</p>
                             <p>Klik untuk fokus ke sesi ini</p>
                           </div>
-                        ) : slot.bookingCode ? (
+                        ) : isBookingSlot ? (
                           <div className="mt-3 space-y-1 text-xs">
                             <p>Kode: {slot.bookingCode}</p>
                             <p>Nama: {slot.customerName}</p>
                             <p>Source: {slot.source}</p>
                           </div>
+                        ) : isEmptySlot ? (
+                          <div className="mt-3 space-y-1 text-xs">
+                            <p>Tersedia untuk walk-in</p>
+                            <p>Klik untuk buka walk-in dari slot ini</p>
+                          </div>
                         ) : (
                           <div className="mt-3 space-y-1 text-xs">
-                            <p>Tersedia untuk booking</p>
-                            <p>Klik untuk buat walk-in dari slot ini</p>
+                            <p>Slot ini tidak tersedia.</p>
                           </div>
                         )}
                       </button>

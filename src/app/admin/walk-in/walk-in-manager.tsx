@@ -8,6 +8,7 @@ import {
   Clock3,
   CreditCard,
   Loader2,
+  PencilLine,
   PlayCircle,
   ReceiptText,
   Store,
@@ -62,6 +63,8 @@ const durationOptions = [
   { value: 120, label: "2 jam" },
   { value: 180, label: "3 jam" },
   { value: 240, label: "4 jam" },
+  { value: 300, label: "5 jam" },
+  { value: 360, label: "6 jam" },
 ];
 
 function pad(value: number) {
@@ -114,6 +117,47 @@ function formatMinutes(value: number | null) {
 
   if (minutes === 0) return `${hours} jam`;
   return `${hours} jam ${minutes} menit`;
+}
+
+function formatDateTimeInputInJakarta(value: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(value));
+
+  const map = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  ) as Record<string, string>;
+
+  return `${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}`;
+}
+
+function buildDateFromLocalInput(localValue: string) {
+  return new Date(`${localValue}:00+07:00`);
+}
+
+function getEstimatedEndDisplay(startedAtLocal: string, durationMinutes: number) {
+  if (!startedAtLocal) return "-";
+
+  const startedAt = buildDateFromLocalInput(startedAtLocal);
+  if (Number.isNaN(startedAt.getTime())) return "-";
+
+  const estimatedEnd = new Date(
+    startedAt.getTime() + durationMinutes * 60 * 1000
+  );
+
+  return formatDateTime(estimatedEnd.toISOString());
+}
+
+function normalizeDurationToHour(value: number) {
+  return Math.max(60, Math.ceil(value / 60) * 60);
 }
 
 function getPaymentBadgeClass(status: "UNPAID" | "PARTIAL" | "PAID") {
@@ -260,6 +304,10 @@ export default function WalkInManager({
   >("UNPAID");
   const [editingPaymentNote, setEditingPaymentNote] = useState("");
 
+  const [editingTimeId, setEditingTimeId] = useState<string | null>(null);
+  const [editingStartedAtLocal, setEditingStartedAtLocal] = useState("");
+  const [editingDurationMinutes, setEditingDurationMinutes] = useState(120);
+
   const [closingSessionId, setClosingSessionId] = useState<string | null>(null);
   const [sessionStoreFilter, setSessionStoreFilter] =
     useState<string>(initialMonitorStore);
@@ -296,17 +344,12 @@ export default function WalkInManager({
   }, [selectedStoreId, availabilityDate]);
 
   const estimatedEndPreview = useMemo(() => {
-    if (!startedAtLocal) return "-";
-
-    const startedAt = new Date(`${startedAtLocal}:00+07:00`);
-    if (Number.isNaN(startedAt.getTime())) return "-";
-
-    const estimatedEnd = new Date(
-      startedAt.getTime() + initialDurationMinutes * 60 * 1000
-    );
-
-    return formatDateTime(estimatedEnd.toISOString());
+    return getEstimatedEndDisplay(startedAtLocal, initialDurationMinutes);
   }, [startedAtLocal, initialDurationMinutes]);
+
+  const editingEstimatedEndPreview = useMemo(() => {
+    return getEstimatedEndDisplay(editingStartedAtLocal, editingDurationMinutes);
+  }, [editingStartedAtLocal, editingDurationMinutes]);
 
   const sortedActiveSessions = useMemo(() => {
     return [...activeSessions].sort(
@@ -505,8 +548,55 @@ export default function WalkInManager({
     setEditingPaymentId(session.id);
     setEditingPaymentStatus(session.paymentStatus);
     setEditingPaymentNote(session.paymentNote ?? "");
+    setEditingTimeId(null);
     setClosingSessionId(null);
     setMessage("");
+  };
+
+  const handleOpenTimeEditor = (session: SessionItem) => {
+    setEditingTimeId(session.id);
+    setEditingStartedAtLocal(formatDateTimeInputInJakarta(session.startedAt));
+    setEditingDurationMinutes(
+      normalizeDurationToHour(getSessionDurationMinutes(session))
+    );
+    setEditingPaymentId(null);
+    setClosingSessionId(null);
+    setExpandedNotesSessionId(session.id);
+    setMessage("");
+  };
+
+  const handleSaveTime = async (id: string) => {
+    try {
+      setBusyId(id);
+      setMessage("");
+
+      const response = await fetch(`/api/admin/walk-in-sessions/${id}/time`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          startedAtLocal: editingStartedAtLocal,
+          durationMinutes: editingDurationMinutes,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setMessage(result.error ?? "Gagal mengubah waktu sesi.");
+        return;
+      }
+
+      setMessage("Waktu sesi berhasil diperbarui.");
+      setEditingTimeId(null);
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      setMessage("Terjadi kesalahan saat mengubah waktu sesi.");
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const handlePayment = async (id: string) => {
@@ -573,6 +663,7 @@ export default function WalkInManager({
 
   const renderSessionCard = (session: SessionItem) => {
     const isEditingPayment = editingPaymentId === session.id;
+    const isEditingTime = editingTimeId === session.id;
     const isClosing = closingSessionId === session.id;
     const progressPercent = getProgressPercent(session);
     const isFocused = focusedSessionId === session.id;
@@ -754,6 +845,16 @@ export default function WalkInManager({
 
             <button
               type="button"
+              onClick={() => handleOpenTimeEditor(session)}
+              disabled={busyId === session.id}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 transition hover:border-[var(--tf-purple)] hover:text-[var(--tf-purple)]"
+            >
+              <PencilLine className="h-4 w-4" />
+              Edit waktu
+            </button>
+
+            <button
+              type="button"
               onClick={() => handleOpenPaymentEditor(session)}
               disabled={busyId === session.id}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--tf-purple)] px-4 py-2.5 font-semibold text-[var(--tf-purple)]"
@@ -769,6 +870,7 @@ export default function WalkInManager({
                   closingSessionId === session.id ? null : session.id
                 );
                 setEditingPaymentId(null);
+                setEditingTimeId(null);
                 setMessage("");
               }}
               disabled={busyId === session.id}
@@ -778,6 +880,81 @@ export default function WalkInManager({
               Tutup sesi
             </button>
           </div>
+
+          {isEditingTime ? (
+            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
+              <h3 className="text-lg font-black text-[var(--tf-purple)]">
+                Edit waktu sesi
+              </h3>
+
+              <div className="mt-4 grid gap-4">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Mulai main
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={editingStartedAtLocal}
+                    onChange={(e) => setEditingStartedAtLocal(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Durasi sesi
+                  </label>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {durationOptions.map((option) => {
+                      const isActive = editingDurationMinutes === option.value;
+
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setEditingDurationMinutes(option.value)}
+                          className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+                            isActive
+                              ? "border-[var(--tf-purple)] bg-[var(--tf-lavender)] text-[var(--tf-purple)]"
+                              : "border-slate-200 bg-white text-slate-700 hover:border-[var(--tf-purple)]"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
+                  <p className="text-sm text-slate-500">Estimasi selesai baru</p>
+                  <p className="mt-1 font-semibold text-slate-900">
+                    {editingEstimatedEndPreview}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleSaveTime(session.id)}
+                    disabled={busyId === session.id}
+                    className="rounded-2xl bg-[var(--tf-purple)] px-4 py-3 font-semibold text-white"
+                  >
+                    {busyId === session.id ? "Menyimpan..." : "Simpan waktu"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditingTimeId(null)}
+                    disabled={busyId === session.id}
+                    className="rounded-2xl border border-slate-300 px-4 py-3 font-semibold text-slate-700"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {isEditingPayment ? (
             <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
@@ -1068,7 +1245,7 @@ export default function WalkInManager({
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Durasi awal
                 </label>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {durationOptions.map((option) => {
                     const isActive = initialDurationMinutes === option.value;
 

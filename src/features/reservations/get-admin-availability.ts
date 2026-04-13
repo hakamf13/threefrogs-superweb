@@ -17,12 +17,7 @@ function buildSlotDate(bookingDate: string, hour: number) {
   return new Date(`${bookingDate}T${pad(hour)}:00:00+07:00`);
 }
 
-function isOverlap(
-  startA: Date,
-  endA: Date,
-  startB: Date,
-  endB: Date
-) {
+function isOverlap(startA: Date, endA: Date, startB: Date, endB: Date) {
   return startA < endB && endA > startB;
 }
 
@@ -86,10 +81,7 @@ export async function getAdminAvailabilityByStoreAndDate(
           in: [...ACTIVE_BOOKING_STATUSES],
         },
       },
-      orderBy: [
-        { tableId: "asc" },
-        { slotHour: "asc" },
-      ],
+      orderBy: [{ tableId: "asc" }, { slotHour: "asc" }],
       select: {
         tableId: true,
         slotHour: true,
@@ -116,10 +108,7 @@ export async function getAdminAvailabilityByStoreAndDate(
           isActive: true,
         },
       },
-      orderBy: [
-        { tableId: "asc" },
-        { startedAt: "asc" },
-      ],
+      orderBy: [{ tableId: "asc" }, { startedAt: "asc" }],
       select: {
         id: true,
         tableId: true,
@@ -178,12 +167,12 @@ export async function getAdminAvailabilityByStoreAndDate(
           source: "WALK_IN",
           openTableSessionId: null,
           walkInSessionId: walkIn.id,
+          walkInEstimatedEndAt: walkIn.estimatedEndAt.toISOString(),
+          walkInPaymentStatus: walkIn.paymentStatus,
         };
       }
 
-      const bookingSlot = tableBookingSlots.find(
-        (item) => item.slotHour === hour
-      );
+      const bookingSlot = tableBookingSlots.find((item) => item.slotHour === hour);
 
       if (bookingSlot) {
         return {
@@ -197,6 +186,8 @@ export async function getAdminAvailabilityByStoreAndDate(
           source: bookingSlot.booking.source,
           openTableSessionId: null,
           walkInSessionId: null,
+          walkInEstimatedEndAt: null,
+          walkInPaymentStatus: null,
         };
       }
 
@@ -216,6 +207,8 @@ export async function getAdminAvailabilityByStoreAndDate(
         source: null,
         openTableSessionId: null,
         walkInSessionId: null,
+        walkInEstimatedEndAt: null,
+        walkInPaymentStatus: null,
       };
     });
 
