@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  ArrowRightLeft,
   ChevronDown,
   ChevronUp,
   Clock3,
@@ -308,6 +309,9 @@ export default function WalkInManager({
   const [editingStartedAtLocal, setEditingStartedAtLocal] = useState("");
   const [editingDurationMinutes, setEditingDurationMinutes] = useState(120);
 
+  const [editingTableId, setEditingTableId] = useState<string | null>(null);
+  const [editingTableTargetId, setEditingTableTargetId] = useState("");
+
   const [closingSessionId, setClosingSessionId] = useState<string | null>(null);
   const [sessionStoreFilter, setSessionStoreFilter] =
     useState<string>(initialMonitorStore);
@@ -450,6 +454,10 @@ export default function WalkInManager({
     return new Map(stores.map((store) => [store.name, store.id]));
   }, [stores]);
 
+  const storeByName = useMemo(() => {
+    return new Map(stores.map((store) => [store.name, store]));
+  }, [stores]);
+
   useEffect(() => {
     if (!focusedSessionId) return;
 
@@ -549,6 +557,7 @@ export default function WalkInManager({
     setEditingPaymentStatus(session.paymentStatus);
     setEditingPaymentNote(session.paymentNote ?? "");
     setEditingTimeId(null);
+    setEditingTableId(null);
     setClosingSessionId(null);
     setMessage("");
   };
@@ -560,6 +569,28 @@ export default function WalkInManager({
       normalizeDurationToHour(getSessionDurationMinutes(session))
     );
     setEditingPaymentId(null);
+    setEditingTableId(null);
+    setClosingSessionId(null);
+    setExpandedNotesSessionId(session.id);
+    setMessage("");
+  };
+
+  const handleOpenTableEditor = (session: SessionItem) => {
+    const currentStore = storeByName.get(session.store.name);
+
+    const matchedTable =
+      currentStore?.tables.find((table) => {
+        if (session.table.displayLabel) {
+          return table.displayLabel === session.table.displayLabel;
+        }
+
+        return table.tableNumber === session.table.tableNumber;
+      }) ?? null;
+
+    setEditingTableId(session.id);
+    setEditingTableTargetId(matchedTable?.id ?? "");
+    setEditingPaymentId(null);
+    setEditingTimeId(null);
     setClosingSessionId(null);
     setExpandedNotesSessionId(session.id);
     setMessage("");
@@ -594,6 +625,44 @@ export default function WalkInManager({
     } catch (error) {
       console.error(error);
       setMessage("Terjadi kesalahan saat mengubah waktu sesi.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleSaveTable = async (id: string) => {
+    if (!editingTableTargetId) {
+      setMessage("Pilih meja tujuan dulu.");
+      return;
+    }
+
+    try {
+      setBusyId(id);
+      setMessage("");
+
+      const response = await fetch(`/api/admin/walk-in-sessions/${id}/table`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tableId: editingTableTargetId,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setMessage(result.error ?? "Gagal memindahkan meja.");
+        return;
+      }
+
+      setMessage("Meja sesi berhasil dipindahkan.");
+      setEditingTableId(null);
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      setMessage("Terjadi kesalahan saat memindahkan meja.");
     } finally {
       setBusyId(null);
     }
@@ -664,11 +733,14 @@ export default function WalkInManager({
   const renderSessionCard = (session: SessionItem) => {
     const isEditingPayment = editingPaymentId === session.id;
     const isEditingTime = editingTimeId === session.id;
+    const isEditingTable = editingTableId === session.id;
     const isClosing = closingSessionId === session.id;
     const progressPercent = getProgressPercent(session);
     const isFocused = focusedSessionId === session.id;
     const hasNotes = Boolean(session.paymentNote || session.notes);
     const isExpanded = expandedNotesSessionId === session.id;
+    const currentStore = storeByName.get(session.store.name);
+    const tableOptions = currentStore?.tables ?? [];
 
     return (
       <div
@@ -855,6 +927,16 @@ export default function WalkInManager({
 
             <button
               type="button"
+              onClick={() => handleOpenTableEditor(session)}
+              disabled={busyId === session.id}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 transition hover:border-[var(--tf-purple)] hover:text-[var(--tf-purple)]"
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+              Pindah meja
+            </button>
+
+            <button
+              type="button"
               onClick={() => handleOpenPaymentEditor(session)}
               disabled={busyId === session.id}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--tf-purple)] px-4 py-2.5 font-semibold text-[var(--tf-purple)]"
@@ -871,6 +953,7 @@ export default function WalkInManager({
                 );
                 setEditingPaymentId(null);
                 setEditingTimeId(null);
+                setEditingTableId(null);
                 setMessage("");
               }}
               disabled={busyId === session.id}
@@ -946,6 +1029,71 @@ export default function WalkInManager({
                   <button
                     type="button"
                     onClick={() => setEditingTimeId(null)}
+                    disabled={busyId === session.id}
+                    className="rounded-2xl border border-slate-300 px-4 py-3 font-semibold text-slate-700"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {isEditingTable ? (
+            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
+              <h3 className="text-lg font-black text-[var(--tf-purple)]">
+                Pindah meja sesi
+              </h3>
+
+              <div className="mt-4 grid gap-4">
+                <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4 text-sm text-slate-700">
+                  <p>
+                    Store: <span className="font-semibold">{session.store.name}</span>
+                  </p>
+                  <p className="mt-1">
+                    Meja saat ini:{" "}
+                    <span className="font-semibold">
+                      {session.table.displayLabel ||
+                        `Meja ${session.table.tableNumber}`}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-slate-500">
+                    Sistem akan mengecek bentrok booking dan walk-in lain di meja
+                    tujuan.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Meja tujuan
+                  </label>
+                  <select
+                    value={editingTableTargetId}
+                    onChange={(e) => setEditingTableTargetId(e.target.value)}
+                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
+                  >
+                    <option value="">Pilih meja tujuan</option>
+                    {tableOptions.map((table) => (
+                      <option key={table.id} value={table.id}>
+                        {table.displayLabel || `Meja ${table.tableNumber}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleSaveTable(session.id)}
+                    disabled={busyId === session.id}
+                    className="rounded-2xl bg-[var(--tf-purple)] px-4 py-3 font-semibold text-white"
+                  >
+                    {busyId === session.id ? "Menyimpan..." : "Simpan meja"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditingTableId(null)}
                     disabled={busyId === session.id}
                     className="rounded-2xl border border-slate-300 px-4 py-3 font-semibold text-slate-700"
                   >

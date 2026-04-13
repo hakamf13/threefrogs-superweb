@@ -85,7 +85,9 @@ function formatWalkInEnd(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
-function getPaymentLabel(status: "UNPAID" | "PARTIAL" | "PAID" | null | undefined) {
+function getPaymentLabel(
+  status: "UNPAID" | "PARTIAL" | "PAID" | null | undefined
+) {
   switch (status) {
     case "PAID":
       return "Lunas";
@@ -95,6 +97,21 @@ function getPaymentLabel(status: "UNPAID" | "PARTIAL" | "PAID" | null | undefine
       return "Belum bayar";
     default:
       return "-";
+  }
+}
+
+function getPaymentBadgeClass(
+  status: "UNPAID" | "PARTIAL" | "PAID" | null | undefined
+) {
+  switch (status) {
+    case "PAID":
+      return "bg-green-50 text-green-700";
+    case "PARTIAL":
+      return "bg-yellow-50 text-yellow-700";
+    case "UNPAID":
+      return "bg-slate-100 text-slate-700";
+    default:
+      return "bg-slate-100 text-slate-700";
   }
 }
 
@@ -293,108 +310,192 @@ export default function AdminAvailabilityBoard({
 
         {!isLoading && selectedStore ? (
           <div className="space-y-6">
-            {tables.map((table) => (
-              <section key={table.id} className={panelClass}>
-                <div className="mb-4 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h3 className="text-2xl font-bold text-[var(--tf-purple)]">
-                      {table.displayLabel || `Meja ${table.tableNumber}`}
-                    </h3>
-                    <p className="text-sm text-slate-500">
-                      Kapasitas: {table.capacity ?? "-"} orang
-                    </p>
+            {tables.map((table) => {
+              const walkInSlots = table.slots.filter(
+                (slot) => slot.status === "WALK_IN" || !!slot.walkInSessionId
+              );
+              const activeWalkInSlot = walkInSlots[0] ?? null;
+              const bookedSlotsCount = table.slots.filter(
+                (slot) => slot.status !== "AVAILABLE"
+              ).length;
+              const availableSlotsCount = table.slots.filter(
+                (slot) => slot.status === "AVAILABLE"
+              ).length;
+
+              return (
+                <section key={table.id} className={panelClass}>
+                  <div className="mb-4 flex flex-col gap-4">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <h3 className="text-2xl font-bold text-[var(--tf-purple)]">
+                          {table.displayLabel || `Meja ${table.tableNumber}`}
+                        </h3>
+                        <p className="text-sm text-slate-500">
+                          Kapasitas: {table.capacity ?? "-"} orang
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                          Slot kosong {availableSlotsCount}
+                        </span>
+                        <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                          Slot terisi {bookedSlotsCount}
+                        </span>
+                        {activeWalkInSlot ? (
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${getPaymentBadgeClass(
+                              activeWalkInSlot.walkInPaymentStatus
+                            )}`}
+                          >
+                            Walk-in • {getPaymentLabel(activeWalkInSlot.walkInPaymentStatus)}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    {activeWalkInSlot ? (
+                      <div className="rounded-2xl border border-[var(--tf-purple)] bg-[var(--tf-lavender)] px-4 py-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                          <div className="space-y-1 text-sm text-[var(--tf-purple-dark)]">
+                            <p className="font-bold">Walk-in aktif di meja ini</p>
+                            <p>Customer: {activeWalkInSlot.customerName || "-"}</p>
+                            <p>
+                              Estimasi selesai:{" "}
+                              {formatWalkInEnd(activeWalkInSlot.walkInEstimatedEndAt)}
+                            </p>
+                            <p>
+                              Status bayar:{" "}
+                              {getPaymentLabel(activeWalkInSlot.walkInPaymentStatus)}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const params = new URLSearchParams();
+                              params.set("storeId", selectedStoreId);
+                              params.set("monitorStore", selectedStore?.name ?? "");
+                              params.set("availabilityDate", selectedDate);
+
+                              if (activeWalkInSlot.walkInSessionId) {
+                                params.set("focus", activeWalkInSlot.walkInSessionId);
+                              }
+
+                              if (activeWalkInSlot.customerName) {
+                                params.set("q", activeWalkInSlot.customerName);
+                              } else {
+                                params.set(
+                                  "q",
+                                  table.displayLabel || `Meja ${table.tableNumber}`
+                                );
+                              }
+
+                              router.push(`/admin/walk-in?${params.toString()}`);
+                            }}
+                            className="rounded-2xl bg-[var(--tf-purple)] px-4 py-2.5 text-sm font-bold text-white"
+                          >
+                            Fokus ke sesi ini
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                </div>
 
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  {table.slots.map((slot) => {
-                    const isBookingSlot = !!slot.bookingId;
-                    const isWalkInSlot =
-                      slot.status === "WALK_IN" || !!slot.walkInSessionId;
-                    const isEmptySlot = slot.status === "AVAILABLE";
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    {table.slots.map((slot) => {
+                      const isBookingSlot = !!slot.bookingId;
+                      const isWalkInSlot =
+                        slot.status === "WALK_IN" || !!slot.walkInSessionId;
+                      const isEmptySlot = slot.status === "AVAILABLE";
 
-                    return (
-                      <button
-                        key={slot.hour}
-                        type="button"
-                        onClick={() => {
-                          if (slot.bookingId) {
-                            router.push(`/admin/bookings/${slot.bookingId}`);
-                            return;
-                          }
+                      return (
+                        <button
+                          key={slot.hour}
+                          type="button"
+                          onClick={() => {
+                            if (slot.bookingId) {
+                              router.push(`/admin/bookings/${slot.bookingId}`);
+                              return;
+                            }
 
-                          if (slot.walkInSessionId) {
+                            if (slot.walkInSessionId) {
+                              const params = new URLSearchParams();
+
+                              params.set("storeId", selectedStoreId);
+                              params.set("monitorStore", selectedStore?.name ?? "");
+                              params.set("availabilityDate", selectedDate);
+                              params.set("focus", slot.walkInSessionId);
+
+                              if (slot.customerName) {
+                                params.set("q", slot.customerName);
+                              } else {
+                                params.set(
+                                  "q",
+                                  table.displayLabel || `Meja ${table.tableNumber}`
+                                );
+                              }
+
+                              router.push(`/admin/walk-in?${params.toString()}`);
+                              return;
+                            }
+
                             const params = new URLSearchParams();
-
                             params.set("storeId", selectedStoreId);
-                            params.set("monitorStore", selectedStore?.name ?? "");
+                            params.set("tableId", table.id);
+                            params.set("date", selectedDate);
+                            params.set("hour", String(slot.hour));
                             params.set("availabilityDate", selectedDate);
-                            params.set("focus", slot.walkInSessionId);
 
-                            if (slot.customerName) {
-                              params.set("q", slot.customerName);
-                            } else {
-                              params.set(
-                                "q",
-                                table.displayLabel || `Meja ${table.tableNumber}`
-                              );
+                            if (selectedStore?.name) {
+                              params.set("monitorStore", selectedStore.name);
                             }
 
                             router.push(`/admin/walk-in?${params.toString()}`);
-                            return;
-                          }
+                          }}
+                          className={`rounded-2xl border p-4 text-left transition hover:-translate-y-[1px] hover:shadow-sm ${getCellClasses(
+                            slot.status
+                          )}`}
+                        >
+                          <p className="font-bold">{formatHourLabel(slot.hour)}</p>
+                          <p className="mt-2 text-sm font-semibold">
+                            {getCellLabel(slot.status)}
+                          </p>
 
-                          const params = new URLSearchParams();
-                          params.set("storeId", selectedStoreId);
-                          params.set("tableId", table.id);
-                          params.set("date", selectedDate);
-                          params.set("hour", String(slot.hour));
-                          params.set("availabilityDate", selectedDate);
-
-                          if (selectedStore?.name) {
-                            params.set("monitorStore", selectedStore.name);
-                          }
-
-                          router.push(`/admin/walk-in?${params.toString()}`);
-                        }}
-                        className={`rounded-2xl border p-4 text-left transition hover:-translate-y-[1px] hover:shadow-sm ${getCellClasses(
-                          slot.status
-                        )}`}
-                      >
-                        <p className="font-bold">{formatHourLabel(slot.hour)}</p>
-                        <p className="mt-2 text-sm font-semibold">
-                          {getCellLabel(slot.status)}
-                        </p>
-
-                        {isWalkInSlot ? (
-                          <div className="mt-3 space-y-1 text-xs">
-                            <p>Nama: {slot.customerName || "-"}</p>
-                            <p>Selesai: {formatWalkInEnd(slot.walkInEstimatedEndAt)}</p>
-                            <p>Bayar: {getPaymentLabel(slot.walkInPaymentStatus)}</p>
-                            <p>Klik untuk fokus ke sesi ini</p>
-                          </div>
-                        ) : isBookingSlot ? (
-                          <div className="mt-3 space-y-1 text-xs">
-                            <p>Kode: {slot.bookingCode}</p>
-                            <p>Nama: {slot.customerName}</p>
-                            <p>Source: {slot.source}</p>
-                          </div>
-                        ) : isEmptySlot ? (
-                          <div className="mt-3 space-y-1 text-xs">
-                            <p>Tersedia untuk walk-in</p>
-                            <p>Klik untuk buka walk-in dari slot ini</p>
-                          </div>
-                        ) : (
-                          <div className="mt-3 space-y-1 text-xs">
-                            <p>Slot ini tidak tersedia.</p>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            ))}
+                          {isWalkInSlot ? (
+                            <div className="mt-3 space-y-1 text-xs">
+                              <p>Nama: {slot.customerName || "-"}</p>
+                              <p>
+                                Selesai: {formatWalkInEnd(slot.walkInEstimatedEndAt)}
+                              </p>
+                              <p>
+                                Bayar: {getPaymentLabel(slot.walkInPaymentStatus)}
+                              </p>
+                              <p>Klik untuk fokus ke sesi ini</p>
+                            </div>
+                          ) : isBookingSlot ? (
+                            <div className="mt-3 space-y-1 text-xs">
+                              <p>Kode: {slot.bookingCode}</p>
+                              <p>Nama: {slot.customerName}</p>
+                              <p>Source: {slot.source}</p>
+                            </div>
+                          ) : isEmptySlot ? (
+                            <div className="mt-3 space-y-1 text-xs">
+                              <p>Tersedia untuk walk-in</p>
+                              <p>Klik untuk buka walk-in dari slot ini</p>
+                            </div>
+                          ) : (
+                            <div className="mt-3 space-y-1 text-xs">
+                              <p>Slot ini tidak tersedia.</p>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         ) : null}
       </div>
