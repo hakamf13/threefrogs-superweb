@@ -91,6 +91,21 @@ export default function AdminAvailabilityBoard({
     [stores, selectedStoreId]
   );
 
+  const walkInPageBaseHref = useMemo(() => {
+    const params = new URLSearchParams();
+
+    if (selectedStoreId) {
+      params.set("storeId", selectedStoreId);
+      params.set("monitorStore", selectedStore?.name ?? "");
+    }
+
+    if (selectedDate) {
+      params.set("availabilityDate", selectedDate);
+    }
+
+    return `/admin/walk-in?${params.toString()}`;
+  }, [selectedStoreId, selectedStore, selectedDate]);
+
   useEffect(() => {
     async function loadAvailability() {
       if (!selectedStoreId || !selectedDate) return;
@@ -149,7 +164,7 @@ export default function AdminAvailabilityBoard({
               Manual Booking
             </Link>
             <Link
-              href="/admin/walk-in"
+              href={walkInPageBaseHref}
               className="rounded-2xl border border-[var(--tf-purple)] px-5 py-3 font-bold text-[var(--tf-purple)]"
             >
               Walk-in
@@ -286,13 +301,35 @@ export default function AdminAvailabilityBoard({
                           }
 
                           if (slot.walkInSessionId) {
-                            router.push("/admin/walk-in");
+                            const params = new URLSearchParams();
+
+                            params.set("storeId", selectedStoreId);
+                            params.set("monitorStore", selectedStore?.name ?? "");
+                            params.set("availabilityDate", selectedDate);
+                            params.set("focus", slot.walkInSessionId);
+
+                            if (slot.customerName) {
+                              params.set("q", slot.customerName);
+                            } else {
+                              params.set("q", table.displayLabel || `Meja ${table.tableNumber}`);
+                            }
+
+                            router.push(`/admin/walk-in?${params.toString()}`);
                             return;
                           }
 
-                          router.push(
-                            `/admin/walk-in?storeId=${selectedStoreId}&tableId=${table.id}&date=${selectedDate}&hour=${slot.hour}`
-                          );
+                          const params = new URLSearchParams();
+                          params.set("storeId", selectedStoreId);
+                          params.set("tableId", table.id);
+                          params.set("date", selectedDate);
+                          params.set("hour", String(slot.hour));
+                          params.set("availabilityDate", selectedDate);
+
+                          if (selectedStore?.name) {
+                            params.set("monitorStore", selectedStore.name);
+                          }
+
+                          router.push(`/admin/walk-in?${params.toString()}`);
                         }}
                         className={`rounded-2xl border p-4 text-left transition ${getCellClasses(
                           slot.status
@@ -309,7 +346,7 @@ export default function AdminAvailabilityBoard({
                           <div className="mt-3 space-y-1 text-xs">
                             <p>Mode: Walk-in</p>
                             <p>Nama: {slot.customerName || "-"}</p>
-                            <p>Klik untuk buka halaman walk-in</p>
+                            <p>Klik untuk fokus ke sesi ini</p>
                           </div>
                         ) : slot.bookingCode ? (
                           <div className="mt-3 space-y-1 text-xs">
