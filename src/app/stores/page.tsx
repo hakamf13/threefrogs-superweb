@@ -4,6 +4,7 @@ import SiteHeader from "@/components/layout/site-header";
 import SiteFooter from "@/components/layout/site-footer";
 import { prisma } from "../../lib/prisma";
 import EmptyStateCard from "@/components/ui/empty-state-card";
+import { getStoreOperatingHoursSummary } from "@/lib/store-hours";
 
 export default async function StoresPage() {
   const stores = await prisma.store.findMany({
@@ -15,6 +16,14 @@ export default async function StoresPage() {
       createdAt: "asc",
     },
     include: {
+      operatingHours: {
+        select: {
+          dayOfWeek: true,
+          openHour: true,
+          closeHour: true,
+          isClosed: true,
+        },
+      },
       tables: {
         where: {
           isActive: true,
@@ -100,7 +109,7 @@ export default async function StoresPage() {
 
                   <div className="mt-5 space-y-2 text-sm leading-7 text-slate-600">
                     <p>Alamat: {store.address || "-"}</p>
-                    <p>Jam operasional: 11:00 – 22:00</p>
+                    <p>Jam operasional: {getStoreOperatingHoursSummary(store)}</p>
                   </div>
 
                   <Link

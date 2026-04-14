@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { getAvailabilityByStoreAndDate } from "@/features/reservations/get-availability";
 
-export const dynamic = "force-dynamic";
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -21,7 +19,6 @@ export async function GET(request: Request) {
       where: {
         id: storeId,
         isActive: true,
-        category: "MAHJONG",
       },
       select: {
         id: true,

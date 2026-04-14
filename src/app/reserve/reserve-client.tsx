@@ -33,6 +33,8 @@ type StoreOption = {
   coverImageUrl: string | null;
   category: string | null;
   activeTableCount: number;
+  openHour?: number | null;
+  closeHour?: number | null;
 };
 
 type AvailabilityTable = {
@@ -61,11 +63,25 @@ type ReserveClientProps = {
 };
 
 const panelClass =
-  "rounded-[1.6rem] border border-[var(--tf-border)] bg-[var(--tf-surface)] p-4 shadow-[var(--tf-shadow-card)] sm:p-5 lg:p-6";
+  "rounded-[2rem] border border-[var(--tf-border)] bg-[var(--tf-surface)] p-6 shadow-[var(--tf-shadow-card)]";
 
 function getLocationText(store?: StoreOption) {
   if (!store) return "-";
   return store.address?.trim() || store.city?.trim() || "Surabaya";
+}
+
+function formatHourRangeFromSlots(slots: TableSlot[]) {
+  if (!slots.length) return "Store tutup pada tanggal ini";
+
+  const first = slots[0]?.hour;
+  const last = slots[slots.length - 1]?.hour;
+
+  if (first == null || last == null) return "-";
+
+  return `${String(first).padStart(2, "0")}:00 - ${String(last + 1).padStart(
+    2,
+    "0"
+  )}:00`;
 }
 
 export default function ReserveClient({
@@ -111,6 +127,11 @@ export default function ReserveClient({
   const totalHours = selectedSlots.length;
   const totalPrice = totalHours * PRICE_PER_HOUR;
   const isProfileComplete = Boolean(currentUser.name && currentUser.phone);
+
+  const availabilityHourRangeLabel = useMemo(() => {
+    const firstTableWithSlots = availabilityTables.find((table) => table.slots.length > 0);
+    return formatHourRangeFromSlots(firstTableWithSlots?.slots ?? []);
+  }, [availabilityTables]);
 
   useEffect(() => {
     if (!initialStoreId) return;
@@ -297,33 +318,32 @@ export default function ReserveClient({
   };
 
   return (
-    <main className="min-h-[calc(100vh-88px)] px-4 py-8 text-slate-800 sm:px-6 sm:py-10 md:py-12">
-      <div className="mx-auto max-w-[1140px] space-y-8">
-        <section className="space-y-3">
-          <p className="inline-flex rounded-full bg-[var(--tf-cream)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
-            Reservasi
+    <main className="min-h-[calc(100vh-88px)] px-6 py-12 text-slate-800 md:py-16">
+      <div className="mx-auto max-w-7xl space-y-10">
+        <section className="space-y-4">
+          <p className="inline-flex rounded-full bg-[var(--tf-cream)] px-4 py-2 text-xs font-black uppercase tracking-[0.2em] text-[var(--tf-orange-dark)]">
+            Reservation
           </p>
 
           <div className="space-y-3">
-            <h1 className="text-3xl font-black leading-[0.95] tracking-tight text-[var(--tf-purple)] sm:text-4xl lg:text-5xl">
+            <h1 className="text-4xl font-black leading-[0.95] tracking-[-0.04em] text-[var(--tf-purple)] md:text-6xl">
               Reservasi Mahjong
             </h1>
-            <p className="max-w-2xl text-base leading-7 text-slate-600">
+            <p className="max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
               Pilih store, tentukan tanggal main, pilih meja, lalu booking slot
-              jam favoritmu. Fokusnya dibuat secepat mungkin untuk dipakai
-              operasional, tapi tetap nyaman dan rapi dipandang.
+              jam favoritmu.
             </p>
           </div>
         </section>
 
-        <section className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="min-w-0 space-y-5">
+        <section className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="min-w-0 space-y-6">
             <div className={panelClass}>
-              <div className="mb-4">
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              <div className="mb-5">
+                <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
                   Step 1
                 </p>
-                <h2 className="mt-2 text-xl font-black text-[var(--tf-purple)] sm:text-2xl">
+                <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
                   Data Pemesan
                 </h2>
               </div>
@@ -368,16 +388,13 @@ export default function ReserveClient({
             </div>
 
             <div className={panelClass}>
-              <div className="mb-4">
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              <div className="mb-5">
+                <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
                   Step 2
                 </p>
-                <h2 className="mt-2 text-xl font-black text-[var(--tf-purple)] sm:text-2xl">
+                <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
                   Pilih Store
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Pilih store yang paling sesuai dengan lokasi dan preferensimu.
-                </p>
               </div>
 
               <ReserveStoreCards
@@ -387,7 +404,7 @@ export default function ReserveClient({
               />
 
               {selectedStore ? (
-                <div className="mt-5 rounded-[1.35rem] border border-[var(--tf-border)] bg-[var(--tf-surface-muted)] p-4 sm:p-5">
+                <div className="mt-6 rounded-[1.75rem] border border-[var(--tf-border)] bg-[var(--tf-surface-muted)] p-5">
                   <div className="flex items-start gap-3">
                     <div className="rounded-2xl bg-white p-3 text-[var(--tf-purple)] shadow-sm">
                       <Store className="h-5 w-5" />
@@ -415,7 +432,7 @@ export default function ReserveClient({
                           {selectedStore.activeTableCount} meja aktif
                         </span>
                         <span className="rounded-full bg-[var(--tf-cream)] px-3 py-1 text-xs font-bold text-[var(--tf-orange-dark)]">
-                          {selectedStore.category || "MAHJONG"}
+                          Jam tampil: {availabilityHourRangeLabel}
                         </span>
                       </div>
                     </div>
@@ -425,41 +442,50 @@ export default function ReserveClient({
             </div>
 
             <div className={panelClass}>
-              <div className="mb-4">
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              <div className="mb-5">
+                <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
                   Step 3
                 </p>
-                <h2 className="mt-2 text-xl font-black text-[var(--tf-purple)] sm:text-2xl">
+                <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
                   Pilih Tanggal
                 </h2>
               </div>
 
-              <input
-                type="date"
-                value={selectedDate}
-                min={defaultDate}
-                max={maxDate}
-                onChange={(e) => {
-                  setSelectedDate(e.target.value);
-                  setSelectedTableId("");
-                  setSelectedSlots([]);
-                  setErrorMessage("");
-                }}
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
-              />
+              <div className="space-y-3">
+                <input
+                  type="date"
+                  value={selectedDate}
+                  min={defaultDate}
+                  max={maxDate}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    setSelectedTableId("");
+                    setSelectedSlots([]);
+                    setErrorMessage("");
+                  }}
+                  className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
+                />
 
-              <p className="mt-3 text-sm text-slate-500">
-                Booking hanya bisa dibuat untuk tanggal {defaultDate} sampai{" "}
-                {maxDate}.
-              </p>
+                <p className="text-sm text-slate-500">
+                  Booking hanya bisa dibuat untuk tanggal {defaultDate} sampai{" "}
+                  {maxDate}.
+                </p>
+
+                <div className="rounded-2xl border border-[var(--tf-border)] bg-[var(--tf-surface-muted)] px-4 py-3 text-sm text-slate-600">
+                  Jam operasional aktif untuk tanggal ini:{" "}
+                  <span className="font-semibold text-[var(--tf-purple)]">
+                    {availabilityHourRangeLabel}
+                  </span>
+                </div>
+              </div>
             </div>
 
             <div className={panelClass}>
-              <div className="mb-4">
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              <div className="mb-5">
+                <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
                   Step 4
                 </p>
-                <h2 className="mt-2 text-xl font-black text-[var(--tf-purple)] sm:text-2xl">
+                <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
                   Pilih Meja
                 </h2>
               </div>
@@ -469,13 +495,13 @@ export default function ReserveClient({
                   {Array.from({ length: 6 }).map((_, index) => (
                     <div
                       key={index}
-                      className="h-32 animate-pulse rounded-2xl border border-[var(--tf-border)] bg-[var(--tf-surface-muted)]"
+                      className="h-36 animate-pulse rounded-2xl border border-[var(--tf-border)] bg-[var(--tf-surface-muted)]"
                     />
                   ))}
                 </div>
               ) : availabilityTables.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-[var(--tf-border)] bg-[var(--tf-surface-muted)] px-4 py-8 text-center text-slate-500">
-                  Belum ada meja aktif atau availability belum tersedia.
+                  Store tutup pada tanggal ini atau availability belum tersedia.
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
@@ -535,11 +561,11 @@ export default function ReserveClient({
             </div>
 
             <div className={panelClass}>
-              <div className="mb-4">
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              <div className="mb-5">
+                <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
                   Step 5
                 </p>
-                <h2 className="mt-2 text-xl font-black text-[var(--tf-purple)] sm:text-2xl">
+                <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
                   Pilih Slot Jam
                 </h2>
               </div>
@@ -550,250 +576,176 @@ export default function ReserveClient({
                 </div>
               ) : !selectedTable ? (
                 <div className="rounded-2xl border border-dashed border-[var(--tf-border)] bg-[var(--tf-surface-muted)] px-4 py-8 text-center text-slate-500">
-                  Meja tidak ditemukan.
+                  Data meja tidak ditemukan.
+                </div>
+              ) : selectedTable.slots.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-[var(--tf-border)] bg-[var(--tf-surface-muted)] px-4 py-8 text-center text-slate-500">
+                  Store tutup pada tanggal ini, jadi tidak ada slot yang bisa dipilih.
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="rounded-2xl border border-[var(--tf-border)] bg-[var(--tf-surface-muted)] p-4">
-                    <p className="text-lg font-black text-[var(--tf-purple)]">
-                      {selectedTable.displayLabel || `Meja ${selectedTable.tableNumber}`}
-                    </p>
+                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+                  {selectedTable.slots.map((slot) => {
+                    const isSelected = selectedSlots.includes(slot.hour);
 
-                    {selectedTable.note ? (
-                      <p className="mt-1 text-sm leading-6 text-slate-600">
-                        {selectedTable.note}
-                      </p>
-                    ) : null}
-
-                    <p className="mt-2 text-xs text-slate-500">
-                      Kapasitas: {selectedTable.capacity ?? "-"} orang
-                    </p>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {selectedTable.slots.map((slot) => {
-                      const selected = selectedSlots.includes(slot.hour);
-                      const disabled = !slot.isAvailable && !selected;
-
-                      return (
-                        <button
-                          key={slot.hour}
-                          type="button"
-                          onClick={() => handleToggleSlot(slot.hour)}
-                          disabled={disabled}
-                          className={[
-                            "rounded-2xl border px-4 py-3 text-left transition",
-                            selected
-                              ? "border-[var(--tf-purple)] bg-[var(--tf-purple)] text-white shadow-sm"
-                              : disabled
-                              ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-                              : "border-[var(--tf-border)] bg-white hover:border-[#C5AFE8]",
-                          ].join(" ")}
-                        >
-                          <span className="font-bold">{formatHourLabel(slot.hour)}</span>
-                          <p className="mt-1 text-xs">
-                            {slot.isAvailable
-                              ? "Tersedia"
-                              : slot.reason === "PAST_TIME"
-                              ? "Jam sudah lewat"
-                              : "Sudah terisi"}
-                          </p>
-                        </button>
-                      );
-                    })}
-                  </div>
+                    return (
+                      <button
+                        key={slot.hour}
+                        type="button"
+                        onClick={() => handleToggleSlot(slot.hour)}
+                        className={[
+                          "rounded-2xl border px-4 py-4 text-left transition",
+                          isSelected
+                            ? "border-[var(--tf-purple)] bg-[#F4EEFF]"
+                            : slot.isAvailable
+                            ? "border-[var(--tf-border)] bg-white hover:border-[#C5AFE8]"
+                            : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400",
+                        ].join(" ")}
+                      >
+                        <p className="font-bold">{formatHourLabel(slot.hour)}</p>
+                        <p className="mt-2 text-sm">
+                          {slot.isAvailable
+                            ? "Tersedia"
+                            : slot.reason === "PAST_TIME"
+                            ? "Sudah lewat"
+                            : "Sudah dibooking"}
+                        </p>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
             <div className={panelClass}>
-              <div className="mb-4">
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              <div className="mb-5">
+                <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
                   Step 6
                 </p>
-                <h2 className="mt-2 text-xl font-black text-[var(--tf-purple)] sm:text-2xl">
-                  Catatan Booking
+                <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
+                  Catatan Tambahan
                 </h2>
               </div>
 
               <textarea
-                placeholder="Contoh: tiles besar, datang terlambat 10 menit, prefer meja tertentu, dan lainnya"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={4}
+                placeholder="Contoh: minta meja dekat colokan"
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
               />
             </div>
           </div>
 
-          <aside className="lg:sticky lg:top-24">
+          <aside className="xl:sticky xl:top-24">
             <div className={`${panelClass} space-y-5`}>
               <div>
-                <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
-                  Summary
+                <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
+                  Ringkasan
                 </p>
-                <h2 className="mt-2 text-xl font-black text-[var(--tf-purple)] sm:text-2xl">
-                  Ringkasan Reservasi
+                <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
+                  Booking Kamu
                 </h2>
               </div>
 
-              <div className="space-y-4 text-sm text-slate-700">
-                <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
-                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--tf-purple)]">
-                    <ShieldCheck className="h-4 w-4" />
-                    Pemesan
-                  </div>
-                  <p className="mt-2 font-semibold">{currentUser.name || "-"}</p>
-                  <p className="mt-1 text-slate-500">{currentUser.phone || "-"}</p>
+              {errorMessage ? (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                  {errorMessage}
                 </div>
+              ) : null}
 
+              <div className="space-y-3">
                 <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
-                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--tf-purple)]">
-                    <Store className="h-4 w-4" />
-                    Store
-                  </div>
-                  <p className="mt-2 font-semibold">{selectedStore?.name ?? "-"}</p>
-                  <p className="mt-1 text-slate-500">{getLocationText(selectedStore)}</p>
-                  {selectedStore?.locationHint ? (
-                    <p className="mt-2 text-xs leading-5 text-slate-500">
-                      {selectedStore.locationHint}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                  <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
-                    <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--tf-purple)]">
-                      <CalendarDays className="h-4 w-4" />
-                      Tanggal
-                    </div>
-                    <p className="mt-2 font-semibold">{selectedDate || "-"}</p>
-                  </div>
-
-                  <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
-                    <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--tf-purple)]">
-                      <Clock3 className="h-4 w-4" />
-                      Durasi
-                    </div>
-                    <p className="mt-2 font-semibold">{totalHours} jam</p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--tf-purple)]">
-                    Meja
+                  <p className="text-sm text-slate-500">Store</p>
+                  <p className="mt-1 font-semibold text-slate-800">
+                    {selectedStore?.name || "-"}
                   </p>
-                  <p className="mt-2 font-semibold">
+                </div>
+
+                <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
+                  <p className="text-sm text-slate-500">Tanggal</p>
+                  <p className="mt-1 font-semibold text-slate-800">
+                    {selectedDate || "-"}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
+                  <p className="text-sm text-slate-500">Meja</p>
+                  <p className="mt-1 font-semibold text-slate-800">
                     {selectedTable
                       ? selectedTable.displayLabel || `Meja ${selectedTable.tableNumber}`
                       : "-"}
                   </p>
-                  {selectedTable?.note ? (
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
-                      {selectedTable.note}
-                    </p>
-                  ) : null}
                 </div>
 
                 <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--tf-purple)]">
-                    Slot Terpilih
-                  </p>
-
-                  {selectedSlotLabels.length === 0 ? (
-                    <p className="mt-2 font-semibold">-</p>
-                  ) : (
-                    <div className="mt-3 flex flex-wrap gap-2">
+                  <p className="text-sm text-slate-500">Slot Dipilih</p>
+                  {selectedSlotLabels.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-2">
                       {selectedSlotLabels.map((label) => (
                         <span
                           key={label}
-                          className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[var(--tf-purple-dark)] shadow-sm"
+                          className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[var(--tf-purple)]"
                         >
                           {label}
                         </span>
                       ))}
                     </div>
+                  ) : (
+                    <p className="mt-1 font-semibold text-slate-800">Belum ada</p>
                   )}
-
-                  {selectedSlots.length > 0 ? (
-                    <div className="mt-4 rounded-2xl border border-[#C8E7A5] bg-[#F6FFE6] p-4">
-                      <div className="flex items-center gap-2 text-sm font-bold text-[var(--tf-green-dark)]">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Slot terpilih sudah siap
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-slate-700">
-                        Kamu memilih {selectedSlots.length} jam bermain di{" "}
-                        {selectedTable
-                          ? selectedTable.displayLabel || `Meja ${selectedTable.tableNumber}`
-                          : "meja pilihan"}
-                        .
-                      </p>
-                    </div>
-                  ) : null}
                 </div>
 
-                <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
-                  <p className="text-slate-500">Harga per jam</p>
-                  <p className="mt-1 font-semibold">
-                    {formatRupiah(PRICE_PER_HOUR)}
+                <div className="rounded-2xl bg-[var(--tf-cream)] p-4">
+                  <p className="text-sm text-[var(--tf-orange-dark)]">
+                    Estimasi Total
                   </p>
-
-                  <div className="mt-4 border-t border-[var(--tf-border)] pt-4">
-                    <p className="text-slate-500">Total</p>
-                    <p className="mt-1 text-3xl font-black tracking-tight text-[var(--tf-purple)]">
-                      {formatRupiah(totalPrice)}
-                    </p>
-                  </div>
+                  <p className="mt-1 text-2xl font-black text-[var(--tf-purple)]">
+                    {formatRupiah(totalPrice)}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    {totalHours} jam × {formatRupiah(PRICE_PER_HOUR)}
+                  </p>
                 </div>
               </div>
 
-              {errorMessage ? (
-                <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <p>{errorMessage}</p>
-                  </div>
+              <div className="rounded-2xl border border-[var(--tf-border)] bg-[var(--tf-surface-muted)] p-4 text-sm text-slate-600">
+                <div className="flex items-start gap-3">
+                  <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--tf-purple)]" />
+                  <p className="leading-6">
+                    Pilih slot yang berurutan. Untuk hari ini, slot yang sudah lewat
+                    otomatis tidak bisa dipilih.
+                  </p>
                 </div>
-              ) : null}
+              </div>
 
-              <div className="rounded-[1.25rem] bg-[var(--tf-lavender)] p-4">
-                <p className="text-sm font-bold text-[var(--tf-purple-dark)]">
-                  Tips Booking
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  Pilih slot berurutan agar sistem bisa memproses booking lebih
-                  cepat dan lebih aman dari konflik availability.
-                </p>
+              <div className="rounded-2xl border border-[var(--tf-border)] bg-[var(--tf-surface-muted)] p-4 text-sm text-slate-600">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--tf-purple)]" />
+                  <p className="leading-6">
+                    Setelah submit, booking akan dibuat atas nama akun kamu dan
+                    menunggu pembayaran.
+                  </p>
+                </div>
               </div>
 
               <button
                 type="button"
                 onClick={handleSubmitBooking}
-                disabled={
-                  isSubmitting ||
-                  !isProfileComplete ||
-                  !selectedStoreId ||
-                  !selectedDate ||
-                  !selectedTableId ||
-                  selectedSlots.length === 0
-                }
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--tf-purple)] px-4 py-3.5 font-bold text-white transition hover:bg-[var(--tf-purple-dark)] disabled:cursor-not-allowed disabled:bg-slate-300"
+                disabled={isSubmitting}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--tf-purple)] px-5 py-3.5 font-bold text-white transition hover:bg-[var(--tf-purple-dark)] disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Menyimpan Booking...
+                    Mengirim...
                   </>
                 ) : (
-                  "Buat Booking"
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Buat Booking
+                  </>
                 )}
               </button>
-
-              <div className="rounded-2xl bg-slate-50 p-4 text-xs leading-6 text-slate-600">
-                <p>• Slot abu-abu berarti sudah terisi atau jamnya sudah lewat.</p>
-                <p>• Slot yang dipilih harus berurutan.</p>
-                <p>• Booking akan di-hold selama 15 menit sambil menunggu pembayaran.</p>
-              </div>
             </div>
           </aside>
         </section>

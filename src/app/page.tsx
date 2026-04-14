@@ -4,6 +4,7 @@ import { prisma } from "../lib/prisma";
 import SiteHeader from "@/components/layout/site-header";
 import SiteFooter from "@/components/layout/site-footer";
 import HeroStoreCarousel from "@/components/home/hero-store-carousel";
+import { getStoreOperatingHoursSummary } from "@/lib/store-hours";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,14 @@ export default async function HomePage() {
     },
     take: 4,
     include: {
+      operatingHours: {
+        select: {
+          dayOfWeek: true,
+          openHour: true,
+          closeHour: true,
+          isClosed: true,
+        },
+      },
       tables: {
         where: {
           isActive: true,
@@ -79,8 +88,6 @@ export default async function HomePage() {
       },
     },
   });
-
-  // const heroStore = stores[0] ?? null;
 
   return (
     <div id="page-top" className="min-h-screen bg-[var(--tf-bg)] text-slate-800">
@@ -96,7 +103,7 @@ export default async function HomePage() {
             <div className="grid gap-10 xl:grid-cols-[1.05fr_0.95fr] xl:items-center">
               <div className="text-white">
                 <p className="inline-flex rounded-full border border-white/18 bg-white/10 px-4 py-2 text-sm font-medium text-white/92">
-                  Buka tiap hari 11:00 – 22:00
+                  Jam operasional menyesuaikan cabang
                 </p>
 
                 <h1 className="mt-8 max-w-4xl text-5xl font-black leading-[0.95] tracking-tight md:text-6xl">
@@ -223,6 +230,15 @@ export default async function HomePage() {
                   <span className="rounded-full bg-[var(--tf-cream)] px-3 py-1 text-xs font-bold text-[var(--tf-orange-dark)]">
                     {store.city || "Surabaya"}
                   </span>
+                </div>
+
+                <div className="mt-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+                    Jam operasional
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {getStoreOperatingHoursSummary(store)}
+                  </p>
                 </div>
 
                 <Link
