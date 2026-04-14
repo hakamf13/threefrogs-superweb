@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../../../../../../lib/prisma";
+import { TableType } from "@prisma/client";
 
 type RouteContext = {
 	params: Promise<{
@@ -19,26 +20,36 @@ export async function POST(request: Request, context: RouteContext) {
 		const { id: storeId } = await context.params;
 		const body = await request.json().catch(() => ({}));
 
-		const tableNumber = Number(body?.tableNumber ?? 0);
+		const tableNumber = Number(body?.tableNumber);
 		const tableCode =
-			typeof body?.tableCode === "string" ? body.tableCode.trim() : "";
+			typeof body?.tableCode === "string" && body.tableCode.trim().length > 0
+				? body.tableCode.trim()
+				: null;
 		const displayLabel =
-			typeof body?.displayLabel === "string" ? body.displayLabel.trim() : "";
+			typeof body?.displayLabel === "string" &&
+			body.displayLabel.trim().length > 0
+				? body.displayLabel.trim()
+				: null;
 		const capacity =
-			body?.capacity === null || body?.capacity === undefined
+			body?.capacity == null || body.capacity === ""
 				? null
 				: Number(body.capacity);
-		const notes = typeof body?.notes === "string" ? body.notes.trim() : "";
-		// const sortOrder =
-		// 	body?.sortOrder === null || body?.sortOrder === undefined
-		// 		? 0
-		// 		: Number(body.sortOrder);
-		const isActive =
-			typeof body?.isActive === "boolean" ? body.isActive : true;
+		const note =
+			typeof body?.note === "string" && body.note.trim().length > 0
+				? body.note.trim()
+				: null;
+		const isActive = Boolean(body?.isActive);
 
-		if (!Number.isFinite(tableNumber) || tableNumber <= 0) {
+		if (!Number.isInteger(tableNumber) || tableNumber <= 0) {
 			return NextResponse.json(
-				{ error: "Nomor meja tidak valid." },
+				{ error: "Nomor meja wajib berupa angka valid." },
+				{ status: 400 }
+			);
+		}
+
+		if (capacity != null && (!Number.isInteger(capacity) || capacity <= 0)) {
+			return NextResponse.json(
+				{ error: "Kapasitas meja tidak valid." },
 				{ status: 400 }
 			);
 		}
@@ -55,48 +66,42 @@ export async function POST(request: Request, context: RouteContext) {
 			);
 		}
 
-		const duplicateTableNumber = await prisma.table.findFirst({
+		const existingNumber = await prisma.table.findFirst({
 			where: {
 				storeId,
 				tableNumber,
 			},
-			select: {
-				id: true,
-			},
+			select: { id: true },
 		});
 
-		if (duplicateTableNumber) {
+		if (existingNumber) {
 			return NextResponse.json(
 				{ error: "Nomor meja sudah dipakai di store ini." },
 				{ status: 409 }
 			);
 		}
 
-		const created = await prisma.table.create({
+		await prisma.table.create({
 			data: {
 				storeId,
 				tableNumber,
-				tableCode: tableCode || null,
-				displayLabel: displayLabel || null,
+				tableCode,
+				displayLabel,
 				capacity,
-				notes: notes || null,
-				// sortOrder,
-				isActive,...NextResponse,
-			},
-			select: {
-				id: true,
+				note,
+				isActive,
+				tableType: TableType.MAHJONG,
+				positionX: null,
+				positionY: null,
 			},
 		});
 
-		return NextResponse.json({
-			success: true,
-			tableId: created.id,
-		});
+		return NextResponse.json({ success: true });
 	} catch (error) {
 		console.error("Create table error:", error);
 
 		return NextResponse.json(
-			{ error: "Gagal membuat meja." },
+			{ error: "Gagal menambahkan meja." },
 			{ status: 500 }
 		);
 	}

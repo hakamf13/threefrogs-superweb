@@ -310,6 +310,18 @@ export default function AdminAvailabilityBoard({
 
         {!isLoading && selectedStore ? (
           <div className="space-y-6">
+
+            {!isLoading && tables.length > 0 && tables.every((table) => table.slots.length === 0) ? (
+              <div className={panelClass}>
+                <p className="font-semibold text-[var(--tf-purple)]">
+                  Store tutup atau tidak punya slot operasional pada tanggal ini.
+                </p>
+                <p className="mt-2 text-sm text-slate-600">
+                  Cek jam operasional per hari di Store Management untuk store yang dipilih.
+                </p>
+              </div>
+            ) : null}
+
             {tables.map((table) => {
               const walkInSlots = table.slots.filter(
                 (slot) => slot.status === "WALK_IN" || !!slot.walkInSessionId

@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import {
-	ACTIVE_BOOKING_STATUSES,
-	CLOSE_HOUR,
-	OPEN_HOUR,
-} from "@/lib/constants";
+import { ACTIVE_BOOKING_STATUSES } from "@/lib/constants";
+import { getStoreHoursForDate } from "@/lib/store-hours";
 
 function pad(value: number) {
 	return String(value).padStart(2, "0");
@@ -29,12 +26,24 @@ function buildSlotDate(dateText: string, hour: number) {
 	return new Date(`${dateText}T${pad(hour)}:00:00+07:00`);
 }
 
-function isOverlap(
-	startA: Date,
-	endA: Date,
-	startB: Date,
-	endB: Date
-) {
+function formatDateKeyInJakarta(date: Date) {
+	const parts = new Intl.DateTimeFormat("en-CA", {
+		timeZone: "Asia/Jakarta",
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+	}).formatToParts(date);
+
+	const map = Object.fromEntries(
+		parts
+			.filter((part) => part.type !== "literal")
+			.map((part) => [part.type, part.value])
+	) as Record<string, string>;
+
+	return `${map.year}-${map.month}-${map.day}`;
+}
+
+function isOverlap(startA: Date, endA: Date, startB: Date, endB: Date) {
 	return startA < endB && endA > startB;
 }
 
@@ -77,11 +86,12 @@ export async function POST(request: Request) {
 
 		if (
 			!Number.isFinite(initialDurationMinutes) ||
-			initialDurationMinutes < 30 ||
-			initialDurationMinutes > 600
+			initialDurationMinutes < 60 ||
+			initialDurationMinutes > 720 ||
+			initialDurationMinutes % 60 !== 0
 		) {
 			return NextResponse.json(
-				{ error: "Durasi awal tidak valid." },
+				{ error: "Durasi awal harus kelipatan 60 menit." },
 				{ status: 400 }
 			);
 		}
@@ -99,37 +109,16 @@ export async function POST(request: Request) {
 		}
 
 		const bookingDateText = startedAtLocal.slice(0, 10);
+		const endDateText = formatDateKeyInJakarta(estimatedEndAt);
+
+		if (bookingDateText !== endDateText) {
+			return NextResponse.json(
+				{ error: "Walk-in harus selesai di hari yang sama." },
+				{ status: 400 }
+			);
+		}
+
 		const bookingDate = getBookingDateKey(bookingDateText);
-
-		const { hour, minute } = getHourMinuteFromLocal(startedAtLocal);
-		const startMinutes = hour * 60 + minute;
-		const endDate = estimatedEndAt;
-		const endHourJakarta = new Intl.DateTimeFormat("en-GB", {
-			hour: "2-digit",
-			minute: "2-digit",
-			hour12: false,
-			timeZone: "Asia/Jakarta",
-		}).formatToParts(endDate);
-
-		const endHour =
-			Number(endHourJakarta.find((part) => part.type === "hour")?.value ?? "0");
-		const endMinute =
-			Number(endHourJakarta.find((part) => part.type === "minute")?.value ?? "0");
-		const endMinutes = endHour * 60 + endMinute;
-
-		if (startMinutes < OPEN_HOUR * 60) {
-			return NextResponse.json(
-				{ error: "Walk-in tidak bisa dimulai sebelum jam operasional." },
-				{ status: 400 }
-			);
-		}
-
-		if (endMinutes > CLOSE_HOUR * 60 || endMinutes === 0) {
-			return NextResponse.json(
-				{ error: "Estimasi selesai melewati jam tutup toko." },
-				{ status: 400 }
-			);
-		}
 
 		const store = await prisma.store.findFirst({
 			where: {
@@ -139,6 +128,16 @@ export async function POST(request: Request) {
 			},
 			select: {
 				id: true,
+				openHour: true,
+				closeHour: true,
+				operatingHours: {
+					select: {
+						dayOfWeek: true,
+						openHour: true,
+						closeHour: true,
+						isClosed: true,
+					},
+				},
 			},
 		});
 
@@ -146,6 +145,45 @@ export async function POST(request: Request) {
 			return NextResponse.json(
 				{ error: "Store tidak ditemukan." },
 				{ status: 404 }
+			);
+		}
+
+		const resolvedHours = getStoreHoursForDate(store, bookingDateText);
+
+		if (resolvedHours.isClosed) {
+			return NextResponse.json(
+				{ error: "Store tutup pada tanggal sesi ini." },
+				{ status: 400 }
+			);
+		}
+
+		const { hour, minute } = getHourMinuteFromLocal(startedAtLocal);
+		const startMinutes = hour * 60 + minute;
+
+		const endHourJakarta = new Intl.DateTimeFormat("en-GB", {
+			hour: "2-digit",
+			minute: "2-digit",
+			hour12: false,
+			timeZone: "Asia/Jakarta",
+		}).formatToParts(estimatedEndAt);
+
+		const endHour =
+			Number(endHourJakarta.find((part) => part.type === "hour")?.value ?? "0");
+		const endMinute =
+			Number(endHourJakarta.find((part) => part.type === "minute")?.value ?? "0");
+		const endMinutes = endHour * 60 + endMinute;
+
+		if (startMinutes < resolvedHours.openHour * 60) {
+			return NextResponse.json(
+				{ error: "Walk-in tidak bisa dimulai sebelum jam operasional store." },
+				{ status: 400 }
+			);
+		}
+
+		if (endMinutes > resolvedHours.closeHour * 60 || endMinutes === 0) {
+			return NextResponse.json(
+				{ error: "Estimasi selesai melewati jam tutup store." },
+				{ status: 400 }
 			);
 		}
 

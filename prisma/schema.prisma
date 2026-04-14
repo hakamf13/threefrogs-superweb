@@ -58,6 +58,32 @@ enum OpenTableSessionStatus {
   CANCELLED
 }
 
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model StoreOperatingHour {
+  id        String    @id @default(cuid())
+  storeId   String
+  dayOfWeek DayOfWeek
+  openHour  Int?
+  closeHour Int?
+  isClosed  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, dayOfWeek])
+  @@index([storeId])
+}
+
 model User {
   id                     String             @id @default(cuid())
   name                   String
@@ -94,6 +120,7 @@ model Store {
   openingHour             Int?          @default(11)
   closingHour             Int?          @default(22)
 
+  operatingHours  StoreOperatingHour[]
   tables       Table[]
   bookings     Booking[]
   bookingSlots BookingSlot[]

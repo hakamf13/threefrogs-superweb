@@ -1,5 +1,3 @@
-// test aja
-
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../../lib/prisma";
@@ -8,8 +6,6 @@ import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bo
 import {
   ACTIVE_BOOKING_STATUSES,
   BOOKING_HOLD_MINUTES,
-  CLOSE_HOUR,
-  OPEN_HOUR,
   PRICE_PER_HOUR,
 } from "../../../lib/constants";
 import { createBookingSchema } from "../../../lib/validations";
@@ -19,16 +15,13 @@ import {
   getCurrentHourInJakarta,
   getTodayDateStringInJakarta,
 } from "@/lib/booking-window";
+import { notifyAdminsBookingCreated } from "@/lib/admin-notifications";
 import { enforceRouteRateLimit } from "@/lib/rate-limit";
 import { isMidtransConfigured } from "@/lib/midtrans";
 import { generateMidtransOrderId } from "@/features/payments/generate-midtrans-order-id";
 import { createMidtransSnapTransaction } from "@/features/payments/create-midtrans-snap-transaction";
 import { updateBookingPaymentRequest } from "@/features/payments/update-booking-payment-request";
-import { assertBookingAntiAbuse } from "@/lib/bookings/booking-anti-abuse";
-import {
-  sendAdminBookingCreatedNotification,
-  sendCustomerBookingCreatedNotification,
-} from "@/lib/notifications/booking-notifications";
+import { getStoreHoursForDate } from "@/lib/store-hours";
 
 function isSequential(slots: number[]) {
   const sorted = [...slots].sort((a, b) => a - b);
@@ -107,11 +100,6 @@ export async function POST(request: Request) {
       );
     }
 
-    
-
-    // const customerName = currentUser.name;
-    // const customerPhone = currentUser.phone;
-
     const body = await request.json();
     const parsed = createBookingSchema.safeParse(body);
 
@@ -149,9 +137,57 @@ export async function POST(request: Request) {
     const firstSlot = normalizedSlots[0];
     const lastSlot = normalizedSlots[normalizedSlots.length - 1];
 
-    if (firstSlot < OPEN_HOUR || lastSlot + 1 > CLOSE_HOUR) {
+    const store = await prisma.store.findFirst({
+      where: {
+        id: storeId,
+        isActive: true,
+        category: "MAHJONG",
+      },
+      select: {
+        id: true,
+        name: true,
+        openHour: true,
+        closeHour: true,
+        operatingHours: {
+          select: {
+            dayOfWeek: true,
+            openHour: true,
+            closeHour: true,
+            isClosed: true,
+          },
+        },
+      },
+    });
+
+    if (!store) {
       return NextResponse.json(
-        { error: "Slot di luar jam operasional." },
+        { error: "Store tidak ditemukan." },
+        { status: 404 }
+      );
+    }
+
+    const resolvedHours = getStoreHoursForDate(store, bookingDate);
+
+    if (resolvedHours.isClosed) {
+      return NextResponse.json(
+        { error: "Store tutup pada tanggal yang dipilih." },
+        { status: 400 }
+      );
+    }
+
+    if (
+      firstSlot < resolvedHours.openHour ||
+      lastSlot + 1 > resolvedHours.closeHour
+    ) {
+      return NextResponse.json(
+        {
+          error: `Slot di luar jam operasional store (${String(
+            resolvedHours.openHour
+          ).padStart(2, "0")}:00 - ${String(resolvedHours.closeHour).padStart(
+            2,
+            "0"
+          )}:00).`,
+        },
         { status: 400 }
       );
     }
@@ -166,26 +202,6 @@ export async function POST(request: Request) {
             "Untuk hari ini, slot yang sudah lewat atau sedang berjalan tidak bisa dibooking lagi.",
         },
         { status: 400 }
-      );
-    }
-
-    // Test 
-    const store = await prisma.store.findFirst({
-      where: {
-        id: storeId,
-        isActive: true,
-        category: "MAHJONG",
-      },
-      select: {
-        id: true,
-        name: true,
-      },
-    });
-
-    if (!store) {
-      return NextResponse.json(
-        { error: "Store tidak ditemukan." },
-        { status: 404 }
       );
     }
 
@@ -211,12 +227,6 @@ export async function POST(request: Request) {
 
     const bookingDateValue = new Date(`${bookingDate}T00:00:00.000Z`);
 
-    await assertBookingAntiAbuse({
-      customerPhone: currentUser.phone,
-      bookingDate: bookingDateValue,
-    });
-
-    
     const conflicts = await prisma.bookingSlot.findMany({
       where: {
         tableId,
@@ -259,8 +269,8 @@ export async function POST(request: Request) {
             bookingType: "MAHJONG",
             status: "AWAITING_PAYMENT",
             source: "ONLINE",
-            customerName: currentUser.name!,
-            customerPhone: currentUser.phone!,
+            customerName: currentUser.name,
+            customerPhone: currentUser.phone,
             customerEmail: currentUser.email || null,
             bookingDate: bookingDateValue,
             startHour: firstSlot,
@@ -345,48 +355,22 @@ export async function POST(request: Request) {
       }
     }
 
-    void sendAdminBookingCreatedNotification({
-      bookingId: booking.id,
-      bookingCode: booking.bookingCode,
-      customerName: booking.customerName,
-      customerPhone: booking.customerPhone,
-      customerEmail: booking.customerEmail,
-      storeName: store.name,
-      bookingDate: booking.bookingDate,
-      startHour: booking.startHour,
-      endHour: booking.endHour,
-      totalPrice: booking.totalPrice,
-    }).catch(console.error);
-
-    void sendCustomerBookingCreatedNotification({
-      bookingId: booking.id,
-      bookingCode: booking.bookingCode,
-      customerName: booking.customerName,
-      customerPhone: booking.customerPhone,
-      customerEmail: booking.customerEmail,
-      storeName: store.name,
-      bookingDate: booking.bookingDate,
-      startHour: booking.startHour,
-      endHour: booking.endHour,
-      totalPrice: booking.totalPrice,
-    }).catch(console.error);
-
-    // try {
-    //   await notifyAdminsBookingCreated({
-    //     bookingCode: booking.bookingCode,
-    //     customerName: booking.customerName,
-    //     customerPhone: booking.customerPhone,
-    //     customerEmail: booking.customerEmail,
-    //     storeName: store.name,
-    //     tableLabel: table.displayLabel || `Meja ${table.tableNumber}`,
-    //     bookingDate: booking.bookingDate,
-    //     slotHours: normalizedSlots,
-    //     totalPrice: booking.totalPrice,
-    //     paymentMode: paymentResult ? "MIDTRANS" : "MANUAL",
-    //   });
-    // } catch (error) {
-    //   console.error("Notify admins booking created error:", error);
-    // }
+    try {
+      await notifyAdminsBookingCreated({
+        bookingCode: booking.bookingCode,
+        customerName: booking.customerName,
+        customerPhone: booking.customerPhone,
+        customerEmail: booking.customerEmail,
+        storeName: store.name,
+        tableLabel: table.displayLabel || `Meja ${table.tableNumber}`,
+        bookingDate: booking.bookingDate,
+        slotHours: normalizedSlots,
+        totalPrice: booking.totalPrice,
+        paymentMode: paymentResult ? "MIDTRANS" : "MANUAL",
+      });
+    } catch (error) {
+      console.error("Notify admins booking created error:", error);
+    }
 
     return NextResponse.json({
       success: true,

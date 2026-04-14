@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { ACTIVE_BOOKING_STATUSES } from "@/lib/constants";
+import { getStoreHoursForDate } from "@/lib/store-hours";
 
 type RouteContext = {
 	params: Promise<{
@@ -117,6 +118,70 @@ export async function PATCH(request: Request, context: RouteContext) {
 					error:
 						"Untuk sementara sesi walk-in harus tetap berada di hari yang sama.",
 				},
+				{ status: 400 }
+			);
+		}
+
+		const store = await prisma.store.findUnique({
+			where: { id: walkInSession.storeId },
+			select: {
+				id: true,
+				openHour: true,
+				closeHour: true,
+				operatingHours: {
+					select: {
+						dayOfWeek: true,
+						openHour: true,
+						closeHour: true,
+						isClosed: true,
+					},
+				},
+			},
+		});
+
+		if (!store) {
+			return NextResponse.json(
+				{ error: "Store tidak ditemukan." },
+				{ status: 404 }
+			);
+		}
+
+		const resolvedHours = getStoreHoursForDate(store, startDateKey);
+
+		if (resolvedHours.isClosed) {
+			return NextResponse.json(
+				{ error: "Store tutup pada tanggal sesi ini." },
+				{ status: 400 }
+			);
+		}
+
+		const startHour = Number(startedAtLocal.slice(11, 13));
+		const startMinute = Number(startedAtLocal.slice(14, 16));
+		const startMinutes = startHour * 60 + startMinute;
+
+		const endHourJakarta = new Intl.DateTimeFormat("en-GB", {
+			hour: "2-digit",
+			minute: "2-digit",
+			hour12: false,
+			timeZone: "Asia/Jakarta",
+		}).formatToParts(estimatedEndAt);
+
+		const endHour =
+			Number(endHourJakarta.find((part) => part.type === "hour")?.value ?? "0");
+		const endMinute =
+			Number(endHourJakarta.find((part) => part.type === "minute")?.value ?? "0");
+		const endMinutes = endHour * 60 + endMinute;
+
+		if (startMinutes < resolvedHours.openHour * 60) {
+			return NextResponse.json(
+				{ error: "Waktu mulai sebelum jam operasional store." },
+				{ status: 400 }
+			);
+		}
+
+		if (endMinutes > resolvedHours.closeHour * 60 || endMinutes === 0) {
+			return NextResponse.json(
+				{ error: "Estimasi selesai melewati jam tutup store." },
 				{ status: 400 }
 			);
 		}

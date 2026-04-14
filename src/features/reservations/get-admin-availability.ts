@@ -1,9 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import {
-  ACTIVE_BOOKING_STATUSES,
-  CLOSE_HOUR,
-  OPEN_HOUR,
-} from "@/lib/constants";
+import { ACTIVE_BOOKING_STATUSES } from "@/lib/constants";
+import { buildHourRange, getStoreHoursForDate } from "@/lib/store-hours";
 
 function pad(value: number) {
   return String(value).padStart(2, "0");
@@ -52,7 +49,24 @@ export async function getAdminAvailabilityByStoreAndDate(
 ) {
   const bookingDateKey = getBookingDateKey(bookingDate);
 
-  const [tables, bookingSlots, walkInSessions] = await Promise.all([
+  const [store, tables, bookingSlots, walkInSessions] = await Promise.all([
+    prisma.store.findUnique({
+      where: { id: storeId },
+      select: {
+        id: true,
+        openHour: true,
+        closeHour: true,
+        operatingHours: {
+          select: {
+            dayOfWeek: true,
+            openHour: true,
+            closeHour: true,
+            isClosed: true,
+          },
+        },
+      },
+    }),
+
     prisma.table.findMany({
       where: {
         storeId,
@@ -121,6 +135,15 @@ export async function getAdminAvailabilityByStoreAndDate(
     }),
   ]);
 
+  if (!store) {
+    throw new Error("Store tidak ditemukan.");
+  }
+
+  const resolvedHours = getStoreHoursForDate(store, bookingDate);
+  const hourRange = resolvedHours.isClosed
+    ? []
+    : buildHourRange(resolvedHours.openHour, resolvedHours.closeHour);
+
   const slotsByTableId = new Map<string, typeof bookingSlots>();
   for (const slot of bookingSlots) {
     const existing = slotsByTableId.get(slot.tableId) ?? [];
@@ -137,11 +160,6 @@ export async function getAdminAvailabilityByStoreAndDate(
 
   const nowJakarta = getNowInJakarta();
   const isTodayInJakarta = nowJakarta.dateKey === bookingDate;
-
-  const hourRange = Array.from(
-    { length: CLOSE_HOUR - OPEN_HOUR },
-    (_, index) => OPEN_HOUR + index
-  );
 
   return tables.map((table) => {
     const tableBookingSlots = slotsByTableId.get(table.id) ?? [];

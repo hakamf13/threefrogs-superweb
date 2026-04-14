@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "../../../../../lib/prisma";
 
 type RouteContext = {
 	params: Promise<{
@@ -19,30 +19,41 @@ export async function PATCH(request: Request, context: RouteContext) {
 		const { id } = await context.params;
 		const body = await request.json().catch(() => ({}));
 
-		const tableNumber = Number(body?.tableNumber ?? 0);
+		const tableNumber = Number(body?.tableNumber);
 		const tableCode =
-			typeof body?.tableCode === "string" ? body.tableCode.trim() : "";
+			typeof body?.tableCode === "string" && body.tableCode.trim().length > 0
+				? body.tableCode.trim()
+				: null;
 		const displayLabel =
-			typeof body?.displayLabel === "string" ? body.displayLabel.trim() : "";
+			typeof body?.displayLabel === "string" &&
+			body.displayLabel.trim().length > 0
+				? body.displayLabel.trim()
+				: null;
 		const capacity =
-			body?.capacity === null || body?.capacity === undefined
+			body?.capacity == null || body.capacity === ""
 				? null
 				: Number(body.capacity);
-		const notes = typeof body?.notes === "string" ? body.notes.trim() : "";
-		// const sortOrder =
-		// 	body?.sortOrder === null || body?.sortOrder === undefined
-		// 		? 0
-		// 		: Number(body.sortOrder);
+		const note =
+			typeof body?.note === "string" && body.note.trim().length > 0
+				? body.note.trim()
+				: null;
 		const isActive = Boolean(body?.isActive);
 
-		if (!Number.isFinite(tableNumber) || tableNumber <= 0) {
+		if (!Number.isInteger(tableNumber) || tableNumber <= 0) {
 			return NextResponse.json(
-				{ error: "Nomor meja tidak valid." },
+				{ error: "Nomor meja wajib berupa angka valid." },
 				{ status: 400 }
 			);
 		}
 
-		const existing = await prisma.table.findUnique({
+		if (capacity != null && (!Number.isInteger(capacity) || capacity <= 0)) {
+			return NextResponse.json(
+				{ error: "Kapasitas meja tidak valid." },
+				{ status: 400 }
+			);
+		}
+
+		const table = await prisma.table.findUnique({
 			where: { id },
 			select: {
 				id: true,
@@ -50,27 +61,25 @@ export async function PATCH(request: Request, context: RouteContext) {
 			},
 		});
 
-		if (!existing) {
+		if (!table) {
 			return NextResponse.json(
 				{ error: "Meja tidak ditemukan." },
 				{ status: 404 }
 			);
 		}
 
-		const duplicateTableNumber = await prisma.table.findFirst({
+		const existingNumber = await prisma.table.findFirst({
 			where: {
-				storeId: existing.storeId,
+				storeId: table.storeId,
 				tableNumber,
 				id: {
 					not: id,
 				},
 			},
-			select: {
-				id: true,
-			},
+			select: { id: true },
 		});
 
-		if (duplicateTableNumber) {
+		if (existingNumber) {
 			return NextResponse.json(
 				{ error: "Nomor meja sudah dipakai di store ini." },
 				{ status: 409 }
@@ -81,11 +90,10 @@ export async function PATCH(request: Request, context: RouteContext) {
 			where: { id },
 			data: {
 				tableNumber,
-				tableCode: tableCode || null,
-				displayLabel: displayLabel || null,
+				tableCode,
+				displayLabel,
 				capacity,
-				notes: notes || null,
-				// sortOrder,
+				note,
 				isActive,
 			},
 		});

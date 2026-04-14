@@ -5,14 +5,17 @@ import { prisma } from "../../../../lib/prisma";
 import {
   ACTIVE_BOOKING_STATUSES,
   BOOKING_HOLD_MINUTES,
-  CLOSE_HOUR,
-  OPEN_HOUR,
   PRICE_PER_HOUR,
 } from "../../../../lib/constants";
 import { createManualBookingSchema } from "../../../../lib/validations";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
-import { getBookingWindow, isDateWithinBookingWindow } from "@/lib/booking-window";
-import { getCurrentHourInJakarta, getTodayDateStringInJakarta } from "@/lib/booking-window";
+import {
+  getBookingWindow,
+  isDateWithinBookingWindow,
+  getCurrentHourInJakarta,
+  getTodayDateStringInJakarta,
+} from "@/lib/booking-window";
+import { getStoreHoursForDate } from "@/lib/store-hours";
 
 function isSequential(slots: number[]) {
   const sorted = [...slots].sort((a, b) => a - b);
@@ -81,14 +84,14 @@ export async function POST(request: Request) {
     } = parsed.data;
 
     if (!isDateWithinBookingWindow(bookingDate)) {
-        const { minDate, maxDate } = getBookingWindow();
+      const { minDate, maxDate } = getBookingWindow();
 
-        return NextResponse.json(
-            {
-            error: `Booking hanya bisa dibuat untuk tanggal ${minDate} sampai ${maxDate}.`,
-            },
-            { status: 400 }
-        );
+      return NextResponse.json(
+        {
+          error: `Booking hanya bisa dibuat untuk tanggal ${minDate} sampai ${maxDate}.`,
+        },
+        { status: 400 }
+      );
     }
 
     const normalizedSlots = [...new Set(selectedSlots)].sort((a, b) => a - b);
@@ -103,25 +106,8 @@ export async function POST(request: Request) {
     const firstSlot = normalizedSlots[0];
     const lastSlot = normalizedSlots[normalizedSlots.length - 1];
 
-    if (firstSlot < OPEN_HOUR || lastSlot + 1 > CLOSE_HOUR) {
-      return NextResponse.json(
-        { error: "Slot di luar jam operasional." },
-        { status: 400 }
-      );
-    }
-
     const todayInJakarta = getTodayDateStringInJakarta();
     const currentHour = getCurrentHourInJakarta();
-
-    if (bookingDate === todayInJakarta && firstSlot <= currentHour) {
-      return NextResponse.json(
-        {
-          error:
-            "Untuk hari ini, manual booking tidak bisa dibuat di slot yang sudah lewat atau sedang berjalan.",
-        },
-        { status: 400 }
-      );
-    }
 
     const store = await prisma.store.findFirst({
       where: {
@@ -131,6 +117,16 @@ export async function POST(request: Request) {
       },
       select: {
         id: true,
+        openHour: true,
+        closeHour: true,
+        operatingHours: {
+          select: {
+            dayOfWeek: true,
+            openHour: true,
+            closeHour: true,
+            isClosed: true,
+          },
+        },
       },
     });
 
@@ -138,6 +134,42 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Store tidak ditemukan." },
         { status: 404 }
+      );
+    }
+
+    const resolvedHours = getStoreHoursForDate(store, bookingDate);
+
+    if (resolvedHours.isClosed) {
+      return NextResponse.json(
+        { error: "Store tutup pada tanggal yang dipilih." },
+        { status: 400 }
+      );
+    }
+
+    if (
+      firstSlot < resolvedHours.openHour ||
+      lastSlot + 1 > resolvedHours.closeHour
+    ) {
+      return NextResponse.json(
+        {
+          error: `Slot di luar jam operasional store (${String(
+            resolvedHours.openHour
+          ).padStart(2, "0")}:00 - ${String(resolvedHours.closeHour).padStart(
+            2,
+            "0"
+          )}:00).`,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (bookingDate === todayInJakarta && firstSlot <= currentHour) {
+      return NextResponse.json(
+        {
+          error:
+            "Untuk hari ini, manual booking tidak bisa dibuat di slot yang sudah lewat atau sedang berjalan.",
+        },
+        { status: 400 }
       );
     }
 
