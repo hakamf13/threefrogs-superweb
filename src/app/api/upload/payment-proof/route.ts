@@ -10,7 +10,7 @@ const ALLOWED_MIME_TYPES = [
   "image/jpg",
 ];
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 function isAllowedCloudinaryUrl(fileUrl: string) {
   try {
@@ -81,13 +81,13 @@ export async function POST(request: Request) {
       where: { bookingCode },
       select: {
         id: true,
-        bookingCode: true,
         userId: true,
         status: true,
         customerName: true,
+        paymentGatewayProvider: true,
       },
     });
-
+    
     if (!booking) {
       return NextResponse.json(
         { error: "Booking tidak ditemukan." },
@@ -102,6 +102,16 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Kamu tidak punya akses ke booking ini." },
         { status: 403 }
+      );
+    }
+
+    if (booking.paymentGatewayProvider === "MIDTRANS") {
+      return NextResponse.json(
+        {
+          error:
+            "Booking ini memakai Midtrans. Bukti pembayaran manual tidak bisa diupload.",
+        },
+        { status: 400 }
       );
     }
 
@@ -176,7 +186,7 @@ export async function POST(request: Request) {
 
     void sendAdminPaymentProofUploadedNotification({
       bookingId: booking.id,
-      bookingCode: booking.bookingCode,
+      bookingCode,
       customerName: booking.customerName,
     }).catch(console.error);
 

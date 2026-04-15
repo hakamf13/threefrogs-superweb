@@ -102,6 +102,13 @@ export async function PATCH(request: Request, context: RouteContext) {
 			normalizedOperatingHours.map((item) => item.dayOfWeek)
 		);
 
+		if (uniqueDays.size !== 7) {
+			return NextResponse.json(
+				{ error: "Hari operasional tidak boleh duplikat." },
+				{ status: 400 }
+			);
+		}
+
     for (const item of normalizedOperatingHours) {
       if (!DAY_VALUES.includes(item.dayOfWeek as DayOfWeek)) {
         return NextResponse.json(

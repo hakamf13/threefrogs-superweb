@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyMidtransSignature } from "@/features/payments/verify-midtrans-signature";
-import { sendCustomerBookingStatusChangedNotification } from "@/lib/notifications/booking-notifications";
 
 type MidtransNotificationBody = {
 	order_id: string;
@@ -75,9 +74,6 @@ export async function POST(request: Request) {
 				id: true,
 				status: true,
 				paymentReferenceId: true,
-				bookingCode: true,
-				customerName: true,
-				customerEmail: true,
 			},
 		});
 
@@ -114,6 +110,7 @@ export async function POST(request: Request) {
 							status: "CONFIRMED",
 							confirmedAt: new Date(),
 							paymentSucceededAt: new Date(),
+							expiresAt: null,
 							paymentGatewayStatus: transaction_status,
 							paymentMethodCode: payment_type?.toUpperCase() || undefined,
 							paymentGatewayPayload: body as object,
@@ -138,15 +135,6 @@ export async function POST(request: Request) {
 						},
 					});
 				});
-
-				void sendCustomerBookingStatusChangedNotification({
-					bookingId: booking.id,
-					bookingCode: booking.bookingCode,
-					customerName: booking.customerName,
-					customerEmail: booking.customerEmail,
-					statusLabel: "Booking terkonfirmasi",
-					note: "Pembayaran berhasil diverifikasi otomatis oleh sistem.",
-				}).catch(console.error);
 			}
 
 			return NextResponse.json({ received: true, action: "confirmed" });
@@ -186,18 +174,56 @@ export async function POST(request: Request) {
 						},
 					});
 				});
-
-				void sendCustomerBookingStatusChangedNotification({
-					bookingId: booking.id,
-					bookingCode: booking.bookingCode,
-					customerName: booking.customerName,
-					customerEmail: booking.customerEmail,
-					statusLabel: "Pembayaran kedaluwarsa",
-					note: "Silakan buat booking baru jika masih ingin reservasi.",
-				}).catch(console.error);
 			}
 
 			return NextResponse.json({ received: true, action: "expired" });
+		}
+
+		if (
+			transaction_status === "cancel" ||
+			transaction_status === "deny" ||
+			transaction_status === "failure"
+		) {
+			if (
+				booking.status !== "CONFIRMED" &&
+				booking.status !== "CANCELLED" &&
+				booking.status !== "EXPIRED"
+			) {
+				await prisma.$transaction(async (tx) => {
+					await tx.booking.update({
+						where: {
+							id: booking.id,
+						},
+						data: {
+							status: "CANCELLED",
+							cancelledAt: new Date(),
+							paymentGatewayStatus: transaction_status,
+							paymentMethodCode: payment_type?.toUpperCase() || undefined,
+							paymentGatewayPayload: body as object,
+						},
+					});
+
+					await tx.bookingSlot.updateMany({
+						where: {
+							bookingId: booking.id,
+						},
+						data: {
+							status: "CANCELLED",
+						},
+					});
+
+					await tx.bookingStatusLog.create({
+						data: {
+							bookingId: booking.id,
+							oldStatus: booking.status,
+							newStatus: "CANCELLED",
+							note: `Auto-cancel via Midtrans webhook (${transaction_status}).`,
+						},
+					});
+				});
+			}
+
+			return NextResponse.json({ received: true, action: "cancelled" });
 		}
 
 		return NextResponse.json({ received: true, action: "updated" });

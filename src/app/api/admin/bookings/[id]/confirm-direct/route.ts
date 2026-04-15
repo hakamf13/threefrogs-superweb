@@ -35,6 +35,16 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
+    if (booking.paymentGatewayProvider === "MIDTRANS") {
+      return NextResponse.json(
+        {
+          error:
+            "Booking Midtrans tidak boleh direct confirm manual. Tunggu webhook pembayaran atau batalkan booking.",
+        },
+        { status: 400 }
+      );
+    }
+
     if (
       booking.status !== "AWAITING_PAYMENT" &&
       booking.status !== "PENDING_VERIFICATION"

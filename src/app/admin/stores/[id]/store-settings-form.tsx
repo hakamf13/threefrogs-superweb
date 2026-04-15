@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Image from "next/image";
 
 type DayOfWeek =
   | "MONDAY"
@@ -254,11 +255,15 @@ export default function StoreSettingsForm({ store }: StoreSettingsFormProps) {
       <div className="mt-6 space-y-5">
         <div>
           {store.coverImageUrl ? (
-            <img
-              src={store.coverImageUrl}
-              alt={store.name}
-              className="h-56 w-full rounded-[1.6rem] object-cover"
-            />
+            <div className="relative h-56 w-full overflow-hidden rounded-[1.6rem]">
+							<Image
+								src={store.coverImageUrl}
+								alt={store.name}
+								fill
+								className="object-cover"
+								sizes="(max-width: 768px) 100vw, 50vw"
+							/>
+						</div>
           ) : (
             <div className="h-56 rounded-[1.6rem] bg-gradient-to-br from-[var(--tf-lavender)] to-[var(--tf-cream)]" />
           )}

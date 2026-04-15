@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "../../../lib/prisma";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
@@ -64,11 +65,15 @@ export default async function AdminStoresPage() {
               className="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)] transition hover:-translate-y-[1px] hover:border-[var(--tf-purple)]"
             >
               {store.coverImageUrl ? (
-                <img
-                  src={store.coverImageUrl}
-                  alt={store.name}
-                  className="mb-5 h-48 w-full rounded-[1.5rem] object-cover"
-                />
+                <div className="relative mb-5 h-48 w-full overflow-hidden rounded-[1.5rem]">
+                  <Image
+                    src={store.coverImageUrl}
+                    alt={store.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
+                </div>
               ) : (
                 <div className="mb-5 h-48 rounded-[1.5rem] bg-gradient-to-br from-[var(--tf-lavender)] to-[var(--tf-cream)]" />
               )}
