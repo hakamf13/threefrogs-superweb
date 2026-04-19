@@ -8,10 +8,13 @@ import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bo
 import {
   formatDateDisplay,
   formatRupiah,
+  getPaymentGatewayStatusColor,
   getPaymentGatewayStatusLabel,
 } from "../../lib/utils";
 import EmptyStateCard from "@/components/ui/empty-state-card";
 import CancelBookingButton from "@/components/reservations/cancel-booking-button";
+import RegenerateMidtransButton from "@/components/payments/regenerate-midtrans-button";
+import PaymentStatusSyncBanner from "@/components/payments/payment-status-sync-banner";
 import { BookingStatus, Prisma } from "@prisma/client";
 import BookingStatusChip from "@/components/bookings/booking-status-chip";
 
@@ -22,6 +25,7 @@ type MyBookingsPageProps = {
     q?: string;
     status?: string;
     sort?: string;
+    refresh?: string;
   }>;
 };
 
@@ -51,6 +55,7 @@ export default async function MyBookingsPage({
   const q = (params.q ?? "").trim();
   const status = (params.status ?? "").trim();
   const sort = params.sort === "oldest" ? "oldest" : "newest";
+  const refresh = (params.refresh ?? "").trim();
 
   const whereClause: Prisma.BookingWhereInput = {
     userId: session.user.id,
@@ -125,6 +130,8 @@ export default async function MyBookingsPage({
               </p>
             </div>
           </div>
+
+          <PaymentStatusSyncBanner enabled={refresh === "payment"} />
 
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className={summaryCardClass}>
@@ -250,6 +257,10 @@ export default async function MyBookingsPage({
                   booking.status === "AWAITING_PAYMENT" &&
                   !!booking.paymentCheckoutUrl;
 
+                const showMidtransRegenerate =
+                  booking.paymentGatewayProvider === "MIDTRANS" &&
+                  booking.status === "AWAITING_PAYMENT";
+
                 const canCancel =
                   booking.status === "AWAITING_PAYMENT" ||
                   booking.status === "PENDING_VERIFICATION" ||
@@ -301,11 +312,19 @@ export default async function MyBookingsPage({
                         </div>
 
                         {booking.paymentGatewayProvider === "MIDTRANS" ? (
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                            Midtrans •{" "}
-                            {getPaymentGatewayStatusLabel(
-                              booking.paymentGatewayStatus
-                            )}
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span className="rounded-full bg-[var(--tf-lavender)] px-3 py-1 text-xs font-bold text-[var(--tf-purple-dark)]">
+                              Midtrans
+                            </span>
+                            <span
+                              className={`rounded-full px-3 py-1 text-xs font-bold ${getPaymentGatewayStatusColor(
+                                booking.paymentGatewayStatus
+                              )}`}
+                            >
+                              {getPaymentGatewayStatusLabel(
+                                booking.paymentGatewayStatus
+                              )}
+                            </span>
                           </div>
                         ) : (
                           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
@@ -314,7 +333,7 @@ export default async function MyBookingsPage({
                         )}
                       </div>
 
-                      <div className="flex flex-wrap gap-3 lg:max-w-[280px] lg:justify-end">
+                      <div className="flex flex-wrap gap-3 lg:max-w-[320px] lg:justify-end">
                         {showMidtransPayButton ? (
                           <a
                             href={booking.paymentCheckoutUrl!}
@@ -324,6 +343,13 @@ export default async function MyBookingsPage({
                           >
                             Bayar sekarang
                           </a>
+                        ) : null}
+
+                        {showMidtransRegenerate ? (
+                          <RegenerateMidtransButton
+                            bookingCode={booking.bookingCode}
+                            label="Ulangi Link Bayar"
+                          />
                         ) : null}
 
                         <Link

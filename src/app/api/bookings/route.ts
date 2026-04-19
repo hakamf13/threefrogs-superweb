@@ -352,6 +352,23 @@ export async function POST(request: Request) {
         };
       } catch (paymentError) {
         console.error("Create Midtrans Snap transaction error:", paymentError);
+
+        await prisma.booking.update({
+          where: {
+            id: booking.id,
+          },
+          data: {
+            paymentGatewayProvider: "MIDTRANS",
+            paymentGatewayStatus: "TOKEN_FAILED",
+            paymentMethodCode: "MIDTRANS_SNAP",
+          },
+        });
+
+        paymentResult = {
+          checkoutUrl: null,
+          gatewayToken: null,
+          gatewayStatus: "TOKEN_FAILED",
+        };
       }
     }
 

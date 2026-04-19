@@ -88,6 +88,20 @@ export default async function AdminLayout({
               Store Management
             </Link>
 
+            <Link
+              href="/admin/payment-readiness"
+              className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Payment Readiness
+            </Link>
+
+            <Link
+              href="/admin/payment-ops"
+              className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Payment Ops
+            </Link>
+
             <LogoutButton />
           </nav>
         </div>

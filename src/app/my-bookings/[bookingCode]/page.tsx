@@ -6,6 +6,8 @@ import SiteFooter from "@/components/layout/site-footer";
 import PaymentProofUploader from "@/components/payments/payment-proof-uploader";
 import CancelBookingButton from "@/components/reservations/cancel-booking-button";
 import BookingStatusChip from "@/components/bookings/booking-status-chip";
+import RegenerateMidtransButton from "@/components/payments/regenerate-midtrans-button";
+import RefreshBookingStatusButton from "@/components/payments/refresh-booking-status-button";
 import { prisma } from "@/lib/prisma";
 import { expireOverdueBookings } from "@/features/reservations/expire-overdue-bookings";
 import {
@@ -15,6 +17,8 @@ import {
   formatRupiah,
   getBookingStatusDescription,
   getBookingStatusPanelClass,
+  getPaymentGatewayStatusColor,
+  getPaymentGatewayStatusDescription,
   getPaymentGatewayStatusLabel,
   getPaymentProofStatusColor,
   getPaymentProofStatusLabel,
@@ -80,6 +84,9 @@ export default async function MyBookingDetailPage({
     booking.status === "AWAITING_PAYMENT" &&
     !!booking.paymentCheckoutUrl;
 
+  const showMidtransRecoverCard =
+    isMidtransBooking && booking.status === "AWAITING_PAYMENT";
+
   const showMidtransSuccessCard =
     isMidtransBooking && booking.status === "CONFIRMED";
 
@@ -131,6 +138,34 @@ export default async function MyBookingDetailPage({
               </p>
             ) : null}
           </div>
+
+          {booking.paymentGatewayProvider === "MIDTRANS" ? (
+            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
+              <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
+                Payment Gateway
+              </p>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="rounded-full bg-[var(--tf-lavender)] px-3 py-1 text-xs font-bold text-[var(--tf-purple-dark)]">
+                  Midtrans
+                </span>
+
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold ${getPaymentGatewayStatusColor(
+                    booking.paymentGatewayStatus
+                  )}`}
+                >
+                  {getPaymentGatewayStatusLabel(booking.paymentGatewayStatus)}
+                </span>
+              </div>
+
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                {getPaymentGatewayStatusDescription(
+                  booking.paymentGatewayStatus
+                )}
+              </p>
+            </div>
+          ) : null}
 
           {latestRejectedProof?.rejectionReason ? (
             <div className="rounded-[1.6rem] border border-red-200 bg-red-50 p-5 text-red-700">
@@ -288,14 +323,44 @@ export default async function MyBookingDetailPage({
                       {getPaymentGatewayStatusLabel(booking.paymentGatewayStatus)}
                     </p>
 
-                    <a
-                      href={booking.paymentCheckoutUrl!}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-4 inline-flex rounded-2xl bg-[var(--tf-purple)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
-                    >
-                      Bayar sekarang
-                    </a>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <a
+                        href={booking.paymentCheckoutUrl!}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex rounded-2xl bg-[var(--tf-purple)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
+                      >
+                        Bayar sekarang
+                      </a>
+
+                      <RegenerateMidtransButton
+                        bookingCode={booking.bookingCode}
+                        label="Buat Ulang Link Bayar"
+                      />
+                    </div>
+                  </div>
+                ) : null}
+
+                {!showMidtransPendingCard && showMidtransRecoverCard ? (
+                  <div className="rounded-2xl border border-slate-200 bg-[var(--tf-surface-muted)] p-4">
+                    <h3 className="text-lg font-black text-slate-900">
+                      Link pembayaran perlu dibuat ulang
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      Booking masih menunggu pembayaran, tapi link checkout aktif
+                      tidak tersedia. Buat ulang link pembayaran untuk lanjut.
+                    </p>
+                    <p className="mt-3 text-sm font-medium text-slate-700">
+                      Status gateway:{" "}
+                      {getPaymentGatewayStatusLabel(booking.paymentGatewayStatus)}
+                    </p>
+
+                    <div className="mt-4">
+                      <RegenerateMidtransButton
+                        bookingCode={booking.bookingCode}
+                        variant="primary"
+                      />
+                    </div>
                   </div>
                 ) : null}
 
@@ -347,7 +412,9 @@ export default async function MyBookingDetailPage({
             </aside>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap gap-3">
+            <RefreshBookingStatusButton />
+
             <Link
               href="/my-bookings"
               className="rounded-2xl bg-[var(--tf-purple)] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)]"
@@ -359,7 +426,7 @@ export default async function MyBookingDetailPage({
               href="/reserve"
               className="rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-700"
             >
-              Buat booking lagi
+              Buat Booking Lagi
             </Link>
           </div>
         </section>

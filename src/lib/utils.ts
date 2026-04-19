@@ -172,6 +172,10 @@ export function getPaymentGatewayStatusLabel(status?: string | null) {
   switch (status.toLowerCase()) {
     case "token_created":
       return "Siap Dibayar";
+    case "token_regenerated":
+      return "Link Dibuat Ulang";
+    case "token_failed":
+      return "Gagal Membuat Link";
     case "pending":
       return "Menunggu Pembayaran";
     case "settlement":
@@ -188,6 +192,61 @@ export function getPaymentGatewayStatusLabel(status?: string | null) {
       return "Gagal";
     default:
       return status;
+  }
+}
+
+export function getPaymentGatewayStatusColor(status?: string | null) {
+  if (!status) {
+    return "bg-slate-100 text-slate-700 border border-slate-200";
+  }
+
+  switch (status.toLowerCase()) {
+    case "settlement":
+    case "capture":
+      return "bg-green-50 text-green-700 border border-green-200";
+    case "pending":
+    case "token_created":
+    case "token_regenerated":
+      return "bg-yellow-50 text-yellow-700 border border-yellow-200";
+    case "expire":
+    case "cancel":
+    case "deny":
+    case "failure":
+    case "token_failed":
+      return "bg-red-50 text-red-700 border border-red-200";
+    default:
+      return "bg-slate-100 text-slate-700 border border-slate-200";
+  }
+}
+
+export function getPaymentGatewayStatusDescription(status?: string | null) {
+  if (!status) {
+    return "Status pembayaran dari gateway belum tersedia.";
+  }
+
+  switch (status.toLowerCase()) {
+    case "token_created":
+      return "Link pembayaran berhasil dibuat dan siap digunakan.";
+    case "token_regenerated":
+      return "Link pembayaran berhasil dibuat ulang dan siap digunakan.";
+    case "token_failed":
+      return "Sistem gagal membuat link pembayaran otomatis. Coba buat ulang link pembayaran.";
+    case "pending":
+      return "Transaksi sudah dibuat, tetapi pembayaran belum selesai atau belum settle di Midtrans.";
+    case "settlement":
+      return "Pembayaran sudah diterima penuh oleh Midtrans dan booking seharusnya sudah terkonfirmasi otomatis.";
+    case "capture":
+      return "Pembayaran sudah diterima gateway. Booking akan dikonfirmasi sesuai hasil verifikasi Midtrans.";
+    case "expire":
+      return "Batas waktu pembayaran habis sebelum transaksi selesai.";
+    case "cancel":
+      return "Transaksi dibatalkan dari sisi gateway.";
+    case "deny":
+      return "Transaksi ditolak oleh gateway pembayaran.";
+    case "failure":
+      return "Terjadi kegagalan saat proses pembayaran.";
+    default:
+      return "Status pembayaran dari gateway belum tersedia.";
   }
 }
 
