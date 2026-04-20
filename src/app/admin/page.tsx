@@ -44,6 +44,9 @@ const BOOKING_STATUS_VALUES: BookingStatus[] = [
   "EXPIRED",
 ];
 
+const cardClass =
+  "rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]";
+
 export default async function AdminBookingsPage({
   searchParams,
 }: AdminBookingsPageProps) {
@@ -56,6 +59,9 @@ export default async function AdminBookingsPage({
   const storeId = (params.storeId ?? "").trim();
   const date = (params.date ?? "").trim();
   const sort = params.sort === "oldest" ? "oldest" : "newest";
+
+  const today = getTodayDateString();
+  const todayRange = getDateRange(today);
 
   const stores = await prisma.store.findMany({
     where: {
@@ -112,16 +118,47 @@ export default async function AdminBookingsPage({
     };
   }
 
-  const bookings = await prisma.booking.findMany({
-    where: whereClause,
-    orderBy: {
-      createdAt: sort === "oldest" ? "asc" : "desc",
-    },
-    include: {
-      store: true,
-      table: true,
-    },
-  });
+  const [
+    bookings,
+    todayBookingsCount,
+    awaitingPaymentCount,
+    pendingVerificationCount,
+    activeWalkInCount,
+  ] = await Promise.all([
+    prisma.booking.findMany({
+      where: whereClause,
+      orderBy: {
+        createdAt: sort === "oldest" ? "asc" : "desc",
+      },
+      include: {
+        store: true,
+        table: true,
+      },
+    }),
+    prisma.booking.count({
+      where: {
+        bookingDate: {
+          gte: todayRange.start,
+          lte: todayRange.end,
+        },
+      },
+    }),
+    prisma.booking.count({
+      where: {
+        status: "AWAITING_PAYMENT",
+      },
+    }),
+    prisma.booking.count({
+      where: {
+        status: "PENDING_VERIFICATION",
+      },
+    }),
+    prisma.walkInSession.count({
+      where: {
+        status: "ACTIVE",
+      },
+    }),
+  ]);
 
   const summary = {
     total: bookings.length,
@@ -141,70 +178,173 @@ export default async function AdminBookingsPage({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
-              Pusat Booking
+              Dashboard Operasional
             </p>
             <h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
-              Kelola Booking
+              Pusat Kendali Admin
             </h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Lihat, cari, dan pantau seluruh booking agar operasional harian
-              berjalan lebih rapi dan mudah dipantau.
+              Pantau booking, pembayaran, walk-in, dan operasional harian dari
+              satu tempat agar penanganan lebih cepat dan rapi.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/admin/manual-booking"
+              href="/admin/today-operations"
               className="rounded-2xl bg-[var(--tf-purple)] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)]"
             >
-              Buat Booking Manual
+              Operasional Hari Ini
             </Link>
             <Link
-              href="/admin/availability"
+              href="/admin/manual-booking"
               className="rounded-2xl border border-[var(--tf-purple)] px-5 py-3 font-bold text-[var(--tf-purple)]"
             >
-              Lihat Ketersediaan
+              Buat Booking Manual
             </Link>
           </div>
         </div>
 
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className={cardClass}>
+            <p className="text-sm text-slate-500">Booking hari ini</p>
+            <p className="mt-2 text-3xl font-black text-[var(--tf-purple)]">
+              {todayBookingsCount}
+            </p>
+          </div>
+
+          <div className={cardClass}>
+            <p className="text-sm text-slate-500">Menunggu pembayaran</p>
+            <p className="mt-2 text-3xl font-black text-orange-600">
+              {awaitingPaymentCount}
+            </p>
+          </div>
+
+          <div className={cardClass}>
+            <p className="text-sm text-slate-500">Menunggu pengecekan</p>
+            <p className="mt-2 text-3xl font-black text-yellow-600">
+              {pendingVerificationCount}
+            </p>
+          </div>
+
+          <div className={cardClass}>
+            <p className="text-sm text-slate-500">Walk-in aktif</p>
+            <p className="mt-2 text-3xl font-black text-[var(--tf-purple)]">
+              {activeWalkInCount}
+            </p>
+          </div>
+
+          <div className={cardClass}>
+            <p className="text-sm text-slate-500">Store aktif</p>
+            <p className="mt-2 text-3xl font-black text-slate-700">
+              {stores.length}
+            </p>
+          </div>
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+          <Link
+            href="/admin/payment-ops"
+            className={`${cardClass} transition hover:-translate-y-[1px] hover:border-[var(--tf-purple)]`}
+          >
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              Pembayaran
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
+              Pemantauan Pembayaran
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Cek pembayaran yang masih menunggu, yang perlu ditinjau,
+              dan yang sudah berhasil.
+            </p>
+          </Link>
+
+          <Link
+            href="/admin/walk-in"
+            className={`${cardClass} transition hover:-translate-y-[1px] hover:border-[var(--tf-purple)]`}
+          >
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              Walk-in
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
+              Kelola Sesi Walk-in
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Buka sesi baru, atur pembayaran, pindahkan meja,
+              dan tutup sesi dengan cepat.
+            </p>
+          </Link>
+
+          <Link
+            href="/admin/availability"
+            className={`${cardClass} transition hover:-translate-y-[1px] hover:border-[var(--tf-purple)]`}
+          >
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              Ketersediaan
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
+              Pantau Jadwal Meja
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Lihat slot meja per jam untuk membantu booking dan walk-in
+              tanpa bentrok jadwal.
+            </p>
+          </Link>
+
+          <Link
+            href="/admin/stores"
+            className={`${cardClass} transition hover:-translate-y-[1px] hover:border-[var(--tf-purple)]`}
+          >
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              Store
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
+              Kelola Store
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Perbarui data store, jam operasional, dan meja aktif
+              untuk menjaga operasional tetap akurat.
+            </p>
+          </Link>
+        </section>
+
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Total booking</p>
+          <div className={cardClass}>
+            <p className="text-sm text-slate-500">Hasil booking</p>
             <p className="mt-2 text-3xl font-black text-[var(--tf-purple)]">
               {summary.total}
             </p>
           </div>
 
-          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
+          <div className={cardClass}>
             <p className="text-sm text-slate-500">Menunggu pembayaran</p>
             <p className="mt-2 text-3xl font-black text-orange-600">
               {summary.awaitingPayment}
             </p>
           </div>
 
-          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
+          <div className={cardClass}>
             <p className="text-sm text-slate-500">Menunggu pengecekan</p>
             <p className="mt-2 text-3xl font-black text-yellow-600">
               {summary.pendingVerification}
             </p>
           </div>
 
-          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
+          <div className={cardClass}>
             <p className="text-sm text-slate-500">Sudah dikonfirmasi</p>
             <p className="mt-2 text-3xl font-black text-green-600">
               {summary.confirmed}
             </p>
           </div>
 
-          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
+          <div className={cardClass}>
             <p className="text-sm text-slate-500">Dibatalkan</p>
             <p className="mt-2 text-3xl font-black text-red-600">
               {summary.cancelled}
             </p>
           </div>
 
-          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
+          <div className={cardClass}>
             <p className="text-sm text-slate-500">Kedaluwarsa</p>
             <p className="mt-2 text-3xl font-black text-slate-600">
               {summary.expired}
@@ -213,6 +353,19 @@ export default async function AdminBookingsPage({
         </section>
 
         <section className="rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
+          <div className="mb-5">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              Daftar Booking
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
+              Cari dan Saring Booking
+            </h2>
+            <p className="mt-2 max-w-2xl text-slate-600">
+              Gunakan filter di bawah untuk menemukan booking yang ingin ditangani
+              lebih cepat.
+            </p>
+          </div>
+
           <form className="grid gap-4 lg:grid-cols-5">
             <div className="lg:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700">
