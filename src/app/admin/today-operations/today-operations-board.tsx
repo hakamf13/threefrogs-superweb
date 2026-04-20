@@ -31,14 +31,14 @@ function getStatusCardClass(status: TableStatus) {
 function getStatusLabel(status: TableStatus) {
   switch (status) {
     case "WALK_IN_ACTIVE":
-      return "Walk-in Aktif";
+      return "Walk-in aktif";
     case "BOOKED_NOW":
-      return "Sedang Dipakai Booking";
+      return "Sedang digunakan";
     case "UPCOMING_BOOKING":
-      return "Ada Booking Berikutnya";
+      return "Ada jadwal berikutnya";
     case "FREE":
     default:
-      return "Kosong";
+      return "Tersedia";
   }
 }
 
@@ -64,7 +64,7 @@ function getWalkInPaymentLabel(status: "UNPAID" | "PARTIAL" | "PAID") {
       return "DP";
     case "UNPAID":
     default:
-      return "Belum bayar";
+      return "Belum dibayar";
   }
 }
 
@@ -119,10 +119,10 @@ export default function TodayOperationsBoard({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
-              Today Operations
+              Operasional Hari Ini
             </p>
             <h1 className="mt-3 text-4xl font-black text-[#5D3FD3]">
-              Operasional Meja Hari Ini
+              Pantau Kondisi Meja Hari Ini
             </h1>
             <p className="mt-2 text-slate-600">
               Tanggal {formatDateDisplay(new Date(`${data.today}T00:00:00.000Z`))} •
@@ -135,56 +135,56 @@ export default function TodayOperationsBoard({
               href="/admin/walk-in"
               className="rounded-2xl bg-[#5D3FD3] px-5 py-3 font-bold text-white transition hover:bg-[#4E35B8]"
             >
-              Walk-in
+              Kelola Walk-in
             </Link>
 
             <Link
               href="/admin/manual-booking"
               className="rounded-2xl border border-[#5D3FD3] px-5 py-3 font-bold text-[#5D3FD3]"
             >
-              Manual Booking
+              Buat Booking Manual
             </Link>
 
             <Link
               href="/admin/availability"
               className="rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-700"
             >
-              Availability
+              Lihat Ketersediaan
             </Link>
           </div>
         </div>
 
         <section className="grid gap-4 md:grid-cols-5">
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Total Meja</p>
+            <p className="text-sm text-slate-500">Total meja</p>
             <p className="mt-2 text-3xl font-black text-[#5D3FD3]">
               {data.summary.totalTables}
             </p>
           </div>
 
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Walk-in Aktif</p>
+            <p className="text-sm text-slate-500">Walk-in aktif</p>
             <p className="mt-2 text-3xl font-black text-[#5D3FD3]">
               {data.summary.walkInCount}
             </p>
           </div>
 
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Booking Berjalan</p>
+            <p className="text-sm text-slate-500">Sedang digunakan</p>
             <p className="mt-2 text-3xl font-black text-green-600">
               {data.summary.bookedNowCount}
             </p>
           </div>
 
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Booking Berikutnya</p>
+            <p className="text-sm text-slate-500">Jadwal berikutnya</p>
             <p className="mt-2 text-3xl font-black text-orange-600">
               {data.summary.upcomingCount}
             </p>
           </div>
 
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Meja Kosong</p>
+            <p className="text-sm text-slate-500">Meja tersedia</p>
             <p className="mt-2 text-3xl font-black text-slate-700">
               {data.summary.freeCount}
             </p>
@@ -239,18 +239,19 @@ export default function TodayOperationsBoard({
                       {table.currentStatus === "WALK_IN_ACTIVE" && table.walkInSession ? (
                         <>
                           <p className="font-semibold">
-                            Customer: {table.walkInSession.customerName}
+                            Pelanggan: {table.walkInSession.customerName}
                           </p>
 
                           {table.walkInSession.customerPhone ? (
-                            <p>HP: {table.walkInSession.customerPhone}</p>
+                            <p>Telepon: {table.walkInSession.customerPhone}</p>
                           ) : null}
 
                           <p>
-                            Mulai: {formatDateTimeDisplay(table.walkInSession.startedAt)}
+                            Mulai bermain:{" "}
+                            {formatDateTimeDisplay(table.walkInSession.startedAt)}
                           </p>
                           <p>
-                            Estimasi selesai:{" "}
+                            Perkiraan selesai:{" "}
                             {formatDateTimeDisplay(table.walkInSession.estimatedEndAt)}
                           </p>
 
@@ -276,9 +277,9 @@ export default function TodayOperationsBoard({
                       {table.currentStatus === "BOOKED_NOW" && table.currentBooking ? (
                         <>
                           <p className="font-semibold">
-                            Customer: {table.currentBooking.customerName}
+                            Pelanggan: {table.currentBooking.customerName}
                           </p>
-                          <p>Kode: {table.currentBooking.bookingCode}</p>
+                          <p>Kode booking: {table.currentBooking.bookingCode}</p>
                           <p>
                             Slot aktif: {formatHourLabel(table.currentBooking.slotHour)}
                           </p>
@@ -288,7 +289,7 @@ export default function TodayOperationsBoard({
                       {table.nextBooking ? (
                         <div className="rounded-[1.25rem] bg-white/70 p-3">
                           <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                            Next Booking
+                            Jadwal berikutnya
                           </p>
                           <p className="mt-2 font-semibold">
                             {table.nextBooking.customerName}
@@ -300,7 +301,7 @@ export default function TodayOperationsBoard({
                       {table.currentStatus === "FREE" ? (
                         <div className="rounded-[1.25rem] bg-white/70 p-3">
                           <p className="font-semibold text-slate-700">
-                            Meja kosong dan siap dipakai sekarang.
+                            Meja ini sedang kosong dan siap digunakan.
                           </p>
                         </div>
                       ) : null}
@@ -321,7 +322,7 @@ export default function TodayOperationsBoard({
                           }
                           className="rounded-2xl bg-[#5D3FD3] px-4 py-2 font-bold text-white"
                         >
-                          Fokus ke Walk-in
+                          Lihat sesi walk-in
                         </button>
                       ) : null}
 
@@ -333,7 +334,7 @@ export default function TodayOperationsBoard({
                           }
                           className="rounded-2xl bg-green-600 px-4 py-2 font-bold text-white"
                         >
-                          Detail Booking
+                          Lihat detail booking
                         </button>
                       ) : null}
 
@@ -346,7 +347,7 @@ export default function TodayOperationsBoard({
                             }
                             className="rounded-2xl bg-[#5D3FD3] px-4 py-2 font-bold text-white"
                           >
-                            Buka Walk-in
+                            Buka sesi walk-in
                           </button>
 
                           <button
@@ -354,7 +355,7 @@ export default function TodayOperationsBoard({
                             onClick={() => router.push("/admin/manual-booking")}
                             className="rounded-2xl border border-slate-300 px-4 py-2 font-bold text-slate-700"
                           >
-                            Manual Booking
+                            Buat booking manual
                           </button>
                         </>
                       ) : null}
@@ -368,7 +369,7 @@ export default function TodayOperationsBoard({
                             }
                             className="rounded-2xl border border-orange-300 px-4 py-2 font-bold text-orange-700"
                           >
-                            Lihat Booking Berikutnya
+                            Lihat booking berikutnya
                           </button>
 
                           <button
@@ -378,7 +379,7 @@ export default function TodayOperationsBoard({
                             }
                             className="rounded-2xl bg-[#5D3FD3] px-4 py-2 font-bold text-white"
                           >
-                            Buka Walk-in
+                            Buka sesi walk-in
                           </button>
                         </>
                       ) : null}

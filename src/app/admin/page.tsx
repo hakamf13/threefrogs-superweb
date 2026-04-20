@@ -42,7 +42,6 @@ const BOOKING_STATUS_VALUES: BookingStatus[] = [
   "CONFIRMED",
   "CANCELLED",
   "EXPIRED",
-  // "COMPLETED",
 ];
 
 export default async function AdminBookingsPage({
@@ -142,13 +141,14 @@ export default async function AdminBookingsPage({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
-              Admin Dashboard
+              Pusat Booking
             </p>
             <h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
-              Daftar Booking
+              Kelola Booking
             </h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Cari, filter, dan pantau semua booking untuk operasional harian.
+              Lihat, cari, dan pantau seluruh booking agar operasional harian
+              berjalan lebih rapi dan mudah dipantau.
             </p>
           </div>
 
@@ -157,41 +157,41 @@ export default async function AdminBookingsPage({
               href="/admin/manual-booking"
               className="rounded-2xl bg-[var(--tf-purple)] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)]"
             >
-              Manual Booking
+              Buat Booking Manual
             </Link>
             <Link
               href="/admin/availability"
               className="rounded-2xl border border-[var(--tf-purple)] px-5 py-3 font-bold text-[var(--tf-purple)]"
             >
-              Availability
+              Lihat Ketersediaan
             </Link>
           </div>
         </div>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Total</p>
+            <p className="text-sm text-slate-500">Total booking</p>
             <p className="mt-2 text-3xl font-black text-[var(--tf-purple)]">
               {summary.total}
             </p>
           </div>
 
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Menunggu bayar</p>
+            <p className="text-sm text-slate-500">Menunggu pembayaran</p>
             <p className="mt-2 text-3xl font-black text-orange-600">
               {summary.awaitingPayment}
             </p>
           </div>
 
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Menunggu verifikasi</p>
+            <p className="text-sm text-slate-500">Menunggu pengecekan</p>
             <p className="mt-2 text-3xl font-black text-yellow-600">
               {summary.pendingVerification}
             </p>
           </div>
 
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Terkonfirmasi</p>
+            <p className="text-sm text-slate-500">Sudah dikonfirmasi</p>
             <p className="mt-2 text-3xl font-black text-green-600">
               {summary.confirmed}
             </p>
@@ -222,14 +222,14 @@ export default async function AdminBookingsPage({
                 type="text"
                 name="q"
                 defaultValue={q}
-                placeholder="Kode booking / nama / no. HP"
+                placeholder="Masukkan kode booking, nama, atau nomor HP"
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
               />
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Status
+                Status booking
               </label>
               <select
                 name="status"
@@ -237,12 +237,11 @@ export default async function AdminBookingsPage({
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
               >
                 <option value="">Semua status</option>
-                <option value="AWAITING_PAYMENT">Menunggu bayar</option>
-                <option value="PENDING_VERIFICATION">Menunggu verifikasi</option>
-                <option value="CONFIRMED">Terkonfirmasi</option>
+                <option value="AWAITING_PAYMENT">Menunggu pembayaran</option>
+                <option value="PENDING_VERIFICATION">Menunggu pengecekan</option>
+                <option value="CONFIRMED">Sudah dikonfirmasi</option>
                 <option value="CANCELLED">Dibatalkan</option>
                 <option value="EXPIRED">Kedaluwarsa</option>
-                <option value="COMPLETED">Selesai</option>
               </select>
             </div>
 
@@ -266,7 +265,7 @@ export default async function AdminBookingsPage({
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
-                Tanggal main
+                Tanggal bermain
               </label>
               <input
                 type="date"
@@ -296,14 +295,14 @@ export default async function AdminBookingsPage({
                 type="submit"
                 className="rounded-2xl bg-[var(--tf-purple)] px-5 py-3 font-bold text-white"
               >
-                Terapkan Filter
+                Tampilkan Hasil
               </button>
 
               <Link
                 href="/admin"
                 className="rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-700"
               >
-                Reset
+                Reset Filter
               </Link>
             </div>
           </form>
@@ -313,10 +312,10 @@ export default async function AdminBookingsPage({
           {bookings.length === 0 ? (
             <EmptyStateCard
               eyebrow="Booking"
-              title="Tidak ada booking yang cocok"
-              description="Coba ubah keyword, status, store, atau tanggal supaya hasil pencarian lebih sesuai."
+              title="Belum ada hasil yang sesuai"
+              description="Coba ubah kata kunci, status, store, atau tanggal agar hasil yang tampil lebih sesuai."
               actionHref="/admin"
-              actionLabel="Tampilkan semua"
+              actionLabel="Lihat semua booking"
             />
           ) : (
             bookings.map((booking) => (

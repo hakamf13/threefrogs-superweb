@@ -98,7 +98,7 @@ export default function AdminManualBookingForm({
         const result = await response.json();
 
         if (!response.ok) {
-          setErrorMessage(result.error ?? "Gagal mengambil availability.");
+          setErrorMessage(result.error ?? "Data ketersediaan belum bisa ditampilkan.");
           setAvailabilityTables([]);
           return;
         }
@@ -106,7 +106,7 @@ export default function AdminManualBookingForm({
         setAvailabilityTables(result.data);
       } catch (error) {
         console.error(error);
-        setErrorMessage("Terjadi kesalahan saat mengambil availability.");
+        setErrorMessage("Terjadi kendala saat mengambil data ketersediaan.");
         setAvailabilityTables([]);
       } finally {
         setIsLoadingAvailability(false);
@@ -156,7 +156,7 @@ export default function AdminManualBookingForm({
     });
 
     if (!isSequential) {
-      setErrorMessage("Slot jam harus dipilih berurutan.");
+      setErrorMessage("Jam yang dipilih harus berurutan.");
       return;
     }
 
@@ -166,7 +166,7 @@ export default function AdminManualBookingForm({
     });
 
     if (!allStillAvailable) {
-      setErrorMessage("Ada slot yang tidak tersedia.");
+      setErrorMessage("Ada jam yang sudah tidak tersedia.");
       return;
     }
 
@@ -176,12 +176,12 @@ export default function AdminManualBookingForm({
 
   const handleSubmit = async () => {
     if (!selectedStoreId || !selectedTableId || selectedSlots.length === 0) {
-      setErrorMessage("Lengkapi store, meja, dan slot dulu.");
+      setErrorMessage("Lengkapi store, meja, dan jam bermain terlebih dahulu.");
       return;
     }
 
     if (!customerName.trim() || !customerPhone.trim()) {
-      setErrorMessage("Nama customer dan nomor HP wajib diisi.");
+      setErrorMessage("Nama pelanggan dan nomor telepon wajib diisi.");
       return;
     }
 
@@ -211,14 +211,14 @@ export default function AdminManualBookingForm({
       const result = await response.json();
 
       if (!response.ok) {
-        setErrorMessage(result.error ?? "Gagal membuat manual booking.");
+        setErrorMessage(result.error ?? "Booking belum berhasil dibuat.");
         return;
       }
 
       router.push(`/admin/bookings/${result.bookingId}`);
     } catch (error) {
       console.error(error);
-      setErrorMessage("Terjadi kesalahan saat membuat manual booking.");
+      setErrorMessage("Terjadi kendala saat membuat booking.");
     } finally {
       setIsSubmitting(false);
     }
@@ -229,14 +229,14 @@ export default function AdminManualBookingForm({
       <div className="mx-auto max-w-6xl space-y-10">
         <div>
           <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
-            Manual Booking
+            Booking Manual
           </p>
           <h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
             Buat Booking Manual
           </h1>
           <p className="mt-2 text-slate-600">
-            Dipakai untuk walk-in atau input admin, dengan flow yang tetap aman
-            terhadap availability.
+            Gunakan halaman ini untuk melayani walk-in atau membuat booking dari
+            admin, sambil tetap menjaga agar jadwal meja tidak bentrok.
           </p>
         </div>
 
@@ -276,7 +276,7 @@ export default function AdminManualBookingForm({
 
             <div className={panelClass}>
               <h2 className="mb-4 text-xl font-bold text-[var(--tf-purple)]">
-                2. Pilih Tanggal
+                2. Pilih Tanggal Bermain
               </h2>
 
               <input
@@ -294,8 +294,7 @@ export default function AdminManualBookingForm({
               />
 
               <p className="mt-2 text-sm text-slate-500">
-                Booking hanya bisa dibuat untuk tanggal {defaultDate} sampai{" "}
-                {maxDate}.
+                Booking dapat dibuat untuk tanggal {defaultDate} sampai {maxDate}.
               </p>
             </div>
 
@@ -307,10 +306,10 @@ export default function AdminManualBookingForm({
               {isLoadingAvailability ? (
                 <div className="flex items-center gap-2 text-slate-500">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Memuat meja...
+                  Memuat data meja...
                 </div>
               ) : availabilityTables.length === 0 ? (
-                <p className="text-slate-500">Belum ada meja tersedia.</p>
+                <p className="text-slate-500">Belum ada meja yang bisa dipilih.</p>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
                   {availabilityTables.map((table) => {
@@ -348,8 +347,8 @@ export default function AdminManualBookingForm({
                         </p>
                         <p className="mt-2 text-xs">
                           {isFullyBooked
-                            ? "Full booked hari ini"
-                            : `Slot tersedia: ${availableCount}`}
+                            ? "Sudah penuh pada tanggal ini"
+                            : `Jam yang masih tersedia: ${availableCount}`}
                         </p>
                       </button>
                     );
@@ -360,11 +359,11 @@ export default function AdminManualBookingForm({
 
             <div className={panelClass}>
               <h2 className="mb-4 text-xl font-bold text-[var(--tf-purple)]">
-                4. Pilih Slot
+                4. Pilih Jam Bermain
               </h2>
 
               {!selectedTableId ? (
-                <p className="text-slate-500">Pilih meja dulu.</p>
+                <p className="text-slate-500">Pilih meja terlebih dahulu.</p>
               ) : !selectedTable ? (
                 <p className="text-slate-500">Meja tidak ditemukan.</p>
               ) : (
@@ -394,8 +393,8 @@ export default function AdminManualBookingForm({
                           {slot.isAvailable
                             ? "Tersedia"
                             : slot.reason === "PAST_TIME"
-                            ? "Lewat"
-                            : "Terisi"}
+                            ? "Sudah lewat"
+                            : "Sudah terisi"}
                         </p>
                       </button>
                     );
@@ -406,13 +405,13 @@ export default function AdminManualBookingForm({
 
             <div className={panelClass}>
               <h2 className="mb-4 text-xl font-bold text-[var(--tf-purple)]">
-                5. Data Customer
+                5. Data Pelanggan
               </h2>
 
               <div className="grid gap-4">
                 <input
                   type="text"
-                  placeholder="Nama customer"
+                  placeholder="Nama pelanggan"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
@@ -420,7 +419,7 @@ export default function AdminManualBookingForm({
 
                 <input
                   type="text"
-                  placeholder="Nomor HP customer"
+                  placeholder="Nomor telepon pelanggan"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
@@ -435,7 +434,7 @@ export default function AdminManualBookingForm({
                 />
 
                 <textarea
-                  placeholder="Catatan (opsional)"
+                  placeholder="Catatan tambahan (opsional)"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={4}
@@ -452,7 +451,7 @@ export default function AdminManualBookingForm({
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Sumber Booking
+                    Sumber booking
                   </label>
                   <select
                     value={source}
@@ -462,13 +461,13 @@ export default function AdminManualBookingForm({
                     className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
                   >
                     <option value="WALK_IN">Walk-in</option>
-                    <option value="ADMIN">Input Admin</option>
+                    <option value="ADMIN">Input admin</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Status Awal
+                    Status awal
                   </label>
                   <select
                     value={initialStatus}
@@ -479,7 +478,7 @@ export default function AdminManualBookingForm({
                     }
                     className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
                   >
-                    <option value="CONFIRMED">Langsung terkonfirmasi</option>
+                    <option value="CONFIRMED">Langsung dikonfirmasi</option>
                     <option value="AWAITING_PAYMENT">
                       Menunggu pembayaran
                     </option>
@@ -492,7 +491,7 @@ export default function AdminManualBookingForm({
           <aside className="xl:sticky xl:top-24">
             <div className={`${panelClass} space-y-4`}>
               <h2 className="text-xl font-bold text-[var(--tf-purple)]">
-                Ringkasan Manual Booking
+                Ringkasan Booking
               </h2>
 
               <div className="space-y-3 text-sm text-slate-700">
@@ -502,7 +501,7 @@ export default function AdminManualBookingForm({
                 </div>
 
                 <div>
-                  <p className="text-slate-500">Tanggal</p>
+                  <p className="text-slate-500">Tanggal bermain</p>
                   <p className="font-semibold">{selectedDate || "-"}</p>
                 </div>
 
@@ -514,7 +513,7 @@ export default function AdminManualBookingForm({
                 </div>
 
                 <div>
-                  <p className="text-slate-500">Slot</p>
+                  <p className="text-slate-500">Jam bermain</p>
                   {selectedSlots.length === 0 ? (
                     <p className="font-semibold">-</p>
                   ) : (
@@ -532,20 +531,26 @@ export default function AdminManualBookingForm({
                 </div>
 
                 <div>
-                  <p className="text-slate-500">Total</p>
+                  <p className="text-slate-500">Total biaya</p>
                   <p className="text-2xl font-black text-[var(--tf-purple)]">
                     {formatRupiah(totalPrice)}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-slate-500">Source</p>
-                  <p className="font-semibold">{source}</p>
+                  <p className="text-slate-500">Sumber booking</p>
+                  <p className="font-semibold">
+                    {source === "WALK_IN" ? "Walk-in" : "Input admin"}
+                  </p>
                 </div>
 
                 <div>
-                  <p className="text-slate-500">Status Awal</p>
-                  <p className="font-semibold">{initialStatus}</p>
+                  <p className="text-slate-500">Status awal</p>
+                  <p className="font-semibold">
+                    {initialStatus === "CONFIRMED"
+                      ? "Langsung dikonfirmasi"
+                      : "Menunggu pembayaran"}
+                  </p>
                 </div>
               </div>
 
@@ -572,7 +577,7 @@ export default function AdminManualBookingForm({
                     Menyimpan...
                   </>
                 ) : (
-                  "Buat Manual Booking"
+                  "Simpan Booking"
                 )}
               </button>
             </div>

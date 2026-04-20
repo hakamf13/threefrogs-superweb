@@ -63,16 +63,16 @@ function getCellClasses(status: string) {
 function getCellLabel(status: string) {
   switch (status) {
     case "AWAITING_PAYMENT":
-      return "Menunggu bayar";
+      return "Menunggu pembayaran";
     case "PENDING_VERIFICATION":
-      return "Menunggu verifikasi";
+      return "Menunggu pengecekan";
     case "CONFIRMED":
-      return "Terkonfirmasi";
+      return "Sudah dikonfirmasi";
     case "WALK_IN":
       return "Walk-in aktif";
     case "AVAILABLE":
     default:
-      return "Kosong";
+      return "Tersedia";
   }
 }
 
@@ -94,7 +94,7 @@ function getPaymentLabel(
     case "PARTIAL":
       return "DP";
     case "UNPAID":
-      return "Belum bayar";
+      return "Belum dibayar";
     default:
       return "-";
   }
@@ -164,7 +164,7 @@ export default function AdminAvailabilityBoard({
         const result = await response.json();
 
         if (!response.ok) {
-          setErrorMessage(result.error ?? "Gagal mengambil availability.");
+          setErrorMessage(result.error ?? "Data ketersediaan belum bisa ditampilkan.");
           setTables([]);
           return;
         }
@@ -172,7 +172,7 @@ export default function AdminAvailabilityBoard({
         setTables(result.data);
       } catch (error) {
         console.error(error);
-        setErrorMessage("Terjadi kesalahan saat mengambil availability.");
+        setErrorMessage("Terjadi kendala saat mengambil data ketersediaan.");
         setTables([]);
       } finally {
         setIsLoading(false);
@@ -188,14 +188,14 @@ export default function AdminAvailabilityBoard({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
-              Availability Admin
+              Ketersediaan Meja
             </p>
             <h1 className="mt-3 text-4xl font-black text-[var(--tf-purple)]">
-              Availability Meja
+              Pantau Jadwal Meja
             </h1>
             <p className="mt-2 max-w-2xl text-slate-600">
-              Lihat status meja per slot untuk membantu booking terjadwal dan
-              walk-in session.
+              Lihat jadwal meja per jam untuk membantu penanganan booking terjadwal
+              maupun sesi walk-in.
             </p>
           </div>
 
@@ -204,19 +204,19 @@ export default function AdminAvailabilityBoard({
               href="/admin/manual-booking"
               className="rounded-2xl bg-[var(--tf-purple)] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)]"
             >
-              Manual Booking
+              Buat Booking Manual
             </Link>
             <a
               href={walkInPageBaseHref}
               className="rounded-2xl border border-[var(--tf-purple)] px-5 py-3 font-bold text-[var(--tf-purple)]"
             >
-              Walk-in
+              Kelola Walk-in
             </a>
             <Link
               href="/admin"
               className="rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-700"
             >
-              Dashboard
+              Kembali ke Dashboard
             </Link>
           </div>
         </div>
@@ -261,7 +261,7 @@ export default function AdminAvailabilityBoard({
 
           {selectedStore ? (
             <div className="mt-5 rounded-2xl bg-[var(--tf-surface-muted)] px-4 py-4 text-sm text-slate-600">
-              Store aktif:{" "}
+              Store yang dipilih:{" "}
               <span className="font-semibold text-[var(--tf-purple)]">
                 {selectedStore.name}
               </span>
@@ -271,21 +271,21 @@ export default function AdminAvailabilityBoard({
 
         <section className={panelClass}>
           <h2 className="mb-4 text-xl font-bold text-[var(--tf-purple)]">
-            Legenda
+            Keterangan Status
           </h2>
 
           <div className="flex flex-wrap gap-3 text-sm font-semibold">
             <div className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-slate-700">
-              Kosong
+              Tersedia
             </div>
             <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-2 text-orange-700">
-              Menunggu bayar
+              Menunggu pembayaran
             </div>
             <div className="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-2 text-yellow-700">
-              Menunggu verifikasi
+              Menunggu pengecekan
             </div>
             <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-2 text-green-700">
-              Terkonfirmasi
+              Sudah dikonfirmasi
             </div>
             <div className="rounded-2xl border border-[var(--tf-purple)] bg-[var(--tf-lavender)] px-4 py-2 text-[var(--tf-purple-dark)]">
               Walk-in aktif
@@ -303,21 +303,20 @@ export default function AdminAvailabilityBoard({
           <div className={panelClass}>
             <div className="flex items-center gap-2 text-slate-500">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Memuat availability...
+              Memuat data ketersediaan...
             </div>
           </div>
         ) : null}
 
         {!isLoading && selectedStore ? (
           <div className="space-y-6">
-
             {!isLoading && tables.length > 0 && tables.every((table) => table.slots.length === 0) ? (
               <div className={panelClass}>
                 <p className="font-semibold text-[var(--tf-purple)]">
-                  Store tutup atau tidak punya slot operasional pada tanggal ini.
+                  Store sedang tutup atau belum memiliki jam operasional pada tanggal ini.
                 </p>
                 <p className="mt-2 text-sm text-slate-600">
-                  Cek jam operasional per hari di Store Management untuk store yang dipilih.
+                  Cek kembali pengaturan jam operasional di halaman Store Management.
                 </p>
               </div>
             ) : null}
@@ -370,14 +369,14 @@ export default function AdminAvailabilityBoard({
                       <div className="rounded-2xl border border-[var(--tf-purple)] bg-[var(--tf-lavender)] px-4 py-4">
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                           <div className="space-y-1 text-sm text-[var(--tf-purple-dark)]">
-                            <p className="font-bold">Walk-in aktif di meja ini</p>
-                            <p>Customer: {activeWalkInSlot.customerName || "-"}</p>
+                            <p className="font-bold">Ada sesi walk-in aktif di meja ini</p>
+                            <p>Pelanggan: {activeWalkInSlot.customerName || "-"}</p>
                             <p>
-                              Estimasi selesai:{" "}
+                              Perkiraan selesai:{" "}
                               {formatWalkInEnd(activeWalkInSlot.walkInEstimatedEndAt)}
                             </p>
                             <p>
-                              Status bayar:{" "}
+                              Status pembayaran:{" "}
                               {getPaymentLabel(activeWalkInSlot.walkInPaymentStatus)}
                             </p>
                           </div>
@@ -407,7 +406,7 @@ export default function AdminAvailabilityBoard({
                             }}
                             className="rounded-2xl bg-[var(--tf-purple)] px-4 py-2.5 text-sm font-bold text-white"
                           >
-                            Fokus ke sesi ini
+                            Lihat sesi ini
                           </button>
                         </div>
                       </div>
@@ -476,29 +475,30 @@ export default function AdminAvailabilityBoard({
 
                           {isWalkInSlot ? (
                             <div className="mt-3 space-y-1 text-xs">
-                              <p>Nama: {slot.customerName || "-"}</p>
+                              <p>Pelanggan: {slot.customerName || "-"}</p>
                               <p>
-                                Selesai: {formatWalkInEnd(slot.walkInEstimatedEndAt)}
+                                Perkiraan selesai:{" "}
+                                {formatWalkInEnd(slot.walkInEstimatedEndAt)}
                               </p>
                               <p>
-                                Bayar: {getPaymentLabel(slot.walkInPaymentStatus)}
+                                Status bayar: {getPaymentLabel(slot.walkInPaymentStatus)}
                               </p>
-                              <p>Klik untuk fokus ke sesi ini</p>
+                              <p>Klik untuk membuka sesi ini</p>
                             </div>
                           ) : isBookingSlot ? (
                             <div className="mt-3 space-y-1 text-xs">
-                              <p>Kode: {slot.bookingCode}</p>
-                              <p>Nama: {slot.customerName}</p>
-                              <p>Source: {slot.source}</p>
+                              <p>Kode booking: {slot.bookingCode}</p>
+                              <p>Pelanggan: {slot.customerName}</p>
+                              <p>Sumber: {slot.source}</p>
                             </div>
                           ) : isEmptySlot ? (
                             <div className="mt-3 space-y-1 text-xs">
-                              <p>Tersedia untuk walk-in</p>
-                              <p>Klik untuk buka walk-in dari slot ini</p>
+                              <p>Slot ini masih tersedia.</p>
+                              <p>Klik untuk membuka sesi walk-in dari jam ini.</p>
                             </div>
                           ) : (
                             <div className="mt-3 space-y-1 text-xs">
-                              <p>Slot ini tidak tersedia.</p>
+                              <p>Slot ini belum bisa dipakai.</p>
                             </div>
                           )}
                         </button>

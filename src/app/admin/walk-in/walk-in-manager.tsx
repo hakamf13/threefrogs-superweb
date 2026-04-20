@@ -181,7 +181,7 @@ function getPaymentLabel(status: "UNPAID" | "PARTIAL" | "PAID") {
       return "DP";
     case "UNPAID":
     default:
-      return "Belum bayar";
+      return "Belum dibayar";
   }
 }
 
@@ -473,7 +473,7 @@ export default function WalkInManager({
 
   const handleCreate = async () => {
     if (!selectedStoreId || !selectedTableId || !customerName.trim()) {
-      setMessage("Lengkapi store, meja, dan nama customer.");
+      setMessage("Lengkapi store, meja, dan nama pelanggan terlebih dahulu.");
       return;
     }
 
@@ -502,11 +502,11 @@ export default function WalkInManager({
       const result = await response.json();
 
       if (!response.ok) {
-        setMessage(result.error ?? "Gagal membuat sesi walk-in.");
+        setMessage(result.error ?? "Sesi walk-in belum berhasil dibuka.");
         return;
       }
 
-      setMessage("Walk-in berhasil dibuka.");
+      setMessage("Sesi walk-in berhasil dibuka.");
       setCustomerName("");
       setCustomerPhone("");
       setNotes("");
@@ -516,7 +516,7 @@ export default function WalkInManager({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kesalahan saat membuat walk-in.");
+      setMessage("Terjadi kendala saat membuka sesi walk-in.");
     } finally {
       setIsSubmitting(false);
     }
@@ -538,7 +538,7 @@ export default function WalkInManager({
       const result = await response.json();
 
       if (!response.ok) {
-        setMessage(result.error ?? "Gagal memperpanjang sesi.");
+        setMessage(result.error ?? "Durasi sesi belum berhasil diperpanjang.");
         return;
       }
 
@@ -546,7 +546,7 @@ export default function WalkInManager({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kesalahan saat extend sesi.");
+      setMessage("Terjadi kendala saat memperpanjang sesi.");
     } finally {
       setBusyId(null);
     }
@@ -615,7 +615,7 @@ export default function WalkInManager({
       const result = await response.json();
 
       if (!response.ok) {
-        setMessage(result.error ?? "Gagal mengubah waktu sesi.");
+        setMessage(result.error ?? "Waktu sesi belum berhasil diperbarui.");
         return;
       }
 
@@ -624,7 +624,7 @@ export default function WalkInManager({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kesalahan saat mengubah waktu sesi.");
+      setMessage("Terjadi kendala saat memperbarui waktu sesi.");
     } finally {
       setBusyId(null);
     }
@@ -632,7 +632,7 @@ export default function WalkInManager({
 
   const handleSaveTable = async (id: string) => {
     if (!editingTableTargetId) {
-      setMessage("Pilih meja tujuan dulu.");
+      setMessage("Pilih meja tujuan terlebih dahulu.");
       return;
     }
 
@@ -653,7 +653,7 @@ export default function WalkInManager({
       const result = await response.json();
 
       if (!response.ok) {
-        setMessage(result.error ?? "Gagal memindahkan meja.");
+        setMessage(result.error ?? "Meja belum berhasil dipindahkan.");
         return;
       }
 
@@ -662,7 +662,7 @@ export default function WalkInManager({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kesalahan saat memindahkan meja.");
+      setMessage("Terjadi kendala saat memindahkan meja.");
     } finally {
       setBusyId(null);
     }
@@ -687,7 +687,7 @@ export default function WalkInManager({
       const result = await response.json();
 
       if (!response.ok) {
-        setMessage(result.error ?? "Gagal mengubah status pembayaran.");
+        setMessage(result.error ?? "Status pembayaran belum berhasil diperbarui.");
         return;
       }
 
@@ -697,7 +697,7 @@ export default function WalkInManager({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kesalahan saat update pembayaran.");
+      setMessage("Terjadi kendala saat memperbarui pembayaran.");
     } finally {
       setBusyId(null);
     }
@@ -715,7 +715,7 @@ export default function WalkInManager({
       const result = await response.json();
 
       if (!response.ok) {
-        setMessage(result.error ?? "Gagal menutup sesi.");
+        setMessage(result.error ?? "Sesi belum berhasil ditutup.");
         return;
       }
 
@@ -724,7 +724,7 @@ export default function WalkInManager({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kesalahan saat menutup sesi.");
+      setMessage("Terjadi kendala saat menutup sesi.");
     } finally {
       setBusyId(null);
     }
@@ -790,7 +790,7 @@ export default function WalkInManager({
 
           <div className="space-y-2 rounded-2xl bg-white p-4">
             <div className="flex items-center justify-between text-sm text-slate-500">
-              <span>Progress waktu</span>
+              <span>Perjalanan sesi</span>
               <span>{progressPercent}%</span>
             </div>
             <div className="h-2 rounded-full bg-slate-100">
@@ -803,14 +803,14 @@ export default function WalkInManager({
 
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-2xl bg-white p-4">
-              <p className="text-sm text-slate-500">Mulai</p>
+              <p className="text-sm text-slate-500">Mulai bermain</p>
               <p className="mt-1 font-semibold text-slate-900">
                 {formatShortDateTime(session.startedAt)}
               </p>
             </div>
 
             <div className="rounded-2xl bg-white p-4">
-              <p className="text-sm text-slate-500">Selesai</p>
+              <p className="text-sm text-slate-500">Perkiraan selesai</p>
               <p className="mt-1 font-semibold text-slate-900">
                 {formatShortDateTime(session.estimatedEndAt)}
               </p>
@@ -828,7 +828,7 @@ export default function WalkInManager({
             <div className="rounded-2xl bg-white p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-slate-900">
-                  Catatan sesi & pembayaran
+                  Catatan sesi dan pembayaran
                 </p>
 
                 <button
@@ -903,7 +903,7 @@ export default function WalkInManager({
               disabled={busyId === session.id}
               className="rounded-2xl border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 transition hover:border-[var(--tf-purple)] hover:text-[var(--tf-purple)]"
             >
-              +1 jam
+              Tambah 1 jam
             </button>
 
             <button
@@ -912,7 +912,7 @@ export default function WalkInManager({
               disabled={busyId === session.id}
               className="rounded-2xl border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 transition hover:border-[var(--tf-purple)] hover:text-[var(--tf-purple)]"
             >
-              +2 jam
+              Tambah 2 jam
             </button>
 
             <button
@@ -922,7 +922,7 @@ export default function WalkInManager({
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 transition hover:border-[var(--tf-purple)] hover:text-[var(--tf-purple)]"
             >
               <PencilLine className="h-4 w-4" />
-              Edit waktu
+              Ubah waktu
             </button>
 
             <button
@@ -942,7 +942,7 @@ export default function WalkInManager({
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--tf-purple)] px-4 py-2.5 font-semibold text-[var(--tf-purple)]"
             >
               <CreditCard className="h-4 w-4" />
-              Pembayaran
+              Atur pembayaran
             </button>
 
             <button
@@ -967,13 +967,13 @@ export default function WalkInManager({
           {isEditingTime ? (
             <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
               <h3 className="text-lg font-black text-[var(--tf-purple)]">
-                Edit waktu sesi
+                Ubah waktu sesi
               </h3>
 
               <div className="mt-4 grid gap-4">
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Mulai main
+                    Mulai bermain
                   </label>
                   <input
                     type="datetime-local"
@@ -1010,7 +1010,7 @@ export default function WalkInManager({
                 </div>
 
                 <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
-                  <p className="text-sm text-slate-500">Estimasi selesai baru</p>
+                  <p className="text-sm text-slate-500">Perkiraan selesai baru</p>
                   <p className="mt-1 font-semibold text-slate-900">
                     {editingEstimatedEndPreview}
                   </p>
@@ -1023,7 +1023,7 @@ export default function WalkInManager({
                     disabled={busyId === session.id}
                     className="rounded-2xl bg-[var(--tf-purple)] px-4 py-3 font-semibold text-white"
                   >
-                    {busyId === session.id ? "Menyimpan..." : "Simpan waktu"}
+                    {busyId === session.id ? "Menyimpan..." : "Simpan perubahan"}
                   </button>
 
                   <button
@@ -1042,7 +1042,7 @@ export default function WalkInManager({
           {isEditingTable ? (
             <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
               <h3 className="text-lg font-black text-[var(--tf-purple)]">
-                Pindah meja sesi
+                Pindahkan meja sesi
               </h3>
 
               <div className="mt-4 grid gap-4">
@@ -1058,8 +1058,8 @@ export default function WalkInManager({
                     </span>
                   </p>
                   <p className="mt-1 text-slate-500">
-                    Sistem akan mengecek bentrok booking dan walk-in lain di meja
-                    tujuan.
+                    Sistem akan memastikan meja tujuan tidak bentrok dengan booking
+                    atau sesi lain.
                   </p>
                 </div>
 
@@ -1088,7 +1088,7 @@ export default function WalkInManager({
                     disabled={busyId === session.id}
                     className="rounded-2xl bg-[var(--tf-purple)] px-4 py-3 font-semibold text-white"
                   >
-                    {busyId === session.id ? "Menyimpan..." : "Simpan meja"}
+                    {busyId === session.id ? "Menyimpan..." : "Simpan perubahan"}
                   </button>
 
                   <button
@@ -1107,7 +1107,7 @@ export default function WalkInManager({
           {isEditingPayment ? (
             <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4">
               <h3 className="text-lg font-black text-[var(--tf-purple)]">
-                Update pembayaran
+                Perbarui pembayaran
               </h3>
 
               <div className="mt-4 grid gap-4">
@@ -1124,7 +1124,7 @@ export default function WalkInManager({
                     }
                     className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
                   >
-                    <option value="UNPAID">Belum bayar</option>
+                    <option value="UNPAID">Belum dibayar</option>
                     <option value="PARTIAL">DP</option>
                     <option value="PAID">Lunas</option>
                   </select>
@@ -1138,7 +1138,7 @@ export default function WalkInManager({
                     value={editingPaymentNote}
                     onChange={(e) => setEditingPaymentNote(e.target.value)}
                     rows={3}
-                    placeholder="Contoh: DP 100.000 / sisa di akhir"
+                    placeholder="Contoh: DP 100.000, sisanya dibayar di akhir"
                     className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
                   />
                 </div>
@@ -1175,8 +1175,8 @@ export default function WalkInManager({
                 Tutup sesi ini sekarang?
               </p>
               <p className="mt-2 text-sm leading-6 text-red-700">
-                Sistem akan menghitung durasi real dan total tagihan akhir saat
-                sesi ditutup.
+                Sistem akan menghitung durasi sebenarnya dan total tagihan akhir
+                saat sesi ditutup.
               </p>
 
               <div className="mt-4 flex flex-wrap gap-3">
@@ -1245,14 +1245,14 @@ export default function WalkInManager({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
             <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
-              Walk-in Session
+              Sesi Walk-in
             </p>
             <h1 className="text-4xl font-black tracking-tight text-[var(--tf-purple)]">
-              Kelola Walk-in
+              Kelola Sesi Walk-in
             </h1>
             <p className="max-w-3xl text-slate-600">
-              Pantau sesi yang sedang berjalan, buka walk-in baru dengan cepat,
-              dan kelola pembayaran tanpa membuat tampilan terasa penuh.
+              Buka sesi baru, pantau sesi yang sedang berjalan, dan atur pembayaran
+              dengan tampilan yang tetap ringkas dan mudah diikuti.
             </p>
           </div>
 
@@ -1261,14 +1261,14 @@ export default function WalkInManager({
               href={availabilityHref}
               className="rounded-2xl border border-[var(--tf-purple)] px-5 py-3 font-bold text-[var(--tf-purple)]"
             >
-              Lihat Availability
+              Lihat Ketersediaan
             </a>
 
             <a
               href="/admin"
               className="rounded-2xl border border-slate-300 px-5 py-3 font-bold text-slate-700"
             >
-              Dashboard
+              Kembali ke Dashboard
             </a>
           </div>
         </div>
@@ -1290,14 +1290,14 @@ export default function WalkInManager({
                   Sesi Baru
                 </p>
                 <h2 className="text-2xl font-black text-[var(--tf-purple)]">
-                  Buka Walk-in
+                  Buka Sesi Walk-in
                 </h2>
               </div>
             </div>
 
             {selectedTableId && prefillDate && prefillHour ? (
               <div className="mt-4 rounded-[1.2rem] border border-[var(--tf-purple)] bg-[var(--tf-lavender)] px-4 py-3 text-sm text-[var(--tf-purple-dark)]">
-                Prefill dari Availability • {selectedStore?.name ?? "-"} •{" "}
+                Data diisi dari halaman ketersediaan • {selectedStore?.name ?? "-"} •{" "}
                 {selectedTable?.displayLabel ||
                   (selectedTable ? `Meja ${selectedTable.tableNumber}` : "-")}{" "}
                 • Jam {prefillHour}:00
@@ -1345,7 +1345,7 @@ export default function WalkInManager({
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
-                  Nama customer
+                  Nama pelanggan
                 </label>
                 <input
                   type="text"
@@ -1359,7 +1359,7 @@ export default function WalkInManager({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    Mulai main
+                    Mulai bermain
                   </label>
                   <input
                     type="datetime-local"
@@ -1382,7 +1382,7 @@ export default function WalkInManager({
                     }
                     className="w-full rounded-[1.4rem] border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
                   >
-                    <option value="UNPAID">Belum bayar</option>
+                    <option value="UNPAID">Belum dibayar</option>
                     <option value="PARTIAL">DP</option>
                     <option value="PAID">Lunas</option>
                   </select>
@@ -1418,7 +1418,7 @@ export default function WalkInManager({
               <div className="rounded-[1.4rem] bg-[var(--tf-surface-muted)] p-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <p className="text-sm text-slate-500">Meja terpilih</p>
+                    <p className="text-sm text-slate-500">Meja yang dipilih</p>
                     <p className="mt-1 font-semibold text-slate-900">
                       {selectedTable
                         ? selectedTable.displayLabel ||
@@ -1428,7 +1428,7 @@ export default function WalkInManager({
                   </div>
 
                   <div>
-                    <p className="text-sm text-slate-500">Estimasi selesai</p>
+                    <p className="text-sm text-slate-500">Perkiraan selesai</p>
                     <p className="mt-1 font-semibold text-slate-900">
                       {estimatedEndPreview}
                     </p>
@@ -1444,12 +1444,12 @@ export default function WalkInManager({
                 {showOptionalFields ? (
                   <>
                     <ChevronUp className="h-4 w-4" />
-                    Sembunyikan detail opsional
+                    Sembunyikan detail tambahan
                   </>
                 ) : (
                   <>
                     <ChevronDown className="h-4 w-4" />
-                    Tampilkan detail opsional
+                    Tampilkan detail tambahan
                   </>
                 )}
               </button>
@@ -1458,7 +1458,7 @@ export default function WalkInManager({
                 <div className="space-y-4 rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
                   <div>
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
-                      Nomor HP
+                      Nomor telepon
                     </label>
                     <input
                       type="text"
@@ -1490,7 +1490,7 @@ export default function WalkInManager({
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       rows={3}
-                      placeholder="Contoh: customer minta meja dekat colokan"
+                      placeholder="Contoh: pelanggan meminta meja dekat colokan"
                       className="w-full rounded-[1.4rem] border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
                     />
                   </div>
@@ -1509,7 +1509,7 @@ export default function WalkInManager({
                     Membuka...
                   </>
                 ) : (
-                  "Buka Walk-in"
+                  "Buka sesi walk-in"
                 )}
               </button>
             </div>
@@ -1524,10 +1524,10 @@ export default function WalkInManager({
                   </div>
                   <div>
                     <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
-                      Monitoring
+                      Pemantauan
                     </p>
                     <h2 className="text-2xl font-black text-[var(--tf-purple)]">
-                      Sesi Aktif
+                      Sesi yang Sedang Berjalan
                     </h2>
                   </div>
                 </div>
@@ -1556,7 +1556,7 @@ export default function WalkInManager({
 
                   <div>
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
-                      Cari customer / meja
+                      Cari pelanggan atau meja
                     </label>
                     <input
                       type="text"
@@ -1602,14 +1602,14 @@ export default function WalkInManager({
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 <div className="rounded-[1.3rem] border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Aktif</p>
+                  <p className="text-sm text-slate-500">Sedang berjalan</p>
                   <p className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
                     {sessionSummary.total}
                   </p>
                 </div>
 
                 <div className="rounded-[1.3rem] border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Belum bayar</p>
+                  <p className="text-sm text-slate-500">Belum dibayar</p>
                   <p className="mt-2 text-2xl font-black text-slate-700">
                     {sessionSummary.unpaid}
                   </p>
@@ -1630,7 +1630,7 @@ export default function WalkInManager({
                 </div>
 
                 <div className="rounded-[1.3rem] border border-orange-200 bg-orange-50 p-4">
-                  <p className="text-sm text-orange-700">Hampir selesai</p>
+                  <p className="text-sm text-orange-700">Segera selesai</p>
                   <p className="mt-2 text-2xl font-black text-orange-700">
                     {sessionSummary.endingSoon}
                   </p>
@@ -1640,7 +1640,7 @@ export default function WalkInManager({
               <div className="mt-5 space-y-5">
                 {groupedSessions.length === 0 ? (
                   <div className="rounded-[1.5rem] bg-slate-50 p-5 text-sm text-slate-500">
-                    Belum ada walk-in aktif untuk filter ini.
+                    Belum ada sesi yang sesuai dengan filter ini.
                   </div>
                 ) : (
                   groupedSessions.map((group) => {
@@ -1680,13 +1680,13 @@ export default function WalkInManager({
                                   Aktif {group.sessions.length}
                                 </span>
                                 <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-                                  Belum bayar {unpaidCount}
+                                  Belum dibayar {unpaidCount}
                                 </span>
                                 <span className="rounded-full bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700">
                                   DP {dpCount}
                                 </span>
                                 <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
-                                  Hampir selesai {endingSoonCount}
+                                  Segera selesai {endingSoonCount}
                                 </span>
                               </div>
                             </div>
@@ -1699,7 +1699,7 @@ export default function WalkInManager({
                                 )}
                                 className="rounded-2xl border border-[var(--tf-purple)] px-4 py-2 text-sm font-semibold text-[var(--tf-purple)]"
                               >
-                                Availability store ini
+                                Lihat ketersediaan store ini
                               </a>
 
                               <a
@@ -1710,7 +1710,7 @@ export default function WalkInManager({
                                 )}
                                 className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
                               >
-                                Buka walk-in baru
+                                Buka sesi baru
                               </a>
                             </div>
                           </div>
@@ -1739,7 +1739,7 @@ export default function WalkInManager({
                       Riwayat
                     </p>
                     <h2 className="text-2xl font-black text-[var(--tf-purple)]">
-                      Riwayat Hari Ini
+                      Riwayat Sesi Hari Ini
                     </h2>
                   </div>
                 </div>
@@ -1766,7 +1766,7 @@ export default function WalkInManager({
               <div className="mt-5 space-y-3">
                 {filteredRecentSessions.length === 0 ? (
                   <div className="rounded-[1.5rem] bg-slate-50 p-5 text-sm text-slate-500">
-                    Belum ada riwayat walk-in untuk filter ini.
+                    Belum ada riwayat sesi untuk filter ini.
                   </div>
                 ) : (
                   filteredRecentSessions.map((session) => (
@@ -1801,10 +1801,10 @@ export default function WalkInManager({
 
                       <div className="mt-3 flex flex-wrap gap-2">
                         <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-                          Durasi real: {formatMinutes(session.durationMinutes)}
+                          Durasi sebenarnya: {formatMinutes(session.durationMinutes)}
                         </span>
                         <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
-                          Ditagih: {formatMinutes(session.billedMinutes)}
+                          Durasi tagihan: {formatMinutes(session.billedMinutes)}
                         </span>
                         <span className="rounded-full bg-[var(--tf-lavender)] px-3 py-1 text-xs font-semibold text-[var(--tf-purple-dark)]">
                           {formatCurrency(session.totalPrice)}

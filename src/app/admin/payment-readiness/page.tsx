@@ -47,13 +47,13 @@ export default function PaymentReadinessPage() {
   const expectedWebhookUrl = `${appBaseUrl}/api/payments/midtrans/notification`;
 
   const envChecks = [
-    { label: "PAYMENT_MODE = MIDTRANS", ok: isMidtransMode },
-    { label: "MIDTRANS_SERVER_KEY", ok: hasServerKey },
-    { label: "NEXT_PUBLIC_MIDTRANS_CLIENT_KEY", ok: hasClientKey },
-    { label: "MIDTRANS_MERCHANT_ID", ok: hasMerchantId },
-    { label: "MIDTRANS_FINISH_REDIRECT_URL", ok: hasFinishUrl },
-    { label: "MIDTRANS_UNFINISH_REDIRECT_URL", ok: hasUnfinishUrl },
-    { label: "MIDTRANS_ERROR_REDIRECT_URL", ok: hasErrorUrl },
+    { label: "Metode pembayaran aktif", ok: isMidtransMode },
+    { label: "Server key Midtrans", ok: hasServerKey },
+    { label: "Client key Midtrans", ok: hasClientKey },
+    { label: "Merchant ID Midtrans", ok: hasMerchantId },
+    { label: "Halaman selesai pembayaran", ok: hasFinishUrl },
+    { label: "Halaman pembayaran belum selesai", ok: hasUnfinishUrl },
+    { label: "Halaman kendala pembayaran", ok: hasErrorUrl },
   ];
 
   return (
@@ -61,17 +61,17 @@ export default function PaymentReadinessPage() {
       <div className="mx-auto max-w-7xl space-y-8">
         <div className="space-y-3">
           <p className="inline-flex rounded-full bg-[var(--tf-cream)] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
-            Payment Readiness
+            Kesiapan Pembayaran
           </p>
 
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="text-3xl font-black tracking-tight text-[var(--tf-purple)] md:text-5xl">
-                Midtrans Readiness Checklist
+                Periksa Kesiapan Sistem Pembayaran
               </h1>
               <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-                Halaman ini membantu memastikan setup Midtrans siap dipakai,
-                baik untuk testing lokal maupun production.
+                Halaman ini membantu memastikan pengaturan pembayaran sudah siap
+                digunakan, baik saat uji coba maupun saat dipakai langsung.
               </p>
             </div>
 
@@ -80,14 +80,14 @@ export default function PaymentReadinessPage() {
                 href="/admin"
                 className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700"
               >
-                Dashboard Admin
+                Kembali ke Dashboard
               </Link>
 
               <Link
                 href="/admin/bookings"
                 className="rounded-2xl bg-[var(--tf-purple)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
               >
-                Cek Booking
+                Lihat Booking
               </Link>
             </div>
           </div>
@@ -95,7 +95,7 @@ export default function PaymentReadinessPage() {
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Mode Pembayaran</p>
+            <p className="text-sm text-slate-500">Metode pembayaran</p>
             <p className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
               {paymentMode}
             </p>
@@ -104,41 +104,41 @@ export default function PaymentReadinessPage() {
                 isMidtransMode
               )}`}
             >
-              {isMidtransMode ? "Midtrans Aktif" : "Masih Manual"}
+              {isMidtransMode ? "Sudah aktif" : "Belum aktif"}
             </span>
           </div>
 
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Environment</p>
+            <p className="text-sm text-slate-500">Mode sistem</p>
             <p className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
-              {isProduction ? "Production" : "Sandbox"}
+              {isProduction ? "Produksi" : "Percobaan"}
             </p>
             <span className="mt-4 inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-700">
-              {isProduction ? "Live Payment" : "Testing Mode"}
+              {isProduction ? "Pembayaran aktif" : "Untuk pengujian"}
             </span>
           </div>
 
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">APP_BASE_URL</p>
+            <p className="text-sm text-slate-500">Alamat website</p>
             <p className="mt-2 break-all text-sm font-semibold text-slate-900">
               {appBaseUrl}
             </p>
             <span className="mt-4 inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-700">
-              {isLocalTesting ? "Local Testing" : "Remote Domain"}
+              {isLocalTesting ? "Lokal" : "Publik"}
             </span>
           </div>
 
           <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[var(--tf-shadow-card)]">
-            <p className="text-sm text-slate-500">Overall Readiness</p>
+            <p className="text-sm text-slate-500">Kesiapan keseluruhan</p>
             <p className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
-              {configReady ? "READY" : "CHECK"}
+              {configReady ? "Siap" : "Perlu dicek"}
             </p>
             <span
               className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-bold ${getBadgeClass(
                 configReady
               )}`}
             >
-              {configReady ? "Config Lengkap" : "Masih Ada Yang Kurang"}
+              {configReady ? "Pengaturan lengkap" : "Masih ada yang perlu dilengkapi"}
             </span>
           </div>
         </section>
@@ -146,7 +146,7 @@ export default function PaymentReadinessPage() {
         <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
           <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
             <h2 className="text-2xl font-black text-[var(--tf-purple)]">
-              Env Checklist
+              Pemeriksaan Pengaturan
             </h2>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -158,7 +158,7 @@ export default function PaymentReadinessPage() {
               </div>
 
               <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm text-slate-500">Expected Webhook URL</p>
+                <p className="text-sm text-slate-500">Alamat notifikasi yang diharapkan</p>
                 <p className="mt-2 break-all text-sm font-semibold text-slate-900">
                   {expectedWebhookUrl}
                 </p>
@@ -187,52 +187,51 @@ export default function PaymentReadinessPage() {
           <div className="space-y-6">
             <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
               <h2 className="text-2xl font-black text-[var(--tf-purple)]">
-                Local Testing Reminder
+                Saat Menguji di Perangkat Sendiri
               </h2>
 
               <div className="mt-5 space-y-3 text-sm leading-6 text-slate-700">
                 <div className="rounded-[1.25rem] bg-slate-50 p-4">
-                  1. Jalankan <code>npm run dev</code>
+                  1. Jalankan aplikasi terlebih dahulu.
                 </div>
                 <div className="rounded-[1.25rem] bg-slate-50 p-4">
-                  2. Jalankan <code>ngrok http 3000</code>
+                  2. Aktifkan alamat publik sementara agar notifikasi pembayaran bisa masuk.
                 </div>
                 <div className="rounded-[1.25rem] bg-slate-50 p-4">
-                  3. Update Payment Notification URL di Midtrans ke URL ngrok
-                  aktif + <code>/api/payments/midtrans/notification</code>
+                  3. Perbarui alamat notifikasi pembayaran sesuai alamat yang sedang aktif.
                 </div>
                 <div className="rounded-[1.25rem] bg-slate-50 p-4">
-                  4. Buat <strong>booking baru</strong>, jangan pakai booking lama
+                  4. Gunakan booking baru saat mencoba pembayaran.
                 </div>
                 <div className="rounded-[1.25rem] bg-slate-50 p-4">
-                  5. Lakukan simulasi bayar sampai benar-benar sukses
+                  5. Selesaikan pembayaran hingga benar-benar berhasil.
                 </div>
                 <div className="rounded-[1.25rem] bg-slate-50 p-4">
-                  6. Cek terminal app, terminal ngrok, dan halaman booking
+                  6. Pastikan status booking ikut berubah setelah pembayaran selesai.
                 </div>
               </div>
             </section>
 
             <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
               <h2 className="text-2xl font-black text-[var(--tf-purple)]">
-                Production Cutover Reminder
+                Saat Digunakan Langsung
               </h2>
 
               <div className="mt-5 space-y-3 text-sm leading-6 text-slate-700">
                 <div className="rounded-[1.25rem] bg-slate-50 p-4">
-                  1. Ganti ke key <strong>production</strong>
+                  1. Gunakan data pembayaran yang resmi dan aktif.
                 </div>
                 <div className="rounded-[1.25rem] bg-slate-50 p-4">
-                  2. Set <code>MIDTRANS_IS_PRODUCTION=true</code>
+                  2. Pastikan mode sistem sudah benar-benar untuk penggunaan langsung.
                 </div>
                 <div className="rounded-[1.25rem] bg-slate-50 p-4">
-                  3. Notification URL harus pakai domain production, bukan ngrok
+                  3. Pastikan alamat notifikasi pembayaran mengarah ke domain resmi.
                 </div>
                 <div className="rounded-[1.25rem] bg-slate-50 p-4">
-                  4. Test 1 transaksi live nominal kecil
+                  4. Lakukan satu transaksi bernilai kecil sebagai uji akhir.
                 </div>
                 <div className="rounded-[1.25rem] bg-slate-50 p-4">
-                  5. Rotate credential yang sempat terekspos saat testing
+                  5. Setelah semua aman, simpan dan rapikan kembali data rahasia yang pernah dipakai saat pengujian.
                 </div>
               </div>
             </section>
@@ -241,47 +240,43 @@ export default function PaymentReadinessPage() {
 
         <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]">
           <h2 className="text-2xl font-black text-[var(--tf-purple)]">
-            Common Failure Patterns
+            Hal yang Sering Menyebabkan Kendala
           </h2>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
               <p className="font-bold text-slate-900">
-                Sudah bayar, tapi status booking belum berubah
+                Pembayaran sudah dilakukan, tetapi status booking belum berubah
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Biasanya karena webhook belum masuk, ngrok mati, notification URL
-                salah, atau browser kembali lebih cepat daripada settlement.
+                Biasanya terjadi karena pembaruan status belum masuk, alamat notifikasi tidak sesuai, atau halaman dibuka kembali lebih cepat daripada proses pembaruan.
               </p>
             </div>
 
             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
               <p className="font-bold text-slate-900">
-                Snap muncul, tapi flow masih seperti manual
+                Halaman pembayaran muncul, tetapi alurnya tidak sesuai
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Biasanya booking dibuat saat mode masih manual, atau env Midtrans
-                belum aktif penuh saat booking dibuat.
+                Biasanya karena booking dibuat saat pengaturan pembayaran belum aktif sepenuhnya.
               </p>
             </div>
 
             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
               <p className="font-bold text-slate-900">
-                Redirect selesai, tapi data belum update di Booking Saya
+                Kembali ke halaman booking, tetapi data belum terbarui
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Ini bisa terjadi kalau settlement webhook datang beberapa detik
-                setelah browser redirect. Refresh status dulu.
+                Hal ini bisa terjadi bila pembaruan status masuk beberapa saat setelah pengguna kembali ke halaman sebelumnya.
               </p>
             </div>
 
             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
               <p className="font-bold text-slate-900">
-                Testing lokal berhasil sekali, lalu gagal lagi
+                Pengujian sempat berhasil, lalu tidak berjalan lagi
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Seringnya karena URL ngrok berubah, tetapi notification URL di
-                dashboard Midtrans belum ikut diperbarui.
+                Umumnya karena alamat sementara yang dipakai saat pengujian sudah berubah, tetapi pengaturan notifikasi belum ikut diperbarui.
               </p>
             </div>
           </div>
