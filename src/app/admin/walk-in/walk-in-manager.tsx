@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  AlertTriangle,
   ArrowRightLeft,
   ChevronDown,
   ChevronUp,
@@ -42,12 +43,23 @@ type SessionItem = {
   billedMinutes: number | null;
   totalPrice: number | null;
   store: {
+    id?: string;
     name: string;
   };
   table: {
+    id?: string;
     tableNumber: number;
     displayLabel: string | null;
   };
+  nextScheduledBooking?: {
+    bookingId: string;
+    bookingCode: string;
+    customerName: string;
+    slotHour: number;
+    slotEndHour: number;
+    startsAt: string;
+    endsAt: string;
+  } | null;
 };
 
 type WalkInManagerProps = {
@@ -55,6 +67,13 @@ type WalkInManagerProps = {
   activeSessions: SessionItem[];
   recentSessions: SessionItem[];
 };
+
+type SessionAlertLevel =
+  | "NORMAL"
+  | "ENDING_SOON"
+  | "OVERTIME"
+  | "OVERLAP_RISK"
+  | "OVERLAP_NOW";
 
 const panelClass =
   "rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]";
@@ -196,19 +215,19 @@ function getRemainingLabel(estimatedEndAt: string) {
 
   if (diffMinutes < 0) {
     const overdue = Math.abs(diffMinutes);
-    if (overdue < 60) return `Lewat ${overdue}m`;
+    if (overdue < 60) return `Lewat ${overdue} menit`;
 
     const h = Math.floor(overdue / 60);
     const m = overdue % 60;
-    return m === 0 ? `Lewat ${h}j` : `Lewat ${h}j ${m}m`;
+    return m === 0 ? `Lewat ${h} jam` : `Lewat ${h} jam ${m} menit`;
   }
 
-  if (diffMinutes < 60) return `Sisa ${diffMinutes}m`;
+  if (diffMinutes < 60) return `Sisa ${diffMinutes} menit`;
 
   const hours = Math.floor(diffMinutes / 60);
   const minutes = diffMinutes % 60;
 
-  return minutes === 0 ? `Sisa ${hours}j` : `Sisa ${hours}j ${minutes}m`;
+  return minutes === 0 ? `Sisa ${hours} jam` : `Sisa ${hours} jam ${minutes} menit`;
 }
 
 function getRemainingClass(estimatedEndAt: string) {
@@ -254,6 +273,79 @@ function getProgressPercent(session: SessionItem) {
 function getCompactNotePreview(text: string, maxLength = 84) {
   if (text.length <= maxLength) return text;
   return `${text.slice(0, maxLength).trim()}...`;
+}
+
+function getSessionAlertLevel(session: SessionItem): SessionAlertLevel {
+  const now = Date.now();
+  const estimatedEnd = new Date(session.estimatedEndAt).getTime();
+  const nextBookingStart = session.nextScheduledBooking
+    ? new Date(session.nextScheduledBooking.startsAt).getTime()
+    : null;
+
+  if (nextBookingStart && now >= nextBookingStart) {
+    return "OVERLAP_NOW";
+  }
+
+  if (estimatedEnd < now) {
+    return "OVERTIME";
+  }
+
+  if (nextBookingStart && estimatedEnd > nextBookingStart) {
+    return "OVERLAP_RISK";
+  }
+
+  const remainingMinutes = getRemainingMinutes(session.estimatedEndAt);
+  if (remainingMinutes >= 0 && remainingMinutes <= 30) {
+    return "ENDING_SOON";
+  }
+
+  return "NORMAL";
+}
+
+function getSessionAlertCopy(session: SessionItem) {
+  const level = getSessionAlertLevel(session);
+
+  switch (level) {
+    case "OVERLAP_NOW":
+      return {
+        title: "Perlu ditangani sekarang",
+        description: session.nextScheduledBooking
+          ? `Sesi ini sudah masuk ke jadwal booking ${session.nextScheduledBooking.bookingCode} untuk ${session.nextScheduledBooking.customerName}.`
+          : "Sesi ini sudah bentrok dengan jadwal berikutnya.",
+        className: "border-red-200 bg-red-50 text-red-700",
+      };
+    case "OVERTIME":
+      return {
+        title: "Sesi sudah lewat waktu",
+        description:
+          "Periksa apakah sesi perlu diperpanjang, dipindah meja, atau ditutup sekarang.",
+        className: "border-red-200 bg-red-50 text-red-700",
+      };
+    case "OVERLAP_RISK":
+      return {
+        title: "Berisiko bentrok dengan booking berikutnya",
+        description: session.nextScheduledBooking
+          ? `Estimasi selesai melewati awal booking ${session.nextScheduledBooking.bookingCode} pada ${formatShortDateTime(
+              session.nextScheduledBooking.startsAt
+            )}.`
+          : "Estimasi selesai melewati jadwal berikutnya.",
+        className: "border-orange-200 bg-orange-50 text-orange-700",
+      };
+    case "ENDING_SOON":
+      return {
+        title: "Sesi akan segera selesai",
+        description:
+          "Siapkan penutupan sesi atau konfirmasi perpanjangan bila pelanggan ingin lanjut bermain.",
+        className: "border-orange-200 bg-orange-50 text-orange-700",
+      };
+    case "NORMAL":
+    default:
+      return {
+        title: "",
+        description: "",
+        className: "",
+      };
+  }
 }
 
 export default function WalkInManager({
@@ -395,10 +487,18 @@ export default function WalkInManager({
       unpaid: base.filter((item) => item.paymentStatus === "UNPAID").length,
       partial: base.filter((item) => item.paymentStatus === "PARTIAL").length,
       paid: base.filter((item) => item.paymentStatus === "PAID").length,
-      endingSoon: base.filter((item) => {
-        const diffMinutes = getRemainingMinutes(item.estimatedEndAt);
-        return diffMinutes >= 0 && diffMinutes <= 30;
-      }).length,
+      endingSoon: base.filter(
+        (item) => getSessionAlertLevel(item) === "ENDING_SOON"
+      ).length,
+      overtime: base.filter(
+        (item) => getSessionAlertLevel(item) === "OVERTIME"
+      ).length,
+      overlapRisk: base.filter(
+        (item) => getSessionAlertLevel(item) === "OVERLAP_RISK"
+      ).length,
+      overlapNow: base.filter(
+        (item) => getSessionAlertLevel(item) === "OVERLAP_NOW"
+      ).length,
     };
   }, [visibleActiveSessions]);
 
@@ -428,6 +528,32 @@ export default function WalkInManager({
     return Array.from(groups.values()).sort((a, b) =>
       a.storeName.localeCompare(b.storeName)
     );
+  }, [visibleActiveSessions]);
+
+  const prioritizedAlerts = useMemo(() => {
+    return visibleActiveSessions
+      .filter((session) => getSessionAlertLevel(session) !== "NORMAL")
+      .sort((a, b) => {
+        const levelOrder: Record<SessionAlertLevel, number> = {
+          OVERLAP_NOW: 0,
+          OVERTIME: 1,
+          OVERLAP_RISK: 2,
+          ENDING_SOON: 3,
+          NORMAL: 4,
+        };
+
+        const aLevel = getSessionAlertLevel(a);
+        const bLevel = getSessionAlertLevel(b);
+
+        if (levelOrder[aLevel] !== levelOrder[bLevel]) {
+          return levelOrder[aLevel] - levelOrder[bLevel];
+        }
+
+        return (
+          new Date(a.estimatedEndAt).getTime() -
+          new Date(b.estimatedEndAt).getTime()
+        );
+      });
   }, [visibleActiveSessions]);
 
   const storeQuickFilters = useMemo(() => {
@@ -741,6 +867,8 @@ export default function WalkInManager({
     const isExpanded = expandedNotesSessionId === session.id;
     const currentStore = storeByName.get(session.store.name);
     const tableOptions = currentStore?.tables ?? [];
+    const alertCopy = getSessionAlertCopy(session);
+    const alertLevel = getSessionAlertLevel(session);
 
     return (
       <div
@@ -787,6 +915,29 @@ export default function WalkInManager({
               </span>
             </div>
           </div>
+
+          {alertLevel !== "NORMAL" ? (
+            <div className={`rounded-2xl border px-4 py-4 ${alertCopy.className}`}>
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-bold">{alertCopy.title}</p>
+                  <p className="mt-1 text-sm leading-6">{alertCopy.description}</p>
+
+                  {session.nextScheduledBooking ? (
+                    <p className="mt-2 text-sm">
+                      Booking berikutnya:{" "}
+                      <span className="font-semibold">
+                        {session.nextScheduledBooking.bookingCode}
+                      </span>{" "}
+                      • {session.nextScheduledBooking.customerName} •{" "}
+                      {formatShortDateTime(session.nextScheduledBooking.startsAt)}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           <div className="space-y-2 rounded-2xl bg-white p-4">
             <div className="flex items-center justify-between text-sm text-slate-500">
@@ -1251,8 +1402,8 @@ export default function WalkInManager({
               Kelola Sesi Walk-in
             </h1>
             <p className="max-w-3xl text-slate-600">
-              Buka sesi baru, pantau sesi yang sedang berjalan, dan atur pembayaran
-              dengan tampilan yang tetap ringkas dan mudah diikuti.
+              Pantau sesi yang sedang berjalan, buka sesi baru dengan cepat,
+              dan tangani kondisi yang perlu perhatian tanpa harus mencari satu per satu.
             </p>
           </div>
 
@@ -1277,6 +1428,57 @@ export default function WalkInManager({
           <div className="rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-[var(--tf-shadow-card)]">
             {message}
           </div>
+        ) : null}
+
+        {prioritizedAlerts.length > 0 ? (
+          <section className="rounded-[2rem] border border-red-200 bg-red-50 p-6 shadow-[var(--tf-shadow-card)]">
+            <div className="flex items-center gap-3">
+              <div className="rounded-2xl bg-white p-3 text-red-600">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-red-700">
+                  Perhatian Operasional
+                </p>
+                <h2 className="text-2xl font-black text-red-700">
+                  Ada sesi yang perlu ditindaklanjuti
+                </h2>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 lg:grid-cols-2">
+              {prioritizedAlerts.slice(0, 6).map((session) => {
+                const copy = getSessionAlertCopy(session);
+
+                return (
+                  <button
+                    key={session.id}
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`walkin-session-${session.id}`);
+                      if (el) {
+                        el.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }
+                      setExpandedNotesSessionId(session.id);
+                    }}
+                    className="rounded-[1.4rem] border border-red-200 bg-white p-4 text-left transition hover:bg-red-50"
+                  >
+                    <p className="font-bold text-slate-900">{session.customerName}</p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {session.store.name} •{" "}
+                      {session.table.displayLabel || `Meja ${session.table.tableNumber}`}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-red-700">
+                      {copy.title}
+                    </p>
+                    <p className="mt-1 text-sm leading-6 text-red-700">
+                      {copy.description}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
         ) : null}
 
         <div className="grid gap-8 xl:grid-cols-[0.88fr_1.12fr]">
@@ -1600,9 +1802,9 @@ export default function WalkInManager({
                 </div>
               ) : null}
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-7">
                 <div className="rounded-[1.3rem] border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm text-slate-500">Sedang berjalan</p>
+                  <p className="text-sm text-slate-500">Aktif</p>
                   <p className="mt-2 text-2xl font-black text-[var(--tf-purple)]">
                     {sessionSummary.total}
                   </p>
@@ -1635,12 +1837,26 @@ export default function WalkInManager({
                     {sessionSummary.endingSoon}
                   </p>
                 </div>
+
+                <div className="rounded-[1.3rem] border border-red-200 bg-red-50 p-4">
+                  <p className="text-sm text-red-700">Lewat waktu</p>
+                  <p className="mt-2 text-2xl font-black text-red-700">
+                    {sessionSummary.overtime}
+                  </p>
+                </div>
+
+                <div className="rounded-[1.3rem] border border-red-200 bg-red-50 p-4">
+                  <p className="text-sm text-red-700">Bentrok jadwal</p>
+                  <p className="mt-2 text-2xl font-black text-red-700">
+                    {sessionSummary.overlapRisk + sessionSummary.overlapNow}
+                  </p>
+                </div>
               </div>
 
               <div className="mt-5 space-y-5">
                 {groupedSessions.length === 0 ? (
                   <div className="rounded-[1.5rem] bg-slate-50 p-5 text-sm text-slate-500">
-                    Belum ada sesi yang sesuai dengan filter ini.
+                    Belum ada sesi aktif untuk filter ini.
                   </div>
                 ) : (
                   groupedSessions.map((group) => {
@@ -1652,11 +1868,13 @@ export default function WalkInManager({
                       (item) => item.paymentStatus === "PARTIAL"
                     ).length;
 
-                    const endingSoonCount = group.sessions.filter((item) => {
-                      const diffMinutes = getRemainingMinutes(
-                        item.estimatedEndAt
-                      );
-                      return diffMinutes >= 0 && diffMinutes <= 30;
+                    const endingSoonCount = group.sessions.filter(
+                      (item) => getSessionAlertLevel(item) === "ENDING_SOON"
+                    ).length;
+
+                    const criticalCount = group.sessions.filter((item) => {
+                      const level = getSessionAlertLevel(item);
+                      return level === "OVERTIME" || level === "OVERLAP_RISK" || level === "OVERLAP_NOW";
                     }).length;
 
                     const storeId = storeIdByName.get(group.storeName) ?? "";
@@ -1687,6 +1905,9 @@ export default function WalkInManager({
                                 </span>
                                 <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
                                   Segera selesai {endingSoonCount}
+                                </span>
+                                <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+                                  Perlu tindakan {criticalCount}
                                 </span>
                               </div>
                             </div>
@@ -1739,7 +1960,7 @@ export default function WalkInManager({
                       Riwayat
                     </p>
                     <h2 className="text-2xl font-black text-[var(--tf-purple)]">
-                      Riwayat Sesi Hari Ini
+                      Riwayat Hari Ini
                     </h2>
                   </div>
                 </div>
