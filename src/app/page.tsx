@@ -5,20 +5,14 @@ import SiteHeader from "@/components/layout/site-header";
 import SiteFooter from "@/components/layout/site-footer";
 import HeroStoreCarousel from "@/components/home/hero-store-carousel";
 import { getStoreOperatingHoursSummary } from "@/lib/store-hours";
+// import dynamic from "next/dynamic";
 
 export const dynamic = "force-dynamic";
-
-const STATS = [
-  { label: "Lokasi aktif", value: "6 lokasi" },
-  { label: "Koleksi game", value: "100+ judul" },
-  { label: "Tipe meja", value: "Auto table" },
-  { label: "Komunitas", value: "500+ member" },
-];
 
 const GAME_TEASERS = [
   {
     title: "Party Games",
-    description: "Pilihan game ringan dan seru untuk pecah suasana bareng teman.",
+    description: "Pilihan game ringan dan seru untuk mencairkan suasana bareng teman.",
     accent: "bg-[var(--tf-cream)] text-[var(--tf-orange-dark)]",
   },
   {
@@ -34,60 +28,83 @@ const GAME_TEASERS = [
 ];
 
 const SNACK_TEASERS = [
-  "Snack ringan untuk nemenin sesi main",
+  "Snack ringan untuk menemani sesi main",
   "Pilihan minuman dingin dan hangat",
-  "Mie instan untuk sesi yang lebih panjang",
+  "Pilihan praktis untuk sesi yang lebih panjang",
 ];
 
 const FAQS = [
   {
     question: "Apakah harus login dulu untuk booking?",
     answer:
-      "Iya. Customer perlu login dulu supaya booking tersimpan ke akun dan bisa dicek lagi di Booking Saya.",
+      "Iya. Customer perlu login dulu supaya booking tersimpan ke akun dan bisa dicek lagi di halaman Booking Saya.",
   },
   {
     question: "Berapa lama slot ditahan kalau belum bayar?",
     answer:
-      "Booking akan di-hold sementara sambil menunggu pembayaran. Kalau lewat batas waktu, booking akan otomatis kedaluwarsa.",
+      "Booking akan ditahan sementara sambil menunggu pembayaran. Kalau lewat batas waktu, booking akan otomatis kedaluwarsa.",
   },
   {
     question: "Kalau salah upload bukti bayar bagaimana?",
     answer:
-      "Tenang, bukti pembayaran bisa di-upload ulang selama booking masih dalam status yang mengizinkan.",
+      "Tenang, bukti pembayaran bisa diunggah ulang selama booking masih dalam status yang mengizinkan.",
   },
   {
     question: "Apakah admin bisa bantu booking walk-in?",
     answer:
-      "Bisa. Admin punya flow manual booking dan direct confirm untuk kebutuhan operasional di store.",
+      "Bisa. Admin punya alur manual booking dan direct confirm untuk kebutuhan operasional di store.",
   },
 ];
 
 export default async function HomePage() {
-  const stores = await prisma.store.findMany({
-    where: {
-      isActive: true,
-      category: "MAHJONG",
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-    take: 4,
-    include: {
-      operatingHours: {
-        select: {
-          dayOfWeek: true,
-          openHour: true,
-          closeHour: true,
-          isClosed: true,
+  const [stores, activeStoresCount] = await Promise.all([
+    prisma.store.findMany({
+      where: {
+        isActive: true,
+        category: "MAHJONG",
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      take: 4,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        city: true,
+        coverImageUrl: true,
+        operatingHours: {
+          select: {
+            dayOfWeek: true,
+            openHour: true,
+            closeHour: true,
+            isClosed: true,
+          },
+        },
+        tables: {
+          where: {
+            isActive: true,
+          },
+          select: {
+            id: true,
+          },
         },
       },
-      tables: {
-        where: {
-          isActive: true,
-        },
+    }),
+    prisma.store.count({
+      where: {
+        isActive: true,
+        category: "MAHJONG",
       },
-    },
-  });
+    }),
+  ]);
+
+  const stats = [
+    { label: "Lokasi aktif", value: `${activeStoresCount} lokasi` },
+    { label: "Koleksi game", value: "100+ judul" },
+    { label: "Tipe meja", value: "Auto table" },
+    { label: "Komunitas", value: "500+ member" },
+  ];
 
   return (
     <div id="page-top" className="min-h-screen bg-[var(--tf-bg)] text-slate-800">
@@ -153,7 +170,7 @@ export default async function HomePage() {
 
         <section className="relative z-10 mt-0 px-4 pb-16 sm:px-6 md:-mt-4 xl:-mt-8">
           <div className="mx-auto grid max-w-[1140px] gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {STATS.map((item) => (
+            {stats.map((item) => (
               <div
                 key={item.label}
                 className="rounded-[1.75rem] border border-[var(--tf-border)] bg-white p-7 text-center shadow-[var(--tf-shadow-card)]"
@@ -272,9 +289,9 @@ export default async function HomePage() {
                   Boardgame teaser
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Nanti katalog game akan dibuat lebih proper, lengkap dengan
-                  filter dan discovery. Untuk sekarang, kita siapkan nuansa dan
-                  arahnya dulu.
+                  Threefrogs juga menyiapkan pilihan boardgame untuk melengkapi
+                  suasana bermain. Fokus utama saat ini tetap pada reservasi
+                  mahjong yang rapi dan nyaman dipakai.
                 </p>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -301,8 +318,8 @@ export default async function HomePage() {
                   Snack & drinks
                 </h3>
                 <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Selain main, customer juga nantinya bisa lihat daftar snack dan
-                  minuman yang tersedia di store.
+                  Selain reservasi, Threefrogs juga menyiapkan pilihan snack dan
+                  minuman untuk menemani sesi bermain yang lebih nyaman.
                 </p>
 
                 <div className="mt-6 space-y-3">
@@ -382,10 +399,10 @@ export default async function HomePage() {
                 <div className="rounded-[1.25rem] bg-[var(--tf-cream)] p-5">
                   <p className="text-sm text-slate-500">Pembayaran</p>
                   <p className="mt-2 text-xl font-black text-[var(--tf-purple)]">
-                    Upload atau konfirmasi
+                    Lebih mudah dipantau
                   </p>
                   <p className="text-sm text-slate-600">
-                    fleksibel untuk customer dan admin
+                    jelas untuk customer maupun admin
                   </p>
                 </div>
               </div>

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { SITE_CONFIG } from "@/lib/site-config";
 
 export default function SiteFooter() {
   return (
@@ -22,14 +23,18 @@ export default function SiteFooter() {
 
             <div className="mt-5 flex gap-3">
               <a
-                href="#"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--tf-lavender)] text-sm font-semibold text-[var(--tf-purple)] transition hover:bg-[#e9dcff]"
+                href={SITE_CONFIG.instagram.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-10 items-center justify-center rounded-2xl bg-[var(--tf-lavender)] px-4 text-sm font-semibold text-[var(--tf-purple)] transition hover:bg-[#e9dcff]"
               >
                 IG
               </a>
               <a
-                href="#"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--tf-lavender)] text-sm font-semibold text-[var(--tf-purple)] transition hover:bg-[#e9dcff]"
+                href={SITE_CONFIG.whatsapp.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-10 items-center justify-center rounded-2xl bg-[var(--tf-lavender)] px-4 text-sm font-semibold text-[var(--tf-purple)] transition hover:bg-[#e9dcff]"
               >
                 WA
               </a>
@@ -64,10 +69,30 @@ export default function SiteFooter() {
               </h3>
 
               <div className="mt-3 space-y-2.5 text-sm leading-6 text-slate-600">
-                <p>WhatsApp: 08xxxxxxxxxx</p>
-                <p>Instagram: @threefrogs.id</p>
-                <p>Surabaya, Indonesia</p>
-                <p>Jam operasional: 11:00 – 22:00</p>
+                <p>
+                  WhatsApp:{" "}
+                  <a
+                    href={SITE_CONFIG.whatsapp.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-[var(--tf-purple)] hover:underline"
+                  >
+                    {SITE_CONFIG.whatsapp.label}
+                  </a>
+                </p>
+                <p>
+                  Instagram:{" "}
+                  <a
+                    href={SITE_CONFIG.instagram.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-[var(--tf-purple)] hover:underline"
+                  >
+                    @{SITE_CONFIG.instagram.label}
+                  </a>
+                </p>
+                <p>{SITE_CONFIG.location}</p>
+                <p>Jam operasional mengikuti cabang yang dipilih.</p>
               </div>
             </div>
           </div>

@@ -6,6 +6,8 @@ import { prisma } from "../../lib/prisma";
 import EmptyStateCard from "@/components/ui/empty-state-card";
 import { getStoreOperatingHoursSummary } from "@/lib/store-hours";
 
+export const dynamic = "force-dynamic";
+
 export default async function StoresPage() {
   const stores = await prisma.store.findMany({
     where: {
@@ -15,7 +17,13 @@ export default async function StoresPage() {
     orderBy: {
       createdAt: "asc",
     },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      coverImageUrl: true,
+      city: true,
+      address: true,
       operatingHours: {
         select: {
           dayOfWeek: true,
@@ -27,6 +35,9 @@ export default async function StoresPage() {
       tables: {
         where: {
           isActive: true,
+        },
+        select: {
+          id: true,
         },
       },
     },
@@ -46,9 +57,9 @@ export default async function StoresPage() {
               Pilih store Threefrogs favoritmu
             </h1>
             <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
-              Setiap store punya karakter dan kapasitas meja yang berbeda.
-              Begitu kamu klik tombol reservasi, store pilihanmu akan langsung
-              terbawa ke halaman booking.
+              Setiap store punya karakter, kapasitas meja, dan jam operasional
+              yang bisa berbeda. Pilih lokasi yang paling cocok, lalu lanjutkan
+              reservasi dengan lebih cepat.
             </p>
           </div>
 
@@ -56,7 +67,7 @@ export default async function StoresPage() {
             <EmptyStateCard
               eyebrow="Stores"
               title="Store belum tersedia"
-              description="Store Threefrogs belum muncul di sistem. Nanti begitu store aktif, daftarnya akan tampil di sini."
+              description="Saat ini belum ada store yang aktif di sistem. Begitu store tersedia, daftarnya akan muncul di sini."
               actionHref="/"
               actionLabel="Kembali ke beranda"
             />
