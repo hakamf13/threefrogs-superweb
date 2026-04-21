@@ -82,6 +82,20 @@ function formatHourRangeFromSlots(slots: TableSlot[]) {
   )}:00`;
 }
 
+function formatDisplayDate(dateText: string) {
+  if (!dateText) return "-";
+
+  const date = new Date(`${dateText}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return dateText;
+
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 export default function ReserveClient({
   stores,
   defaultDate,
@@ -127,9 +141,24 @@ export default function ReserveClient({
   const isProfileComplete = Boolean(currentUser.name && currentUser.phone);
 
   const availabilityHourRangeLabel = useMemo(() => {
-    const firstTableWithSlots = availabilityTables.find((table) => table.slots.length > 0);
+    const firstTableWithSlots = availabilityTables.find(
+      (table) => table.slots.length > 0
+    );
     return formatHourRangeFromSlots(firstTableWithSlots?.slots ?? []);
   }, [availabilityTables]);
+
+  const selectedDateLabel = useMemo(
+    () => formatDisplayDate(selectedDate),
+    [selectedDate]
+  );
+
+  const canSubmitBooking =
+    isProfileComplete &&
+    Boolean(selectedStoreId) &&
+    Boolean(selectedDate) &&
+    Boolean(selectedTableId) &&
+    selectedSlots.length > 0 &&
+    !isSubmitting;
 
   useEffect(() => {
     if (!initialStoreId) return;
@@ -149,18 +178,23 @@ export default function ReserveClient({
         setIsLoadingAvailability(true);
         setErrorMessage("");
 
-        const response = await fetch(
-          `/api/availability?storeId=${selectedStoreId}&bookingDate=${selectedDate}`,
-          {
-            cache: "no-store",
-            signal: controller.signal,
-          }
-        );
+        const params = new URLSearchParams({
+          storeId: selectedStoreId,
+          bookingDate: selectedDate,
+        });
+
+        const response = await fetch(`/api/availability?${params.toString()}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
 
         const result = await response.json();
 
         if (!response.ok) {
-          setErrorMessage(result.error ?? "Gagal mengambil availability.");
+          setErrorMessage(
+            result.error ??
+              "Maaf, ketersediaan meja belum berhasil dimuat. Coba lagi sebentar."
+          );
           setAvailabilityTables([]);
           return;
         }
@@ -172,7 +206,9 @@ export default function ReserveClient({
         }
 
         console.error(error);
-        setErrorMessage("Terjadi kesalahan saat mengambil availability.");
+        setErrorMessage(
+          "Terjadi kendala saat memuat ketersediaan meja. Coba refresh halaman ini."
+        );
         setAvailabilityTables([]);
       } finally {
         setIsLoadingAvailability(false);
@@ -206,7 +242,7 @@ export default function ReserveClient({
     if (!stillValid) {
       setSelectedSlots([]);
       setErrorMessage(
-        "Ketersediaan meja berubah. Pilih ulang slot jam yang kamu inginkan."
+        "Ketersediaan meja baru saja berubah. Pilih ulang slot jam yang kamu inginkan."
       );
     }
   }, [availabilityTables, selectedTableId, selectedSlots]);
@@ -236,7 +272,9 @@ export default function ReserveClient({
     let nextSlots: number[] = [];
 
     if (selectedSlots.includes(hour)) {
-      nextSlots = selectedSlots.filter((slot) => slot !== hour).sort((a, b) => a - b);
+      nextSlots = selectedSlots
+        .filter((slot) => slot !== hour)
+        .sort((a, b) => a - b);
     } else {
       nextSlots = [...selectedSlots, hour].sort((a, b) => a - b);
     }
@@ -247,7 +285,9 @@ export default function ReserveClient({
     });
 
     if (!isSequential) {
-      setErrorMessage("Slot jam harus dipilih berurutan.");
+      setErrorMessage(
+        "Slot jam perlu dipilih berurutan supaya booking bisa diproses."
+      );
       return;
     }
 
@@ -257,7 +297,9 @@ export default function ReserveClient({
     });
 
     if (!allStillAvailable) {
-      setErrorMessage("Ada slot yang sudah tidak tersedia.");
+      setErrorMessage(
+        "Ada slot yang barusan tidak tersedia lagi. Silakan pilih ulang."
+      );
       return;
     }
 
@@ -267,7 +309,9 @@ export default function ReserveClient({
 
   const handleSubmitBooking = async () => {
     if (!isProfileComplete) {
-      setErrorMessage("Profil kamu belum lengkap. Nama dan nomor HP wajib ada.");
+      setErrorMessage(
+        "Profil kamu belum lengkap. Nama dan nomor HP wajib diisi sebelum membuat booking."
+      );
       return;
     }
 
@@ -277,7 +321,9 @@ export default function ReserveClient({
       !selectedTableId ||
       selectedSlots.length === 0
     ) {
-      setErrorMessage("Lengkapi store, tanggal, meja, dan slot jam dulu ya.");
+      setErrorMessage(
+        "Lengkapi store, tanggal, meja, dan slot jam terlebih dahulu."
+      );
       return;
     }
 
@@ -295,21 +341,25 @@ export default function ReserveClient({
           tableId: selectedTableId,
           bookingDate: selectedDate,
           selectedSlots,
-          notes,
+          notes: notes.trim(),
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        setErrorMessage(result.error ?? "Gagal membuat booking.");
+        setErrorMessage(
+          result.error ?? "Booking belum berhasil dibuat. Coba lagi sebentar."
+        );
         return;
       }
 
       router.push(`/booking/${result.bookingCode}`);
     } catch (error) {
       console.error(error);
-      setErrorMessage("Terjadi kesalahan saat mengirim booking.");
+      setErrorMessage(
+        "Terjadi kendala saat mengirim booking. Coba lagi beberapa saat lagi."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -328,8 +378,8 @@ export default function ReserveClient({
               Reservasi Mahjong
             </h1>
             <p className="max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-              Pilih store, tentukan tanggal main, pilih meja, lalu booking slot
-              jam favoritmu.
+              Pilih store, tentukan tanggal main, pilih meja, lalu amankan slot
+              jam yang kamu inginkan.
             </p>
           </div>
         </section>
@@ -372,8 +422,8 @@ export default function ReserveClient({
               {!isProfileComplete ? (
                 <div className="mt-5 rounded-2xl border border-[#FFD9A8] bg-[var(--tf-cream)] px-4 py-4 text-sm text-[var(--tf-orange-dark)]">
                   <p className="font-semibold">
-                    Profil kamu belum lengkap. Nama dan nomor HP wajib ada
-                    sebelum booking.
+                    Profil kamu belum lengkap. Nama dan nomor HP perlu diisi
+                    dulu sebelum booking.
                   </p>
                   <a
                     href="/profile"
@@ -413,6 +463,12 @@ export default function ReserveClient({
                         {selectedStore.name}
                       </p>
 
+                      {selectedStore.description ? (
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          {selectedStore.description}
+                        </p>
+                      ) : null}
+
                       <div className="mt-3 flex items-start gap-2 text-sm text-slate-600">
                         <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--tf-purple)]" />
                         <p className="leading-6">{getLocationText(selectedStore)}</p>
@@ -421,7 +477,8 @@ export default function ReserveClient({
                       <div className="mt-3 flex items-start gap-2 text-sm text-slate-600">
                         <Navigation className="mt-0.5 h-4 w-4 shrink-0 text-[var(--tf-purple)]" />
                         <p className="leading-6">
-                          {selectedStore.locationHint || "Info lokasi menyusul."}
+                          {selectedStore.locationHint ||
+                            "Petunjuk lokasi akan ditampilkan di sini."}
                         </p>
                       </div>
 
@@ -470,7 +527,7 @@ export default function ReserveClient({
                 </p>
 
                 <div className="rounded-2xl border border-[var(--tf-border)] bg-[var(--tf-surface-muted)] px-4 py-3 text-sm text-slate-600">
-                  Jam operasional aktif untuk tanggal ini:{" "}
+                  Jam operasional yang tampil untuk tanggal ini:{" "}
                   <span className="font-semibold text-[var(--tf-purple)]">
                     {availabilityHourRangeLabel}
                   </span>
@@ -499,7 +556,8 @@ export default function ReserveClient({
                 </div>
               ) : availabilityTables.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-[var(--tf-border)] bg-[var(--tf-surface-muted)] px-4 py-8 text-center text-slate-500">
-                  Store tutup pada tanggal ini atau availability belum tersedia.
+                  Belum ada meja yang bisa dipilih untuk tanggal ini. Coba pilih
+                  tanggal lain atau store yang berbeda.
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
@@ -547,7 +605,7 @@ export default function ReserveClient({
                           </span>
                           <span className="rounded-full bg-[var(--tf-cream)] px-2.5 py-1 font-semibold text-[var(--tf-orange-dark)]">
                             {isFullyBooked
-                              ? "Full booked"
+                              ? "Sudah penuh"
                               : `${availableCount} slot tersedia`}
                           </span>
                         </div>
@@ -570,15 +628,16 @@ export default function ReserveClient({
 
               {!selectedTableId ? (
                 <div className="rounded-2xl border border-dashed border-[var(--tf-border)] bg-[var(--tf-surface-muted)] px-4 py-8 text-center text-slate-500">
-                  Pilih meja dulu supaya slot jam bisa dipilih.
+                  Pilih meja terlebih dahulu supaya slot jam bisa ditampilkan.
                 </div>
               ) : !selectedTable ? (
                 <div className="rounded-2xl border border-dashed border-[var(--tf-border)] bg-[var(--tf-surface-muted)] px-4 py-8 text-center text-slate-500">
-                  Data meja tidak ditemukan.
+                  Data meja tidak ditemukan. Silakan pilih ulang meja yang
+                  tersedia.
                 </div>
               ) : selectedTable.slots.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-[var(--tf-border)] bg-[var(--tf-surface-muted)] px-4 py-8 text-center text-slate-500">
-                  Store tutup pada tanggal ini, jadi tidak ada slot yang bisa dipilih.
+                  Tidak ada slot yang bisa dipilih pada tanggal ini.
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
@@ -628,7 +687,7 @@ export default function ReserveClient({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={4}
-                placeholder="Contoh: minta meja dekat colokan"
+                placeholder="Contoh: minta meja dekat colokan atau datang sedikit terlambat"
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
               />
             </div>
@@ -662,7 +721,7 @@ export default function ReserveClient({
                 <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
                   <p className="text-sm text-slate-500">Tanggal</p>
                   <p className="mt-1 font-semibold text-slate-800">
-                    {selectedDate || "-"}
+                    {selectedDateLabel}
                   </p>
                 </div>
 
@@ -670,13 +729,14 @@ export default function ReserveClient({
                   <p className="text-sm text-slate-500">Meja</p>
                   <p className="mt-1 font-semibold text-slate-800">
                     {selectedTable
-                      ? selectedTable.displayLabel || `Meja ${selectedTable.tableNumber}`
+                      ? selectedTable.displayLabel ||
+                        `Meja ${selectedTable.tableNumber}`
                       : "-"}
                   </p>
                 </div>
 
                 <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
-                  <p className="text-sm text-slate-500">Slot Dipilih</p>
+                  <p className="text-sm text-slate-500">Slot dipilih</p>
                   {selectedSlotLabels.length > 0 ? (
                     <div className="mt-2 flex flex-wrap gap-2">
                       {selectedSlotLabels.map((label) => (
@@ -689,13 +749,15 @@ export default function ReserveClient({
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-1 font-semibold text-slate-800">Belum ada</p>
+                    <p className="mt-1 font-semibold text-slate-800">
+                      Belum ada slot yang dipilih
+                    </p>
                   )}
                 </div>
 
                 <div className="rounded-2xl bg-[var(--tf-cream)] p-4">
                   <p className="text-sm text-[var(--tf-orange-dark)]">
-                    Estimasi Total
+                    Estimasi total
                   </p>
                   <p className="mt-1 text-2xl font-black text-[var(--tf-purple)]">
                     {formatRupiah(totalPrice)}
@@ -710,8 +772,8 @@ export default function ReserveClient({
                 <div className="flex items-start gap-3">
                   <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--tf-purple)]" />
                   <p className="leading-6">
-                    Pilih slot yang berurutan. Untuk hari ini, slot yang sudah lewat
-                    otomatis tidak bisa dipilih.
+                    Pilih slot yang berurutan. Untuk hari ini, slot yang sudah
+                    lewat otomatis tidak bisa dipilih.
                   </p>
                 </div>
               </div>
@@ -720,7 +782,7 @@ export default function ReserveClient({
                 <div className="flex items-start gap-3">
                   <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--tf-purple)]" />
                   <p className="leading-6">
-                    Setelah submit, booking akan dibuat atas nama akun kamu dan
+                    Setelah dikirim, booking akan dibuat atas nama akun kamu dan
                     menunggu pembayaran.
                   </p>
                 </div>
@@ -729,13 +791,13 @@ export default function ReserveClient({
               <button
                 type="button"
                 onClick={handleSubmitBooking}
-                disabled={isSubmitting}
+                disabled={!canSubmitBooking}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--tf-purple)] px-5 py-3.5 font-bold text-white transition hover:bg-[var(--tf-purple-dark)] disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Mengirim...
+                    Mengirim booking...
                   </>
                 ) : (
                   <>

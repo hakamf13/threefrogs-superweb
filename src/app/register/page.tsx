@@ -10,9 +10,7 @@ export default function RegisterPage() {
 
       <main className="px-4 py-12 sm:px-6 sm:py-16">
         <div className="mx-auto grid max-w-[1140px] gap-8 xl:grid-cols-[1.08fr_0.92fr] xl:items-stretch">
-          <AuthShowcasePanel mode="register" />
-
-          <div className="rounded-[1.9rem] border border-[var(--tf-border)] bg-white p-6 shadow-[var(--tf-shadow-card)] sm:p-8">
+          <div className="rounded-[1.9rem] border border-[var(--tf-border)] bg-white p-6 shadow-[var(--tf-shadow-card)] sm:p-8 xl:order-2">
             <div className="mb-8">
               <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
                 Register
@@ -30,6 +28,10 @@ export default function RegisterPage() {
             </div>
 
             <RegisterForm />
+          </div>
+
+          <div className="xl:order-1">
+            <AuthShowcasePanel mode="register" />
           </div>
         </div>
       </main>

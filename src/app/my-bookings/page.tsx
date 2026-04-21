@@ -117,16 +117,16 @@ export default async function MyBookingsPage({
         <section className="mx-auto max-w-6xl space-y-8">
           <div className="space-y-3">
             <p className="inline-flex rounded-full bg-[var(--tf-cream)] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
-              My Reservations
+              Booking Saya
             </p>
             <div>
               <h1 className="text-3xl font-black tracking-tight text-[var(--tf-purple)] md:text-5xl">
-                Booking Saya
+                Riwayat Booking Saya
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
                 Semua booking yang kamu buat saat login akan muncul di sini.
-                Kamu bisa cek status, lanjut bayar, lihat bukti pembayaran, atau
-                membatalkan booking yang masih aktif.
+                Kamu bisa mengecek status, melanjutkan pembayaran, membuka detail
+                booking, atau membatalkan booking yang masih aktif.
               </p>
             </div>
           </div>
@@ -142,7 +142,7 @@ export default async function MyBookingsPage({
             </div>
 
             <div className={summaryCardClass}>
-              <p className="text-sm text-slate-500">Menunggu bayar</p>
+              <p className="text-sm text-slate-500">Menunggu pembayaran</p>
               <p className="mt-2 text-3xl font-black text-orange-600">
                 {summary.awaitingPayment}
               </p>
@@ -176,7 +176,7 @@ export default async function MyBookingsPage({
                   id="q"
                   name="q"
                   defaultValue={q}
-                  placeholder="Kode booking, nama, atau nomor HP"
+                  placeholder="Cari dengan kode booking, nama, atau nomor HP"
                   className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[var(--tf-purple)]"
                 />
               </div>
@@ -195,7 +195,7 @@ export default async function MyBookingsPage({
                   className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[var(--tf-purple)]"
                 >
                   <option value="">Semua status</option>
-                  <option value="AWAITING_PAYMENT">Menunggu bayar</option>
+                  <option value="AWAITING_PAYMENT">Menunggu pembayaran</option>
                   <option value="PENDING_VERIFICATION">
                     Menunggu verifikasi
                   </option>
@@ -229,14 +229,14 @@ export default async function MyBookingsPage({
                 type="submit"
                 className="rounded-2xl bg-[var(--tf-purple)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
               >
-                Terapkan filter
+                Terapkan Filter
               </button>
 
               <Link
                 href="/my-bookings"
                 className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700"
               >
-                Tampilkan semua
+                Tampilkan Semua
               </Link>
             </div>
           </form>
@@ -297,14 +297,14 @@ export default async function MyBookingsPage({
                           </div>
 
                           <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
-                            <p className="text-sm text-slate-500">Tanggal</p>
+                            <p className="text-sm text-slate-500">Tanggal main</p>
                             <p className="mt-1 font-semibold text-slate-900">
                               {formatDateDisplay(booking.bookingDate)}
                             </p>
                           </div>
 
                           <div className="rounded-2xl bg-[var(--tf-surface-muted)] p-4">
-                            <p className="text-sm text-slate-500">Total</p>
+                            <p className="text-sm text-slate-500">Total pembayaran</p>
                             <p className="mt-1 font-semibold text-slate-900">
                               {formatRupiah(booking.totalPrice)}
                             </p>
@@ -328,7 +328,7 @@ export default async function MyBookingsPage({
                           </div>
                         ) : (
                           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                            Transfer manual / upload bukti pembayaran
+                            Pembayaran dilakukan dengan transfer manual dan upload bukti bayar.
                           </div>
                         )}
                       </div>
@@ -341,14 +341,14 @@ export default async function MyBookingsPage({
                             rel="noreferrer"
                             className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-900"
                           >
-                            Bayar sekarang
+                            Bayar Sekarang
                           </a>
                         ) : null}
 
                         {showMidtransRegenerate ? (
                           <RegenerateMidtransButton
                             bookingCode={booking.bookingCode}
-                            label="Ulangi Link Bayar"
+                            label="Buat Ulang Link Bayar"
                           />
                         ) : null}
 
@@ -356,7 +356,7 @@ export default async function MyBookingsPage({
                           href={`/booking/${booking.bookingCode}`}
                           className="rounded-2xl bg-[var(--tf-purple)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
                         >
-                          Lihat detail
+                          Lihat Detail
                         </Link>
 
                         {canCancel ? (

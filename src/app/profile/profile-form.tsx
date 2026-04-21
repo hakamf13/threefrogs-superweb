@@ -5,142 +5,154 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type ProfileFormProps = {
-	initialProfile: {
-		name: string;
-		phone: string;
-		email: string;
-	};
+  initialProfile: {
+    name: string;
+    phone: string;
+    email: string;
+  };
 };
 
 export default function ProfileForm({ initialProfile }: ProfileFormProps) {
-	const router = useRouter();
+  const router = useRouter();
 
-	const [name, setName] = useState(initialProfile.name);
-	const [phone, setPhone] = useState(initialProfile.phone);
-	const [email, setEmail] = useState(initialProfile.email);
+  const [name, setName] = useState(initialProfile.name);
+  const [phone, setPhone] = useState(initialProfile.phone);
+  const [email, setEmail] = useState(initialProfile.email);
 
-	const [errorMessage, setErrorMessage] = useState("");
-	const [successMessage, setSuccessMessage] = useState("");
-	const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
+  const canSubmit = Boolean(name.trim() && phone.trim()) && !isSubmitting;
 
-		try {
-			setIsSubmitting(true);
-			setErrorMessage("");
-			setSuccessMessage("");
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-			const response = await fetch("/api/profile", {
-				method: "PATCH",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					name,
-					phone,
-					email,
-				}),
-			});
+    if (!name.trim() || !phone.trim()) {
+      setErrorMessage("Nama dan nomor HP wajib diisi terlebih dahulu.");
+      setSuccessMessage("");
+      return;
+    }
 
-			const result = await response.json();
+    try {
+      setIsSubmitting(true);
+      setErrorMessage("");
+      setSuccessMessage("");
 
-			if (!response.ok) {
-				setErrorMessage(result.error ?? "Gagal update profil.");
-				return;
-			}
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          phone: phone.trim(),
+          email: email.trim(),
+        }),
+      });
 
-			setSuccessMessage("Profil berhasil diperbarui.");
-			router.refresh();
-		} catch (error) {
-			console.error(error);
-			setErrorMessage("Terjadi kesalahan saat update profil.");
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
+      const result = await response.json();
 
-	return (
-		<form onSubmit={handleSubmit} className="space-y-5">
-			<div>
-				<label className="mb-2 block text-sm font-semibold text-slate-700">
-					Nama
-				</label>
-				<input
-					type="text"
-					value={name}
-					onChange={(e) => setName(e.target.value)}
-					placeholder="Nama lengkap"
-					className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
-					required
-				/>
-			</div>
+      if (!response.ok) {
+        setErrorMessage(
+          result.error ?? "Profil belum berhasil diperbarui. Coba lagi sebentar."
+        );
+        return;
+      }
 
-			<div>
-				<label className="mb-2 block text-sm font-semibold text-slate-700">
-					Nomor HP
-				</label>
-				<input
-					type="text"
-					value={phone}
-					onChange={(e) => setPhone(e.target.value)}
-					placeholder="08xxxxxxxxxx"
-					className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
-					required
-				/>
-				<p className="mt-2 text-xs text-slate-500">
-					Nomor HP ini akan otomatis dipakai saat booking.
-				</p>
-			</div>
+      setSuccessMessage("Profil berhasil diperbarui.");
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      setErrorMessage(
+        "Terjadi kendala saat menyimpan profil. Coba lagi beberapa saat lagi."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-			<div>
-				<label className="mb-2 block text-sm font-semibold text-slate-700">
-					Email (opsional)
-				</label>
-				<input
-					type="email"
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-					placeholder="email@kamu.com"
-					className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
-				/>
-			</div>
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">
+          Nama
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Masukkan nama lengkap"
+          className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
+          required
+        />
+      </div>
 
-			{errorMessage ? (
-				<div className="rounded-[1.5rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-					{errorMessage}
-				</div>
-			) : null}
+      <div>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">
+          Nomor HP
+        </label>
+        <input
+          type="text"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Contoh: 08xxxxxxxxxx"
+          className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
+          required
+        />
+        <p className="mt-2 text-xs text-slate-500">
+          Nomor HP ini akan dipakai otomatis saat kamu membuat booking.
+        </p>
+      </div>
 
-			{successMessage ? (
-				<div className="rounded-[1.5rem] border border-[var(--tf-green)] bg-[#f6ffe6] px-4 py-3 text-sm text-[var(--tf-green-dark)]">
-					{successMessage}
-				</div>
-			) : null}
+      <div>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">
+          Email (opsional)
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Contoh: email@kamu.com"
+          className="w-full rounded-[1.5rem] border border-slate-300 px-4 py-3 outline-none transition focus:border-[var(--tf-purple)]"
+        />
+      </div>
 
-			<div className="flex flex-wrap gap-3">
-				<button
-					type="submit"
-					disabled={isSubmitting}
-					className="rounded-[1.5rem] bg-[var(--tf-purple)] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)] disabled:cursor-not-allowed disabled:bg-slate-300"
-				>
-					{isSubmitting ? "Menyimpan..." : "Simpan Profil"}
-				</button>
+      {errorMessage ? (
+        <div className="rounded-[1.5rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {errorMessage}
+        </div>
+      ) : null}
 
-				<Link
-					href="/reserve"
-					className="rounded-[1.5rem] border border-slate-300 px-5 py-3 font-bold text-slate-700"
-				>
-					Ke Reservasi
-				</Link>
+      {successMessage ? (
+        <div className="rounded-[1.5rem] border border-[var(--tf-green)] bg-[#f6ffe6] px-4 py-3 text-sm text-[var(--tf-green-dark)]">
+          {successMessage}
+        </div>
+      ) : null}
 
-				<Link
-					href="/my-bookings"
-					className="rounded-[1.5rem] border border-slate-300 px-5 py-3 font-bold text-slate-700"
-				>
-					Booking Saya
-				</Link>
-			</div>
-		</form>
-	);
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="rounded-[1.5rem] bg-[var(--tf-purple)] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)] disabled:cursor-not-allowed disabled:bg-slate-300"
+        >
+          {isSubmitting ? "Menyimpan..." : "Simpan Profil"}
+        </button>
+
+        <Link
+          href="/reserve"
+          className="rounded-[1.5rem] border border-slate-300 px-5 py-3 font-bold text-slate-700"
+        >
+          Ke Reservasi
+        </Link>
+
+        <Link
+          href="/my-bookings"
+          className="rounded-[1.5rem] border border-slate-300 px-5 py-3 font-bold text-slate-700"
+        >
+          Booking Saya
+        </Link>
+      </div>
+    </form>
+  );
 }

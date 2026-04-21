@@ -5,6 +5,8 @@ import { prisma } from "../../lib/prisma";
 import ReserveClient from "./reserve-client";
 import { getBookingWindow } from "@/lib/booking-window";
 
+export const dynamic = "force-dynamic";
+
 type ReservePageProps = {
   searchParams: Promise<{
     store?: string;
@@ -21,7 +23,8 @@ export default async function ReservePage({
   }
 
   const params = await searchParams;
-  const requestedStoreId = typeof params.store === "string" ? params.store : "";
+  const requestedStoreId =
+    typeof params.store === "string" ? params.store.trim() : "";
 
   const [rawStores, currentUser] = await Promise.all([
     prisma.store.findMany({

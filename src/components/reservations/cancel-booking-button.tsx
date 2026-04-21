@@ -14,10 +14,10 @@ type CancelBookingButtonProps = {
 
 export default function CancelBookingButton({
   bookingCode,
-  label = "Batalkan booking",
+  label = "Batalkan Booking",
   disabled = false,
   redirectTo,
-  confirmMessage = "Yakin ingin membatalkan booking ini?",
+  confirmMessage = "Booking ini akan dibatalkan. Kamu yakin ingin melanjutkan?",
 }: CancelBookingButtonProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,8 +38,9 @@ export default function CancelBookingButton({
       const result = await response.json();
 
       if (!response.ok) {
-        setErrorMessage(result.error ?? "Gagal membatalkan booking.");
-        setIsSubmitting(false);
+        setErrorMessage(
+          result.error ?? "Booking belum berhasil dibatalkan. Coba lagi ya."
+        );
         return;
       }
 
@@ -51,7 +52,10 @@ export default function CancelBookingButton({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setErrorMessage("Terjadi kesalahan saat membatalkan booking.");
+      setErrorMessage(
+        "Terjadi kendala saat membatalkan booking. Coba lagi beberapa saat lagi."
+      );
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -67,7 +71,7 @@ export default function CancelBookingButton({
         {isSubmitting ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Membatalkan...
+            Membatalkan booking...
           </>
         ) : (
           <>

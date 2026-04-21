@@ -108,11 +108,11 @@ export default async function MyBookingDetailPage({
         <section className="mx-auto max-w-6xl space-y-8">
           <div className="space-y-3">
             <p className="inline-flex rounded-full bg-[var(--tf-cream)] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
-              Booking Detail
+              Detail Booking
             </p>
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <p className="text-sm text-slate-500">Kode Booking</p>
+                <p className="text-sm text-slate-500">Kode booking</p>
                 <h1 className="mt-1 text-3xl font-black tracking-tight text-[var(--tf-purple)] md:text-5xl">
                   {booking.bookingCode}
                 </h1>
@@ -142,7 +142,7 @@ export default async function MyBookingDetailPage({
           {booking.paymentGatewayProvider === "MIDTRANS" ? (
             <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
               <p className="text-sm font-black uppercase tracking-widest text-[var(--tf-orange-dark)]">
-                Payment Gateway
+                Status Pembayaran
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2">
@@ -169,7 +169,7 @@ export default async function MyBookingDetailPage({
 
           {latestRejectedProof?.rejectionReason ? (
             <div className="rounded-[1.6rem] border border-red-200 bg-red-50 p-5 text-red-700">
-              <p className="font-bold">Catatan admin</p>
+              <p className="font-bold">Catatan dari admin</p>
               <p className="mt-2 text-sm leading-6">
                 {latestRejectedProof.rejectionReason}
               </p>
@@ -180,7 +180,7 @@ export default async function MyBookingDetailPage({
             <div className="min-w-0 space-y-6">
               <div className={panelClass}>
                 <h2 className="text-2xl font-black text-[var(--tf-purple)]">
-                  Detail Booking
+                  Ringkasan Booking
                 </h2>
 
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -230,7 +230,7 @@ export default async function MyBookingDetailPage({
 
                 {booking.notes ? (
                   <div className="mt-5 rounded-2xl bg-[var(--tf-surface-muted)] p-4">
-                    <p className="text-sm text-slate-500">Catatan booking</p>
+                    <p className="text-sm text-slate-500">Catatan tambahan</p>
                     <p className="mt-2 text-sm leading-7 text-slate-800">
                       {booking.notes}
                     </p>
@@ -254,7 +254,7 @@ export default async function MyBookingDetailPage({
                           <div>
                             <p className="font-semibold text-slate-900">
                               {index === 0
-                                ? "Bukti terbaru"
+                                ? "Bukti pembayaran terbaru"
                                 : proof.fileName || "Bukti pembayaran"}
                             </p>
                             <p className="text-sm text-slate-500">
@@ -284,7 +284,7 @@ export default async function MyBookingDetailPage({
                               rel="noreferrer"
                               className="rounded-2xl border border-[var(--tf-purple)] px-4 py-2 text-sm font-semibold text-[var(--tf-purple)]"
                             >
-                              Lihat
+                              Lihat Bukti
                             </a>
                           </div>
                         </div>
@@ -312,7 +312,7 @@ export default async function MyBookingDetailPage({
                 {showMidtransPendingCard ? (
                   <div className="rounded-2xl border border-slate-200 bg-[var(--tf-surface-muted)] p-4">
                     <h3 className="text-lg font-black text-slate-900">
-                      Pembayaran Midtrans
+                      Lanjutkan pembayaran Midtrans
                     </h3>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
                       Booking ini memakai Midtrans Snap. Klik tombol di bawah
@@ -330,7 +330,7 @@ export default async function MyBookingDetailPage({
                         rel="noreferrer"
                         className="inline-flex rounded-2xl bg-[var(--tf-purple)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--tf-purple-dark)]"
                       >
-                        Bayar sekarang
+                        Bayar Sekarang
                       </a>
 
                       <RegenerateMidtransButton
@@ -347,8 +347,8 @@ export default async function MyBookingDetailPage({
                       Link pembayaran perlu dibuat ulang
                     </h3>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
-                      Booking masih menunggu pembayaran, tapi link checkout aktif
-                      tidak tersedia. Buat ulang link pembayaran untuk lanjut.
+                      Booking masih menunggu pembayaran, tetapi link checkout aktif
+                      tidak tersedia. Buat ulang link pembayaran untuk melanjutkan proses.
                     </p>
                     <p className="mt-3 text-sm font-medium text-slate-700">
                       Status gateway:{" "}
@@ -368,8 +368,8 @@ export default async function MyBookingDetailPage({
                   <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-green-800">
                     <h3 className="text-lg font-black">Pembayaran berhasil</h3>
                     <p className="mt-2 text-sm leading-6">
-                      Booking ini telah dibayar melalui Midtrans dan terkonfirmasi
-                      otomatis oleh sistem.
+                      Booking ini telah dibayar melalui Midtrans dan
+                      terkonfirmasi otomatis oleh sistem.
                     </p>
                     <p className="mt-3 text-sm font-medium">
                       Status gateway:{" "}

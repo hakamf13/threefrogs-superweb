@@ -8,7 +8,7 @@ type RefreshBookingStatusButtonProps = {
 };
 
 export default function RefreshBookingStatusButton({
-	label = "Refresh Status",
+	label = "Perbarui Status",
 }: RefreshBookingStatusButtonProps) {
 	const router = useRouter();
 	const [isRefreshing, setIsRefreshing] = useState(false);
@@ -31,7 +31,7 @@ export default function RefreshBookingStatusButton({
 			disabled={isRefreshing}
 			className="rounded-2xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
 		>
-			{isRefreshing ? "Refreshing..." : label}
+			{isRefreshing ? "Memperbarui..." : label}
 		</button>
 	);
 }

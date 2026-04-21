@@ -24,7 +24,9 @@ export default function PaymentProofUploader({
 
   const handleUpload = async () => {
     if (!window.cloudinary) {
-      setErrorMessage("Cloudinary widget belum siap. Coba refresh halaman.");
+      setErrorMessage(
+        "Widget upload belum siap. Coba refresh halaman lalu ulangi lagi."
+      );
       return;
     }
 
@@ -46,7 +48,7 @@ export default function PaymentProofUploader({
       async (error, result) => {
         if (error) {
           console.error(error);
-          setErrorMessage("Upload gagal. Coba lagi ya.");
+          setErrorMessage("Upload belum berhasil. Coba lagi ya.");
           setIsUploading(false);
           return;
         }
@@ -59,7 +61,9 @@ export default function PaymentProofUploader({
           const info = result.info;
 
           if (!info || typeof info.secure_url !== "string") {
-            setErrorMessage("Upload berhasil, tapi data file tidak lengkap.");
+            setErrorMessage(
+              "File berhasil diunggah, tetapi data file belum lengkap."
+            );
             setIsUploading(false);
             return;
           }
@@ -89,7 +93,7 @@ export default function PaymentProofUploader({
 
             if (!response.ok) {
               setErrorMessage(
-                apiResult.error ?? "Gagal menyimpan bukti pembayaran."
+                apiResult.error ?? "Bukti pembayaran belum berhasil disimpan."
               );
               setIsUploading(false);
               return;
@@ -97,14 +101,19 @@ export default function PaymentProofUploader({
 
             setSuccessMessage(
               isReupload
-                ? "Bukti pembayaran berhasil diupload ulang."
-                : "Bukti pembayaran berhasil diupload."
+                ? "Bukti pembayaran terbaru berhasil dikirim."
+                : "Bukti pembayaran berhasil dikirim."
             );
             setIsUploading(false);
-            router.refresh();
+
+            window.setTimeout(() => {
+              router.refresh();
+            }, 500);
           } catch (err) {
             console.error(err);
-            setErrorMessage("Upload berhasil, tapi gagal menyimpan ke sistem.");
+            setErrorMessage(
+              "File berhasil diunggah, tetapi belum berhasil disimpan ke sistem."
+            );
             setIsUploading(false);
           }
         }
@@ -120,15 +129,23 @@ export default function PaymentProofUploader({
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6">
-      <h2 className="mb-4 text-xl font-bold text-[#5D3FD3]">
-        {isReupload ? "Upload Ulang Bukti Pembayaran" : "Upload Bukti Pembayaran"}
+      <h2 className="mb-2 text-xl font-bold text-[#5D3FD3]">
+        {isReupload
+          ? "Kirim Ulang Bukti Pembayaran"
+          : "Kirim Bukti Pembayaran"}
       </h2>
 
-      <div className="space-y-4">
+      <p className="text-sm leading-6 text-slate-600">
+        Unggah bukti pembayaran yang jelas agar proses pengecekan bisa berjalan
+        lebih cepat.
+      </p>
+
+      <div className="mt-4 space-y-4">
         {bookingStatus === "PENDING_VERIFICATION" ? (
           <div className="rounded-2xl bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
-            Bukti pembayaran sedang diperiksa. Kalau ada yang salah atau kurang
-            jelas, kamu bisa upload ulang. Sistem akan memakai bukti terbaru.
+            Bukti pembayaran sedang diperiksa. Kalau ada file yang ingin
+            diperbarui, kamu bisa mengirim ulang dan sistem akan memakai bukti
+            terbaru.
           </div>
         ) : null}
 
@@ -148,17 +165,17 @@ export default function PaymentProofUploader({
           type="button"
           onClick={handleUpload}
           disabled={isUploading}
-          className="rounded-2xl bg-[#5D3FD3] px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="rounded-2xl bg-[#5D3FD3] px-5 py-3 font-bold text-white transition hover:bg-[var(--tf-purple-dark)] disabled:cursor-not-allowed disabled:bg-slate-300"
         >
           {isUploading
-            ? "Mengupload..."
+            ? "Mengunggah..."
             : isReupload
-            ? "Upload Ulang Bukti"
-            : "Upload Bukti"}
+            ? "Kirim Ulang Bukti"
+            : "Kirim Bukti"}
         </button>
 
         <p className="text-sm text-slate-500">
-          Format: JPG, PNG, WEBP. Maksimal 5MB.
+          Format yang didukung: JPG, PNG, atau WEBP. Ukuran maksimum 5 MB.
         </p>
       </div>
     </div>

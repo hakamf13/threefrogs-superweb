@@ -3,11 +3,20 @@ import Link from "next/link";
 import { prisma } from "../lib/prisma";
 import SiteHeader from "@/components/layout/site-header";
 import SiteFooter from "@/components/layout/site-footer";
-import HeroStoreCarousel from "@/components/home/hero-store-carousel";
 import { getStoreOperatingHoursSummary } from "@/lib/store-hours";
-// import dynamic from "next/dynamic";
+import HeroStoreCarouselLazy from "@/components/home/hero-store-carousel-lazy";
 
 export const dynamic = "force-dynamic";
+
+// const HeroStoreCarousel = dynamic(
+//   () => import("@/components/home/hero-store-carousel"),
+//   {
+//     ssr: false,
+//     loading: () => (
+//       <div className="h-[420px] w-full max-w-[420px] rounded-[1.75rem] border border-white/10 bg-white/10" />
+//     ),
+//   }
+// );
 
 const GAME_TEASERS = [
   {
@@ -113,8 +122,8 @@ export default async function HomePage() {
       <main>
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-[linear-gradient(135deg,#6F2DBD_0%,#5D3FD3_55%,#6A35D4_100%)]" />
-          <div className="absolute left-[-80px] top-12 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
-          <div className="absolute right-[-80px] top-20 h-72 w-72 rounded-full bg-[#FFD23F]/10 blur-3xl" />
+          <div className="absolute left-[-80px] top-12 hidden h-56 w-56 rounded-full bg-white/10 blur-3xl md:block" />
+          <div className="absolute right-[-80px] top-20 hidden h-72 w-72 rounded-full bg-[#FFD23F]/10 blur-3xl md:block" />
 
           <div className="relative mx-auto max-w-[1140px] px-4 py-16 sm:px-6 lg:py-20">
             <div className="grid gap-10 xl:grid-cols-[1.05fr_0.95fr] xl:items-center">
@@ -154,7 +163,7 @@ export default async function HomePage() {
               </div>
 
               <div className="hidden xl:flex xl:justify-end">
-                <HeroStoreCarousel
+                <HeroStoreCarouselLazy
                   stores={stores.map((store) => ({
                     id: store.id,
                     name: store.name,

@@ -86,7 +86,7 @@ export default function PaymentStatusSyncBanner({
           onClick={() => router.refresh()}
           className="rounded-2xl border border-blue-300 bg-white px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
         >
-          Perbarui Sekarang
+          Perbarui Status
         </button>
       </div>
     </div>

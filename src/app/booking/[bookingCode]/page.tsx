@@ -97,10 +97,17 @@ export default async function BookingDetailPage({
       <main className="min-h-screen bg-slate-50">
         <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="mb-6">
-            <p className="text-sm font-medium text-slate-500">Kode Booking</p>
-            <h1 className="mt-1 text-3xl font-bold text-slate-900">
+            <p className="text-sm font-medium uppercase tracking-[0.18em] text-[var(--tf-orange-dark)]">
+              Detail Booking
+            </p>
+            <h1 className="mt-2 text-3xl font-black text-slate-900">
               {booking.bookingCode}
             </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+              Semua informasi booking dan pembayaranmu ditampilkan di halaman ini.
+              Cek status booking, selesaikan pembayaran, atau unggah bukti bayar
+              bila diperlukan.
+            </p>
           </div>
 
           <div
@@ -126,7 +133,7 @@ export default async function BookingDetailPage({
             {latestRejectedProof?.rejectionReason ? (
               <div className="mt-4 rounded-2xl bg-white/80 p-4">
                 <p className="text-sm font-semibold text-slate-900">
-                  Catatan Admin
+                  Catatan dari admin
                 </p>
                 <p className="mt-1 text-sm text-slate-700">
                   {latestRejectedProof.rejectionReason}
@@ -138,12 +145,12 @@ export default async function BookingDetailPage({
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="rounded-3xl border bg-white p-6 lg:col-span-2">
               <h2 className="text-xl font-semibold text-slate-900">
-                Detail Booking
+                Ringkasan Booking
               </h2>
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <div>
-                  <p className="text-sm text-slate-500">Nama Pemesan</p>
+                  <p className="text-sm text-slate-500">Nama pemesan</p>
                   <p className="font-medium text-slate-900">
                     {booking.customerName}
                   </p>
@@ -172,7 +179,7 @@ export default async function BookingDetailPage({
                 </div>
 
                 <div>
-                  <p className="text-sm text-slate-500">Tanggal Main</p>
+                  <p className="text-sm text-slate-500">Tanggal main</p>
                   <p className="font-medium text-slate-900">
                     {formatDateDisplay(booking.bookingDate)}
                   </p>
@@ -187,7 +194,7 @@ export default async function BookingDetailPage({
               </div>
 
               <div className="mt-5">
-                <p className="text-sm text-slate-500">Slot Booking</p>
+                <p className="text-sm text-slate-500">Slot booking</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {booking.slots.map((slot) => (
                     <span
@@ -202,7 +209,7 @@ export default async function BookingDetailPage({
 
               {booking.notes ? (
                 <div className="mt-5">
-                  <p className="text-sm text-slate-500">Catatan Booking</p>
+                  <p className="text-sm text-slate-500">Catatan tambahan</p>
                   <p className="mt-1 text-slate-800">{booking.notes}</p>
                 </div>
               ) : null}
@@ -210,16 +217,20 @@ export default async function BookingDetailPage({
 
             <div className="rounded-3xl border bg-white p-6">
               <h2 className="text-xl font-semibold text-slate-900">
-                Total Pembayaran
+                Pembayaran
               </h2>
               <p className="mt-2 text-3xl font-bold text-slate-900">
                 {formatRupiah(booking.totalPrice)}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Pastikan pembayaran diselesaikan sesuai metode yang tersedia agar
+                booking bisa diproses dengan lancar.
               </p>
 
               {booking.paymentGatewayProvider === "MIDTRANS" ? (
                 <div className="mt-6 rounded-2xl border border-slate-200 p-4">
                   <p className="text-sm font-semibold text-slate-900">
-                    Status Gateway
+                    Status pembayaran otomatis
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -247,17 +258,17 @@ export default async function BookingDetailPage({
               {showMidtransPendingCard ? (
                 <div className="mt-6 rounded-2xl border border-slate-200 p-4">
                   <p className="text-sm font-semibold text-slate-900">
-                    Midtrans Payment
+                    Pembayaran Midtrans
                   </p>
                   <h3 className="mt-1 text-lg font-bold text-slate-900">
-                    Pembayaran Otomatis
+                    Selesaikan pembayaran
                   </h3>
                   <p className="mt-2 text-sm text-slate-600">
-                    Booking ini sudah terhubung ke Midtrans Snap. Klik tombol di
-                    bawah untuk menyelesaikan pembayaran.
+                    Booking ini sudah terhubung ke Midtrans Snap. Lanjutkan ke
+                    halaman pembayaran untuk menyelesaikan transaksi.
                   </p>
                   <p className="mt-3 text-sm font-medium text-slate-700">
-                    Midtrans{" "}
+                    Status Midtrans:{" "}
                     {getPaymentGatewayStatusLabel(booking.paymentGatewayStatus)}
                   </p>
 
@@ -281,17 +292,18 @@ export default async function BookingDetailPage({
               {!showMidtransPendingCard && showMidtransRecoverCard ? (
                 <div className="mt-6 rounded-2xl border border-slate-200 p-4">
                   <p className="text-sm font-semibold text-slate-900">
-                    Midtrans Payment
+                    Pembayaran Midtrans
                   </p>
                   <h3 className="mt-1 text-lg font-bold text-slate-900">
-                    Link Pembayaran Perlu Dibuat Ulang
+                    Buat ulang link pembayaran
                   </h3>
                   <p className="mt-2 text-sm text-slate-600">
-                    Booking masih menunggu pembayaran, tapi link checkout aktif
-                    tidak tersedia. Buat ulang link pembayaran untuk lanjut.
+                    Booking ini masih menunggu pembayaran, tetapi link checkout
+                    aktif tidak tersedia. Buat ulang link pembayaran untuk
+                    melanjutkan proses.
                   </p>
                   <p className="mt-3 text-sm font-medium text-slate-700">
-                    Midtrans{" "}
+                    Status Midtrans:{" "}
                     {getPaymentGatewayStatusLabel(booking.paymentGatewayStatus)}
                   </p>
 
@@ -307,17 +319,17 @@ export default async function BookingDetailPage({
               {showMidtransSuccessCard ? (
                 <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                   <p className="text-sm font-semibold text-emerald-800">
-                    Midtrans Payment
+                    Pembayaran Midtrans
                   </p>
                   <h3 className="mt-1 text-lg font-bold text-emerald-900">
-                    Pembayaran Berhasil
+                    Pembayaran berhasil diterima
                   </h3>
                   <p className="mt-2 text-sm text-emerald-800">
                     Booking ini telah dibayar melalui Midtrans dan sudah
-                    terkonfirmasi otomatis oleh sistem.
+                    dikonfirmasi otomatis oleh sistem.
                   </p>
                   <p className="mt-3 text-sm font-medium text-emerald-900">
-                    Midtrans{" "}
+                    Status Midtrans:{" "}
                     {getPaymentGatewayStatusLabel(booking.paymentGatewayStatus)}
                   </p>
                 </div>
@@ -326,7 +338,7 @@ export default async function BookingDetailPage({
               {!isMidtransBooking ? (
                 <div className="mt-6 rounded-2xl border border-slate-200 p-4">
                   <p className="text-sm font-semibold text-slate-900">
-                    Transfer Manual
+                    Pembayaran manual
                   </p>
                   <div className="mt-3 space-y-1 text-sm text-slate-700">
                     <p>Bank: BCA</p>
@@ -353,6 +365,9 @@ export default async function BookingDetailPage({
               <h2 className="text-xl font-semibold text-slate-900">
                 Riwayat Bukti Pembayaran
               </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Semua bukti pembayaran yang pernah diunggah akan tampil di sini.
+              </p>
 
               <div className="mt-4 space-y-4">
                 {booking.paymentProofs.map((proof, index) => (
@@ -364,8 +379,8 @@ export default async function BookingDetailPage({
                       <div>
                         <p className="font-medium text-slate-900">
                           {index === 0
-                            ? "Bukti Terbaru"
-                            : proof.fileName || "Bukti Pembayaran"}
+                            ? "Bukti pembayaran terbaru"
+                            : proof.fileName || "Bukti pembayaran"}
                         </p>
                         <p className="text-sm text-slate-500">
                           {formatDateTimeDisplay(proof.uploadedAt)}
@@ -393,7 +408,7 @@ export default async function BookingDetailPage({
                       rel="noreferrer"
                       className="mt-4 inline-flex rounded-2xl border px-4 py-2 text-sm font-medium text-slate-900"
                     >
-                      Lihat
+                      Lihat Bukti
                     </a>
                   </div>
                 ))}
@@ -408,14 +423,14 @@ export default async function BookingDetailPage({
               href="/my-bookings"
               className="rounded-2xl border bg-white px-4 py-3 text-sm font-semibold text-slate-900"
             >
-              Lihat Booking Saya
+              Kembali ke Booking Saya
             </Link>
 
             <Link
               href="/reserve"
               className="rounded-2xl border bg-white px-4 py-3 text-sm font-semibold text-slate-900"
             >
-              Buat Booking Lagi
+              Buat Booking Baru
             </Link>
 
             <Link

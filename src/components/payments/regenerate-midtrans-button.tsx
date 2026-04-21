@@ -40,19 +40,25 @@ export default function RegenerateMidtransButton({
 
       if (!response.ok) {
         setErrorMessage(
-          result.error ?? "Gagal membuat ulang link pembayaran."
+          result.error ?? "Link pembayaran belum berhasil dibuat ulang."
         );
         return;
       }
 
       if (result?.payment?.checkoutUrl) {
-        window.open(result.payment.checkoutUrl, "_blank", "noopener,noreferrer");
+        window.open(
+          result.payment.checkoutUrl,
+          "_blank",
+          "noopener,noreferrer"
+        );
       }
 
       router.refresh();
     } catch (error) {
       console.error(error);
-      setErrorMessage("Terjadi kesalahan saat membuat ulang link pembayaran.");
+      setErrorMessage(
+        "Terjadi kendala saat membuat ulang link pembayaran. Coba lagi beberapa saat lagi."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +78,7 @@ export default function RegenerateMidtransButton({
         disabled={isLoading}
         className={buttonClass}
       >
-        {isLoading ? "Membuat ulang..." : label}
+        {isLoading ? "Menyiapkan link..." : label}
       </button>
     </div>
   );
