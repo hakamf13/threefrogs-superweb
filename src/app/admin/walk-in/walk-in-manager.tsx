@@ -227,7 +227,9 @@ function getRemainingLabel(estimatedEndAt: string) {
   const hours = Math.floor(diffMinutes / 60);
   const minutes = diffMinutes % 60;
 
-  return minutes === 0 ? `Sisa ${hours} jam` : `Sisa ${hours} jam ${minutes} menit`;
+  return minutes === 0
+    ? `Sisa ${hours} jam`
+    : `Sisa ${hours} jam ${minutes} menit`;
 }
 
 function getRemainingClass(estimatedEndAt: string) {
@@ -639,10 +641,13 @@ export default function WalkInManager({
       setPaymentNote("");
       setPaymentStatus("UNPAID");
       setInitialDurationMinutes(120);
+      setStartedAtLocal(getNowLocalInputValue());
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kendala saat membuka sesi walk-in.");
+      setMessage(
+        "Terjadi kendala saat membuka sesi walk-in. Coba lagi beberapa saat lagi."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -672,7 +677,9 @@ export default function WalkInManager({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kendala saat memperpanjang sesi.");
+      setMessage(
+        "Terjadi kendala saat memperpanjang sesi. Coba lagi beberapa saat lagi."
+      );
     } finally {
       setBusyId(null);
     }
@@ -750,7 +757,9 @@ export default function WalkInManager({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kendala saat memperbarui waktu sesi.");
+      setMessage(
+        "Terjadi kendala saat memperbarui waktu sesi. Coba lagi beberapa saat lagi."
+      );
     } finally {
       setBusyId(null);
     }
@@ -788,7 +797,9 @@ export default function WalkInManager({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kendala saat memindahkan meja.");
+      setMessage(
+        "Terjadi kendala saat memindahkan meja. Coba lagi beberapa saat lagi."
+      );
     } finally {
       setBusyId(null);
     }
@@ -823,7 +834,9 @@ export default function WalkInManager({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kendala saat memperbarui pembayaran.");
+      setMessage(
+        "Terjadi kendala saat memperbarui pembayaran. Coba lagi beberapa saat lagi."
+      );
     } finally {
       setBusyId(null);
     }
@@ -850,7 +863,9 @@ export default function WalkInManager({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kendala saat menutup sesi.");
+      setMessage(
+        "Terjadi kendala saat menutup sesi. Coba lagi beberapa saat lagi."
+      );
     } finally {
       setBusyId(null);
     }
@@ -1018,9 +1033,7 @@ export default function WalkInManager({
 
                   {session.notes ? (
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                      <p className="font-semibold text-slate-900">
-                        Catatan sesi
-                      </p>
+                      <p className="font-semibold text-slate-900">Catatan sesi</p>
                       <p className="mt-1">{session.notes}</p>
                     </div>
                   ) : null}
@@ -1054,7 +1067,7 @@ export default function WalkInManager({
               disabled={busyId === session.id}
               className="rounded-2xl border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 transition hover:border-[var(--tf-purple)] hover:text-[var(--tf-purple)]"
             >
-              Tambah 1 jam
+              Perpanjang 1 jam
             </button>
 
             <button
@@ -1063,7 +1076,7 @@ export default function WalkInManager({
               disabled={busyId === session.id}
               className="rounded-2xl border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 transition hover:border-[var(--tf-purple)] hover:text-[var(--tf-purple)]"
             >
-              Tambah 2 jam
+              Perpanjang 2 jam
             </button>
 
             <button
@@ -1093,7 +1106,7 @@ export default function WalkInManager({
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--tf-purple)] px-4 py-2.5 font-semibold text-[var(--tf-purple)]"
             >
               <CreditCard className="h-4 w-4" />
-              Atur pembayaran
+              Perbarui pembayaran
             </button>
 
             <button
@@ -1322,12 +1335,11 @@ export default function WalkInManager({
 
           {isClosing ? (
             <div className="rounded-[1.5rem] border border-red-200 bg-red-50 p-4">
-              <p className="font-semibold text-red-800">
-                Tutup sesi ini sekarang?
-              </p>
+              <p className="font-semibold text-red-800">Tutup sesi ini sekarang?</p>
               <p className="mt-2 text-sm leading-6 text-red-700">
                 Sistem akan menghitung durasi sebenarnya dan total tagihan akhir
-                saat sesi ditutup.
+                saat sesi ditutup. Pastikan semua perubahan sesi sudah sesuai
+                sebelum dilanjutkan.
               </p>
 
               <div className="mt-4 flex flex-wrap gap-3">
@@ -1403,7 +1415,8 @@ export default function WalkInManager({
             </h1>
             <p className="max-w-3xl text-slate-600">
               Pantau sesi yang sedang berjalan, buka sesi baru dengan cepat,
-              dan tangani kondisi yang perlu perhatian tanpa harus mencari satu per satu.
+              dan tindak lanjuti kondisi penting seperti sesi hampir selesai,
+              overtime, atau potensi bentrok jadwal tanpa harus mencari satu per satu.
             </p>
           </div>
 
@@ -1856,7 +1869,7 @@ export default function WalkInManager({
               <div className="mt-5 space-y-5">
                 {groupedSessions.length === 0 ? (
                   <div className="rounded-[1.5rem] bg-slate-50 p-5 text-sm text-slate-500">
-                    Belum ada sesi aktif untuk filter ini.
+                    Belum ada sesi aktif yang sesuai dengan filter ini.
                   </div>
                 ) : (
                   groupedSessions.map((group) => {
@@ -1874,7 +1887,11 @@ export default function WalkInManager({
 
                     const criticalCount = group.sessions.filter((item) => {
                       const level = getSessionAlertLevel(item);
-                      return level === "OVERTIME" || level === "OVERLAP_RISK" || level === "OVERLAP_NOW";
+                      return (
+                        level === "OVERTIME" ||
+                        level === "OVERLAP_RISK" ||
+                        level === "OVERLAP_NOW"
+                      );
                     }).length;
 
                     const storeId = storeIdByName.get(group.storeName) ?? "";
@@ -1907,7 +1924,7 @@ export default function WalkInManager({
                                   Segera selesai {endingSoonCount}
                                 </span>
                                 <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
-                                  Perlu tindakan {criticalCount}
+                                  Perlu perhatian {criticalCount}
                                 </span>
                               </div>
                             </div>
@@ -1920,7 +1937,7 @@ export default function WalkInManager({
                                 )}
                                 className="rounded-2xl border border-[var(--tf-purple)] px-4 py-2 text-sm font-semibold text-[var(--tf-purple)]"
                               >
-                                Lihat ketersediaan store ini
+                                Lihat ketersediaan meja
                               </a>
 
                               <a
@@ -1931,16 +1948,14 @@ export default function WalkInManager({
                                 )}
                                 className="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
                               >
-                                Buka sesi baru
+                                Buka sesi walk-in baru
                               </a>
                             </div>
                           </div>
                         </div>
 
                         <div className="grid gap-4 xl:grid-cols-2">
-                          {group.sessions.map((session) =>
-                            renderSessionCard(session)
-                          )}
+                          {group.sessions.map((session) => renderSessionCard(session))}
                         </div>
                       </div>
                     );
@@ -1987,7 +2002,7 @@ export default function WalkInManager({
               <div className="mt-5 space-y-3">
                 {filteredRecentSessions.length === 0 ? (
                   <div className="rounded-[1.5rem] bg-slate-50 p-5 text-sm text-slate-500">
-                    Belum ada riwayat sesi untuk filter ini.
+                    Belum ada riwayat sesi yang sesuai dengan filter ini.
                   </div>
                 ) : (
                   filteredRecentSessions.map((session) => (

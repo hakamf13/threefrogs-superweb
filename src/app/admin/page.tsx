@@ -185,7 +185,8 @@ export default async function AdminBookingsPage({
             </h1>
             <p className="mt-2 max-w-2xl text-slate-600">
               Pantau booking, pembayaran, walk-in, dan operasional harian dari
-              satu tempat agar penanganan lebih cepat dan rapi.
+              satu tempat agar penanganan lebih cepat, lebih rapi, dan lebih mudah
+              diprioritaskan.
             </p>
           </div>
 
@@ -310,7 +311,7 @@ export default async function AdminBookingsPage({
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <div className={cardClass}>
-            <p className="text-sm text-slate-500">Hasil booking</p>
+            <p className="text-sm text-slate-500">Hasil filter booking</p>
             <p className="mt-2 text-3xl font-black text-[var(--tf-purple)]">
               {summary.total}
             </p>
@@ -424,7 +425,6 @@ export default async function AdminBookingsPage({
                 type="date"
                 name="date"
                 defaultValue={date}
-                max={getTodayDateString()}
                 className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none focus:border-[var(--tf-purple)]"
               />
             </div>
@@ -492,7 +492,10 @@ export default async function AdminBookingsPage({
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
                       <p>{booking.customerPhone}</p>
                       <p>{booking.store.name}</p>
-                      <p>Meja {booking.table.tableNumber}</p>
+                      <p>
+                        {booking.table.displayLabel ||
+                          `Meja ${booking.table.tableNumber}`}
+                      </p>
                       <p>{formatDateDisplay(booking.bookingDate)}</p>
                     </div>
 

@@ -74,7 +74,7 @@ export default async function AdminBookingDetailPage({
         <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)] sm:p-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <p className="text-sm text-slate-500">Kode Booking</p>
+              <p className="text-sm text-slate-500">Kode booking</p>
               <h1 className="mt-1 text-3xl font-black text-[#5D3FD3]">
                 {booking.bookingCode}
               </h1>
@@ -85,12 +85,12 @@ export default async function AdminBookingDetailPage({
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Nama Pemesan</p>
+              <p className="text-sm text-slate-500">Nama pemesan</p>
               <p className="mt-1 font-semibold">{booking.customerName}</p>
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">No. HP</p>
+              <p className="text-sm text-slate-500">Nomor HP</p>
               <p className="mt-1 font-semibold">{booking.customerPhone}</p>
             </div>
 
@@ -101,24 +101,28 @@ export default async function AdminBookingDetailPage({
 
             <div className="rounded-2xl bg-slate-50 p-4">
               <p className="text-sm text-slate-500">Meja</p>
-              <p className="mt-1 font-semibold">Meja {booking.table.tableNumber}</p>
+              <p className="mt-1 font-semibold">
+                {booking.table.displayLabel || `Meja ${booking.table.tableNumber}`}
+              </p>
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Tanggal</p>
+              <p className="text-sm text-slate-500">Tanggal main</p>
               <p className="mt-1 font-semibold">
                 {formatDateDisplay(booking.bookingDate)}
               </p>
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-sm text-slate-500">Total</p>
+              <p className="text-sm text-slate-500">Total pembayaran</p>
               <p className="mt-1 font-semibold">{formatRupiah(booking.totalPrice)}</p>
             </div>
           </div>
 
           <div className="mt-8">
-            <p className="mb-3 text-sm font-semibold text-slate-500">Slot Booking</p>
+            <p className="mb-3 text-sm font-semibold text-slate-500">
+              Slot booking
+            </p>
             <div className="grid gap-3 sm:grid-cols-2">
               {booking.slots.map((slot) => (
                 <div
@@ -136,7 +140,7 @@ export default async function AdminBookingDetailPage({
 
         <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)] sm:p-8">
           <p className="text-sm font-black uppercase tracking-widest text-[#C77A00]">
-            Payment Source
+            Sumber Pembayaran
           </p>
           <h2 className="mt-2 text-2xl font-black text-[#5D3FD3]">
             {getPaymentProviderLabel(booking.paymentGatewayProvider)}
@@ -159,7 +163,7 @@ export default async function AdminBookingDetailPage({
               <p>Provider: Midtrans</p>
               <p>Reference: {booking.paymentReferenceId || "-"}</p>
               <p>
-                Gateway status:{" "}
+                Status gateway:{" "}
                 {getPaymentGatewayStatusLabel(booking.paymentGatewayStatus)}
               </p>
               {booking.paymentSucceededAt ? (
@@ -172,14 +176,14 @@ export default async function AdminBookingDetailPage({
                   rel="noreferrer"
                   className="inline-flex rounded-2xl border border-[#5D3FD3] px-4 py-2 font-semibold text-[#5D3FD3]"
                 >
-                  Buka Payment Page
+                  Buka Halaman Pembayaran
                 </a>
               ) : null}
             </div>
           ) : (
             <div className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
               <p>Booking ini memakai pembayaran manual fallback.</p>
-              <p>Admin masih bisa review bukti pembayaran jika diperlukan.</p>
+              <p>Admin masih bisa meninjau bukti pembayaran jika diperlukan.</p>
             </div>
           )}
         </section>
@@ -206,8 +210,8 @@ export default async function AdminBookingDetailPage({
                     <div>
                       <p className="font-semibold text-slate-800">
                         {index === 0
-                          ? "Bukti Terbaru"
-                          : proof.fileName || "Bukti Pembayaran"}
+                          ? "Bukti terbaru"
+                          : proof.fileName || "Bukti pembayaran"}
                       </p>
                       <p className="text-sm text-slate-500">
                         {new Intl.DateTimeFormat("id-ID", {

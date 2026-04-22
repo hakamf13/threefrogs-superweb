@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
-import { formatDateDisplay, formatDateTimeDisplay, formatHourLabel } from "@/lib/utils";
+import {
+  formatDateDisplay,
+  formatDateTimeDisplay,
+  formatHourLabel,
+} from "@/lib/utils";
 import type {
   TodayOperationsBoardData,
   TodayTableBoardStatus,
@@ -93,7 +97,9 @@ function getRemainingMinutes(estimatedEndAt: string | Date) {
   return Math.round((new Date(estimatedEndAt).getTime() - Date.now()) / 60000);
 }
 
-function getBoardAlertLevel(table: TodayOperationsBoardData["stores"][number]["tables"][number]): BoardAlertLevel {
+function getBoardAlertLevel(
+  table: TodayOperationsBoardData["stores"][number]["tables"][number]
+): BoardAlertLevel {
   if (table.currentStatus !== "WALK_IN_ACTIVE" || !table.walkInSession) {
     return "NORMAL";
   }
@@ -160,7 +166,8 @@ function getBoardAlertCopy(
     case "ENDING_SOON":
       return {
         title: "Sesi akan segera selesai",
-        description: "Siapkan tindak lanjut bila pelanggan ingin lanjut bermain.",
+        description:
+          "Siapkan tindak lanjut bila pelanggan ingin lanjut bermain.",
         className: "border-orange-200 bg-orange-50 text-orange-700",
       };
     case "NORMAL":
@@ -397,7 +404,9 @@ export default function TodayOperationsBoard({
                       </div>
 
                       {alertLevel !== "NORMAL" ? (
-                        <div className={`mt-4 rounded-2xl border px-4 py-4 ${alertCopy.className}`}>
+                        <div
+                          className={`mt-4 rounded-2xl border px-4 py-4 ${alertCopy.className}`}
+                        >
                           <div className="flex items-start gap-3">
                             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
                             <div>
@@ -411,7 +420,8 @@ export default function TodayOperationsBoard({
                       ) : null}
 
                       <div className="mt-5 space-y-3 text-sm text-slate-700">
-                        {table.currentStatus === "WALK_IN_ACTIVE" && table.walkInSession ? (
+                        {table.currentStatus === "WALK_IN_ACTIVE" &&
+                        table.walkInSession ? (
                           <>
                             <p className="font-semibold">
                               Pelanggan: {table.walkInSession.customerName}
@@ -422,11 +432,14 @@ export default function TodayOperationsBoard({
                             ) : null}
 
                             <p>
-                              Mulai bermain: {formatDateTimeDisplay(table.walkInSession.startedAt)}
+                              Mulai bermain:{" "}
+                              {formatDateTimeDisplay(table.walkInSession.startedAt)}
                             </p>
                             <p>
                               Perkiraan selesai:{" "}
-                              {formatDateTimeDisplay(table.walkInSession.estimatedEndAt)}
+                              {formatDateTimeDisplay(
+                                table.walkInSession.estimatedEndAt
+                              )}
                             </p>
 
                             <span
@@ -434,7 +447,9 @@ export default function TodayOperationsBoard({
                                 table.walkInSession.paymentStatus
                               )}`}
                             >
-                              {getWalkInPaymentLabel(table.walkInSession.paymentStatus)}
+                              {getWalkInPaymentLabel(
+                                table.walkInSession.paymentStatus
+                              )}
                             </span>
 
                             {table.walkInSession.paymentNote ? (
@@ -442,20 +457,24 @@ export default function TodayOperationsBoard({
                                 <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
                                   Catatan pembayaran
                                 </p>
-                                <p className="mt-2">{table.walkInSession.paymentNote}</p>
+                                <p className="mt-2">
+                                  {table.walkInSession.paymentNote}
+                                </p>
                               </div>
                             ) : null}
                           </>
                         ) : null}
 
-                        {table.currentStatus === "BOOKED_NOW" && table.currentBooking ? (
+                        {table.currentStatus === "BOOKED_NOW" &&
+                        table.currentBooking ? (
                           <>
                             <p className="font-semibold">
                               Pelanggan: {table.currentBooking.customerName}
                             </p>
                             <p>Kode booking: {table.currentBooking.bookingCode}</p>
                             <p>
-                              Slot aktif: {formatHourLabel(table.currentBooking.slotHour)}
+                              Slot aktif:{" "}
+                              {formatHourLabel(table.currentBooking.slotHour)}
                             </p>
                           </>
                         ) : null}
@@ -482,7 +501,8 @@ export default function TodayOperationsBoard({
                       </div>
 
                       <div className="mt-5 flex flex-wrap gap-3">
-                        {table.currentStatus === "WALK_IN_ACTIVE" && table.walkInSession ? (
+                        {table.currentStatus === "WALK_IN_ACTIVE" &&
+                        table.walkInSession ? (
                           <button
                             type="button"
                             onClick={() =>
@@ -496,19 +516,22 @@ export default function TodayOperationsBoard({
                             }
                             className="rounded-2xl bg-[#5D3FD3] px-4 py-2 font-bold text-white"
                           >
-                            Lihat sesi walk-in
+                            Lihat Sesi Walk-in
                           </button>
                         ) : null}
 
-                        {table.currentStatus === "BOOKED_NOW" && table.currentBooking ? (
+                        {table.currentStatus === "BOOKED_NOW" &&
+                        table.currentBooking ? (
                           <button
                             type="button"
                             onClick={() =>
-                              router.push(`/admin/bookings/${table.currentBooking?.bookingId}`)
+                              router.push(
+                                `/admin/bookings/${table.currentBooking?.bookingId}`
+                              )
                             }
                             className="rounded-2xl bg-green-600 px-4 py-2 font-bold text-white"
                           >
-                            Lihat detail booking
+                            Lihat Detail Booking
                           </button>
                         ) : null}
 
@@ -521,7 +544,7 @@ export default function TodayOperationsBoard({
                               }
                               className="rounded-2xl bg-[#5D3FD3] px-4 py-2 font-bold text-white"
                             >
-                              Buka sesi walk-in
+                              Buka Sesi Walk-in
                             </button>
 
                             <button
@@ -529,21 +552,24 @@ export default function TodayOperationsBoard({
                               onClick={() => router.push("/admin/manual-booking")}
                               className="rounded-2xl border border-slate-300 px-4 py-2 font-bold text-slate-700"
                             >
-                              Buat booking manual
+                              Buat Booking Manual
                             </button>
                           </>
                         ) : null}
 
-                        {table.currentStatus === "UPCOMING_BOOKING" && table.nextBooking ? (
+                        {table.currentStatus === "UPCOMING_BOOKING" &&
+                        table.nextBooking ? (
                           <>
                             <button
                               type="button"
                               onClick={() =>
-                                router.push(`/admin/bookings/${table.nextBooking?.bookingId}`)
+                                router.push(
+                                  `/admin/bookings/${table.nextBooking?.bookingId}`
+                                )
                               }
                               className="rounded-2xl border border-orange-300 px-4 py-2 font-bold text-orange-700"
                             >
-                              Lihat booking berikutnya
+                              Lihat Booking Berikutnya
                             </button>
 
                             <button
@@ -553,7 +579,7 @@ export default function TodayOperationsBoard({
                               }
                               className="rounded-2xl bg-[#5D3FD3] px-4 py-2 font-bold text-white"
                             >
-                              Buka sesi walk-in
+                              Buka Sesi Walk-in
                             </button>
                           </>
                         ) : null}

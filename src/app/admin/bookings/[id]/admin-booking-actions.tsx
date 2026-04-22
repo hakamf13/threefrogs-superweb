@@ -48,7 +48,7 @@ export default function AdminBookingActions({
       const result = await response.json();
 
       if (!response.ok) {
-        setMessage(result.error ?? "Gagal mengonfirmasi booking.");
+        setMessage(result.error ?? "Booking belum berhasil dikonfirmasi.");
         return;
       }
 
@@ -56,7 +56,7 @@ export default function AdminBookingActions({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kesalahan saat konfirmasi.");
+      setMessage("Terjadi kendala saat mengonfirmasi booking.");
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +88,7 @@ export default function AdminBookingActions({
       const result = await response.json();
 
       if (!response.ok) {
-        setMessage(result.error ?? "Gagal mengonfirmasi langsung.");
+        setMessage(result.error ?? "Booking belum berhasil dikonfirmasi langsung.");
         return;
       }
 
@@ -97,7 +97,7 @@ export default function AdminBookingActions({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kesalahan saat direct confirm.");
+      setMessage("Terjadi kendala saat melakukan konfirmasi langsung.");
     } finally {
       setIsLoading(false);
     }
@@ -132,7 +132,7 @@ export default function AdminBookingActions({
         : { error: `HTTP ${response.status}` };
 
       if (!response.ok) {
-        setMessage(result.error ?? "Gagal menolak bukti pembayaran.");
+        setMessage(result.error ?? "Bukti pembayaran belum berhasil ditolak.");
         return;
       }
 
@@ -141,14 +141,16 @@ export default function AdminBookingActions({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kesalahan saat menolak bukti.");
+      setMessage("Terjadi kendala saat menolak bukti pembayaran.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCancel = async () => {
-    const ok = window.confirm("Yakin ingin membatalkan booking ini?");
+    const ok = window.confirm(
+      "Booking ini akan dibatalkan. Kamu yakin ingin melanjutkan?"
+    );
     if (!ok) return;
 
     try {
@@ -162,7 +164,7 @@ export default function AdminBookingActions({
       const result = await response.json();
 
       if (!response.ok) {
-        setMessage(result.error ?? "Gagal membatalkan booking.");
+        setMessage(result.error ?? "Booking belum berhasil dibatalkan.");
         return;
       }
 
@@ -170,7 +172,7 @@ export default function AdminBookingActions({
       router.refresh();
     } catch (error) {
       console.error(error);
-      setMessage("Terjadi kesalahan saat cancel.");
+      setMessage("Terjadi kendala saat membatalkan booking.");
     } finally {
       setIsLoading(false);
     }
@@ -186,14 +188,14 @@ export default function AdminBookingActions({
 
           {isMidtransBooking ? (
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Booking ini memakai Midtrans. Pembayaran normal akan tercatat
-              otomatis lewat webhook, jadi admin biasanya tidak perlu cek bukti
-              pembayaran manual.
+              Booking ini memakai Midtrans. Dalam kondisi normal, pembayaran akan
+              tercatat otomatis lewat webhook sehingga admin biasanya tidak perlu
+              memeriksa bukti pembayaran manual.
             </p>
           ) : (
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Booking ini memakai flow manual fallback, jadi admin masih bisa
-              review, konfirmasi, atau menolak bukti pembayaran jika diperlukan.
+              Booking ini memakai alur manual fallback, jadi admin masih bisa
+              meninjau, mengonfirmasi, atau menolak bukti pembayaran bila diperlukan.
             </p>
           )}
         </div>
