@@ -43,9 +43,9 @@ export const metadata: Metadata = {
   },
 
   // Nanti aktifkan ini setelah kamu dapat token verifikasi dari Google Search Console
-  verification: {
-    google: "googledfec0b10d7d26bfa.html",
-  },
+  // verification: {
+  //   google: "googledfec0b10d7d26bfa.html",
+  // },
 };
 
 export default function RootLayout({
