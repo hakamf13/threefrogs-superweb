@@ -1,21 +1,46 @@
 import type { Metadata } from "next";
-// import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 
-// const geistSans = Geist({
-//   variable: "--font-geist-sans",
-//   subsets: ["latin"],
-// });
-
-// const geistMono = Geist_Mono({
-//   variable: "--font-geist-mono",
-//   subsets: ["latin"],
-// });
-
 export const metadata: Metadata = {
-  title: "Threefrogs",
-  description: "Threefrogs Boardgame & Mahjong",
+  metadataBase: new URL("https://threefrogs-superweb.vercel.app"),
+  title: {
+    default: "Threefrogs | Reservasi Mahjong & Boardgame di Surabaya",
+    template: "%s | Threefrogs",
+  },
+  description:
+    "Reservasi mahjong dan boardgame di Surabaya. Cek store, jam operasional, ketersediaan meja, dan booking online di Threefrogs.",
+  applicationName: "Threefrogs",
+  keywords: [
+    "Threefrogs",
+    "mahjong Surabaya",
+    "reservasi mahjong Surabaya",
+    "boardgame Surabaya",
+    "sewa meja mahjong Surabaya",
+    "booking mahjong Surabaya",
+    "pakuwon mall surabaya",
+    "pakuwon city mall",
+    "mahjong pakuwon",
+    "pakuwon mahjong",
+    "mahjong surabaya barat",
+    "sby barat",
+    "pusat surabaya",
+    "tunjungan plaza",
+    "mahjong tunjungan plaza",
+    "mahjong tp",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    url: "/",
+    siteName: "Threefrogs",
+    title: "Threefrogs | Reservasi Mahjong & Boardgame di Surabaya",
+    description:
+      "Reservasi mahjong dan boardgame di Surabaya. Cek store, jam operasional, ketersediaan meja, dan booking online di Threefrogs.",
+  },
 };
 
 export default function RootLayout({
