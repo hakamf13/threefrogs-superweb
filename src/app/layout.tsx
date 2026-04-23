@@ -13,21 +13,15 @@ export const metadata: Metadata = {
   applicationName: "Threefrogs",
   keywords: [
     "Threefrogs",
-    "mahjong Surabaya",
     "reservasi mahjong Surabaya",
+    "mahjong Surabaya",
     "boardgame Surabaya",
-    "sewa meja mahjong Surabaya",
     "booking mahjong Surabaya",
-    "pakuwon mall surabaya",
-    "pakuwon city mall",
-    "mahjong pakuwon",
-    "pakuwon mahjong",
-    "mahjong surabaya barat",
-    "sby barat",
-    "pusat surabaya",
-    "tunjungan plaza",
-    "mahjong tunjungan plaza",
-    "mahjong tp",
+    "sewa meja mahjong Surabaya",
+    "mahjong Surabaya Barat",
+    "mahjong Pakuwon",
+    "mahjong Pakuwon City Mall",
+    "mahjong Tunjungan Plaza",
   ],
   alternates: {
     canonical: "/",
@@ -40,6 +34,17 @@ export const metadata: Metadata = {
     title: "Threefrogs | Reservasi Mahjong & Boardgame di Surabaya",
     description:
       "Reservasi mahjong dan boardgame di Surabaya. Cek store, jam operasional, ketersediaan meja, dan booking online di Threefrogs.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Threefrogs | Reservasi Mahjong & Boardgame di Surabaya",
+    description:
+      "Reservasi mahjong dan boardgame di Surabaya. Cek store, jam operasional, ketersediaan meja, dan booking online di Threefrogs.",
+  },
+
+  // Nanti aktifkan ini setelah kamu dapat token verifikasi dari Google Search Console
+  verification: {
+    google: "googledfec0b10d7d26bfa.html",
   },
 };
 
