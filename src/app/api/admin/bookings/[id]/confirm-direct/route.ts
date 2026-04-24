@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../../../../lib/prisma";
+import { prisma } from "@/lib/prisma";
+import { requireAdminSession } from "@/lib/admin-auth";
 
 type RouteContext = {
   params: Promise<{
@@ -9,7 +10,14 @@ type RouteContext = {
 
 export async function PATCH(request: Request, context: RouteContext) {
   try {
+    const { session, response } = await requireAdminSession();
+
+    if (response) {
+      return response;
+    }
+
     const { id } = await context.params;
+
     const body = await request.json().catch(() => ({}));
 
     const note =
@@ -18,7 +26,9 @@ export async function PATCH(request: Request, context: RouteContext) {
         : "Booking dikonfirmasi langsung oleh admin.";
 
     const booking = await prisma.booking.findUnique({
-      where: { id },
+      where: {
+        id,
+      },
       include: {
         paymentProofs: {
           orderBy: {
@@ -39,7 +49,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json(
         {
           error:
-            "Booking Midtrans tidak boleh direct confirm manual. Tunggu webhook pembayaran atau batalkan booking.",
+            "Booking Midtrans tidak boleh direct confirm manual.\nTunggu webhook pembayaran atau batalkan booking.",
         },
         { status: 400 }
       );
@@ -57,7 +67,9 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     await prisma.$transaction(async (tx) => {
       await tx.booking.update({
-        where: { id: booking.id },
+        where: {
+          id: booking.id,
+        },
         data: {
           status: "CONFIRMED",
           confirmedAt: new Date(),
@@ -92,6 +104,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           bookingId: booking.id,
           oldStatus: booking.status,
           newStatus: "CONFIRMED",
+          changedByUserId: session.user.id,
           note,
         },
       });

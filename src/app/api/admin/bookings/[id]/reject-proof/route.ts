@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../../../../lib/prisma";
-import { BOOKING_HOLD_MINUTES } from "../../../../../../lib/constants";
+import { prisma } from "@/lib/prisma";
+import { BOOKING_HOLD_MINUTES } from "@/lib/constants";
+import { requireAdminSession } from "@/lib/admin-auth";
 
 type RouteContext = {
   params: Promise<{
@@ -10,15 +11,25 @@ type RouteContext = {
 
 export async function PATCH(request: Request, context: RouteContext) {
   try {
+    const { session, response } = await requireAdminSession();
+
+    if (response) {
+      return response;
+    }
+
     const { id } = await context.params;
+
     const body = await request.json().catch(() => ({}));
+
     const reason =
       typeof body?.reason === "string" && body.reason.trim().length > 0
         ? body.reason.trim()
         : "Bukti pembayaran ditolak admin.";
 
     const booking = await prisma.booking.findUnique({
-      where: { id },
+      where: {
+        id,
+      },
       include: {
         paymentProofs: {
           orderBy: {
@@ -103,7 +114,8 @@ export async function PATCH(request: Request, context: RouteContext) {
           bookingId: booking.id,
           oldStatus: "PENDING_VERIFICATION",
           newStatus: "AWAITING_PAYMENT",
-          note: `Bukti pembayaran ditolak admin. Alasan: ${reason}`,
+          changedByUserId: session.user.id,
+          note: `Bukti pembayaran ditolak admin.\nAlasan: ${reason}`,
         },
       });
     });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "../../../../../../lib/prisma";
+import { prisma } from "@/lib/prisma";
+import { requireAdminSession } from "@/lib/admin-auth";
 
 type RouteContext = {
   params: Promise<{
@@ -9,10 +10,18 @@ type RouteContext = {
 
 export async function PATCH(_request: Request, context: RouteContext) {
   try {
+    const { session, response } = await requireAdminSession();
+
+    if (response) {
+      return response;
+    }
+
     const { id } = await context.params;
 
     const booking = await prisma.booking.findUnique({
-      where: { id },
+      where: {
+        id,
+      },
       include: {
         paymentProofs: {
           orderBy: {
@@ -48,7 +57,9 @@ export async function PATCH(_request: Request, context: RouteContext) {
 
     await prisma.$transaction(async (tx) => {
       await tx.booking.update({
-        where: { id: booking.id },
+        where: {
+          id: booking.id,
+        },
         data: {
           status: "CONFIRMED",
           confirmedAt: new Date(),
@@ -83,6 +94,7 @@ export async function PATCH(_request: Request, context: RouteContext) {
           bookingId: booking.id,
           oldStatus: "PENDING_VERIFICATION",
           newStatus: "CONFIRMED",
+          changedByUserId: session.user.id,
           note: "Booking dikonfirmasi admin.",
         },
       });
