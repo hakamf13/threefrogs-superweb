@@ -6,10 +6,30 @@ import { Loader2 } from "lucide-react";
 import { PRICE_PER_HOUR } from "../../../lib/constants";
 import { formatHourLabel, formatRupiah } from "../../../lib/utils";
 
+type AdminSlotStatus =
+  | "AVAILABLE"
+  | "PAST_TIME"
+  | "WALK_IN"
+  | "AWAITING_PAYMENT"
+  | "PENDING_VERIFICATION"
+  | "CONFIRMED"
+  | "CANCELLED"
+  | "EXPIRED";
+
 type TableSlot = {
   hour: number;
   isAvailable: boolean;
-  reason: "PAST_TIME" | "BOOKED" | null;
+  reason?: "PAST_TIME" | "BOOKED" | null;
+  status?: AdminSlotStatus;
+  bookingId?: string | null;
+  bookingCode?: string | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  source?: string | null;
+  openTableSessionId?: string | null;
+  walkInSessionId?: string | null;
+  walkInEstimatedEndAt?: string | null;
+  walkInPaymentStatus?: string | null;
 };
 
 type AvailabilityTable = {
@@ -19,6 +39,61 @@ type AvailabilityTable = {
   capacity: number | null;
   slots: TableSlot[];
 };
+
+function formatJakartaTime(value: string | null | undefined) {
+  if (!value) return null;
+
+  return new Intl.DateTimeFormat("id-ID", {
+    timeZone: "Asia/Jakarta",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function getAdminSlotLabel(slot: TableSlot) {
+  if (slot.isAvailable) return "Tersedia";
+
+  if (slot.status === "WALK_IN") return "Walk-in aktif";
+  if (slot.status === "AWAITING_PAYMENT") return "Menunggu pembayaran";
+  if (slot.status === "PENDING_VERIFICATION") return "Menunggu verifikasi";
+  if (slot.status === "CONFIRMED") return "Booking confirmed";
+  if (slot.status === "CANCELLED") return "Dibatalkan";
+  if (slot.status === "EXPIRED") return "Expired";
+
+  if (slot.reason === "PAST_TIME") return "Sudah lewat";
+  if (slot.reason === "BOOKED") return "Sudah terisi";
+
+  return "Tidak tersedia";
+}
+
+function getAdminSlotDetail(slot: TableSlot) {
+  if (slot.status === "WALK_IN") {
+    const estimatedEnd = formatJakartaTime(slot.walkInEstimatedEndAt);
+    const paymentLabel = slot.walkInPaymentStatus
+      ? `Payment: ${slot.walkInPaymentStatus}`
+      : null;
+
+    return [
+      slot.customerName || "Walk-in",
+      estimatedEnd ? `Estimasi selesai ${estimatedEnd}` : null,
+      paymentLabel,
+    ]
+      .filter(Boolean)
+      .join(" • ");
+  }
+
+  if (slot.bookingCode) {
+    return [
+      slot.bookingCode,
+      slot.customerName,
+      slot.source ? `Source: ${slot.source}` : null,
+    ]
+      .filter(Boolean)
+      .join(" • ");
+  }
+
+  return null;
+}
 
 type StoreOption = {
   id: string;
@@ -92,7 +167,10 @@ export default function AdminManualBookingForm({
         setErrorMessage("");
 
         const response = await fetch(
-          `/api/admin/availability?storeId=${selectedStoreId}&bookingDate=${selectedDate}`
+          `/api/admin/availability?storeId=${selectedStoreId}&bookingDate=${selectedDate}`,
+          {
+            cache: "no-store",
+          }
         );
 
         const result = await response.json();
@@ -317,6 +395,11 @@ export default function AdminManualBookingForm({
                     const availableCount = table.slots.filter(
                       (slot) => slot.isAvailable
                     ).length;
+
+                    const walkInCount = table.slots.filter(
+                      (slot) => slot.status === "WALK_IN"
+                    ).length;
+
                     const isFullyBooked = availableCount === 0;
 
                     return (
@@ -348,7 +431,9 @@ export default function AdminManualBookingForm({
                         <p className="mt-2 text-xs">
                           {isFullyBooked
                             ? "Sudah penuh pada tanggal ini"
-                            : `Jam yang masih tersedia: ${availableCount}`}
+                            : walkInCount > 0
+                              ? `Tersedia: ${availableCount} • Walk-in: ${walkInCount}`
+                              : `Jam yang masih tersedia: ${availableCount}`}
                         </p>
                       </button>
                     );
@@ -371,6 +456,7 @@ export default function AdminManualBookingForm({
                   {selectedTable.slots.map((slot) => {
                     const selected = selectedSlots.includes(slot.hour);
                     const disabled = !slot.isAvailable && !selected;
+                    const slotDetail = getAdminSlotDetail(slot);
 
                     return (
                       <button
@@ -378,6 +464,7 @@ export default function AdminManualBookingForm({
                         type="button"
                         onClick={() => handleToggleSlot(slot.hour)}
                         disabled={disabled}
+                        title={slotDetail ?? getAdminSlotLabel(slot)}
                         className={`rounded-2xl border px-4 py-3 text-left transition ${
                           selected
                             ? "border-[var(--tf-purple)] bg-[var(--tf-purple)] text-white"
@@ -389,13 +476,16 @@ export default function AdminManualBookingForm({
                         <span className="font-semibold">
                           {formatHourLabel(slot.hour)}
                         </span>
+
                         <p className="mt-1 text-xs">
-                          {slot.isAvailable
-                            ? "Tersedia"
-                            : slot.reason === "PAST_TIME"
-                            ? "Sudah lewat"
-                            : "Sudah terisi"}
+                          {getAdminSlotLabel(slot)}
                         </p>
+
+                        {slotDetail ? (
+                          <p className="mt-1 line-clamp-2 text-[11px] leading-snug">
+                            {slotDetail}
+                          </p>
+                        ) : null}
                       </button>
                     );
                   })}

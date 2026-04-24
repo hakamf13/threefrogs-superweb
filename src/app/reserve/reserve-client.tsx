@@ -643,19 +643,28 @@ export default function ReserveClient({
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
                   {selectedTable.slots.map((slot) => {
                     const isSelected = selectedSlots.includes(slot.hour);
+                    const disabled = !slot.isAvailable && !isSelected;
 
                     return (
                       <button
                         key={slot.hour}
                         type="button"
                         onClick={() => handleToggleSlot(slot.hour)}
+                        disabled={disabled}
+                        title={
+                          slot.isAvailable
+                            ? "Slot tersedia"
+                            : slot.reason === "PAST_TIME"
+                              ? "Slot sudah lewat"
+                              : "Slot sudah tidak tersedia"
+                        }
                         className={[
                           "rounded-2xl border px-4 py-4 text-left transition",
                           isSelected
                             ? "border-[var(--tf-purple)] bg-[#F4EEFF]"
                             : slot.isAvailable
-                            ? "border-[var(--tf-border)] bg-white hover:border-[#C5AFE8]"
-                            : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400",
+                              ? "border-[var(--tf-border)] bg-white hover:border-[#C5AFE8]"
+                              : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400",
                         ].join(" ")}
                       >
                         <p className="font-bold">{formatHourLabel(slot.hour)}</p>

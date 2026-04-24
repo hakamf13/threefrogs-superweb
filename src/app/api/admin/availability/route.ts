@@ -45,7 +45,14 @@ export async function GET(request: Request) {
 
     const data = await getAdminAvailabilityByStoreAndDate(storeId, bookingDate);
 
-    return NextResponse.json({ data });
+    return NextResponse.json(
+      { data },
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
+    );
   } catch (error) {
     console.error("Admin availability error:", error);
 
