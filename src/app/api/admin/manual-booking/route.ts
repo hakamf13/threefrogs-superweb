@@ -16,6 +16,7 @@ import {
   getTodayDateStringInJakarta,
 } from "@/lib/booking-window";
 import { getStoreHoursForDate } from "@/lib/store-hours";
+import { findTableOccupancyConflicts } from "@/features/reservations/table-occupancy";
 
 function isSequential(slots: number[]) {
   const sorted = [...slots].sort((a, b) => a - b);
@@ -205,64 +206,27 @@ export async function POST(request: Request) {
 
     const bookingDateValue = new Date(`${bookingDate}T00:00:00.000Z`);
 
-    const requestedStart = buildSlotDate(bookingDate, firstSlot);
-    const requestedEnd = buildSlotDate(bookingDate, lastSlot + 1);
-
-    const [bookingSlots, activeWalkIns] = await Promise.all([
-      prisma.bookingSlot.findMany({
-        where: {
-          tableId,
-          bookingDate: bookingDateValue,
-          status: {
-            in: [...ACTIVE_BOOKING_STATUSES],
-          },
-        },
-        select: {
-          slotHour: true,
-          slotEndHour: true,
-        },
-      }),
-
-      prisma.walkInSession.findMany({
-        where: {
-          tableId,
-          bookingDate: bookingDateValue,
-          status: "ACTIVE",
-        },
-        select: {
-          id: true,
-          startedAt: true,
-          estimatedEndAt: true,
-        },
-      }),
-    ]);
-
-    const hasBookingConflict = bookingSlots.some((slot) => {
-      const slotStart = buildSlotDate(bookingDate, slot.slotHour);
-      const slotEnd = buildSlotDate(bookingDate, slot.slotEndHour);
-
-      return isOverlap(requestedStart, requestedEnd, slotStart, slotEnd);
+    const occupancyConflicts = await findTableOccupancyConflicts({
+      tableId,
+      bookingDate,
+      startHour: firstSlot,
+      endHour: lastSlot + 1,
     });
 
-    if (hasBookingConflict) {
+    if (occupancyConflicts.hasBookingConflict) {
       return NextResponse.json(
-        { error: "Ada booking aktif yang bentrok dengan slot ini." },
+        {
+          error: "Ada slot yang sudah terisi. Pilih jam lain.",
+        },
         { status: 409 }
       );
     }
 
-    const hasWalkInConflict = activeWalkIns.some((walkIn) =>
-      isOverlap(
-        requestedStart,
-        requestedEnd,
-        walkIn.startedAt,
-        walkIn.estimatedEndAt
-      )
-    );
-
-    if (hasWalkInConflict) {
+    if (occupancyConflicts.hasWalkInConflict) {
       return NextResponse.json(
-        { error: "Ada walk-in aktif yang bentrok dengan slot ini." },
+        {
+          error: "Ada walk-in aktif yang bentrok dengan slot ini.",
+        },
         { status: 409 }
       );
     }

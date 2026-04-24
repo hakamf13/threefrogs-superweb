@@ -46,7 +46,9 @@ export async function GET(request: Request) {
     const data = await getAdminAvailabilityByStoreAndDate(storeId, bookingDate);
 
     return NextResponse.json(
-      { data },
+      {
+        data,
+      },
       {
         headers: {
           "Cache-Control": "no-store, max-age=0",
