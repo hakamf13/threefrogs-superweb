@@ -9,6 +9,7 @@ import { formatHourLabel, formatRupiah } from "../../../lib/utils";
 type AdminSlotStatus =
   | "AVAILABLE"
   | "PAST_TIME"
+  | "BOOKED"
   | "WALK_IN"
   | "AWAITING_PAYMENT"
   | "PENDING_VERIFICATION"
@@ -25,17 +26,18 @@ type TableSlot = {
   bookingCode?: string | null;
   customerName?: string | null;
   customerPhone?: string | null;
-  source?: string | null;
+  source?: "ONLINE" | "WALK_IN" | "ADMIN" | string | null;
   openTableSessionId?: string | null;
   walkInSessionId?: string | null;
   walkInEstimatedEndAt?: string | null;
-  walkInPaymentStatus?: string | null;
+  walkInPaymentStatus?: "UNPAID" | "PARTIAL" | "PAID" | string | null;
 };
 
 type AvailabilityTable = {
   id: string;
   tableNumber: number;
   tableCode: string | null;
+  displayLabel?: string | null;
   capacity: number | null;
   slots: TableSlot[];
 };
@@ -113,6 +115,194 @@ type AdminManualBookingFormProps = {
   maxDate: string;
 };
 
+function getSlotStatus(slot: TableSlot): AdminSlotStatus {
+  if (slot.status) return slot.status;
+  if (slot.isAvailable) return "AVAILABLE";
+  if (slot.reason === "PAST_TIME") return "PAST_TIME";
+  if (slot.reason === "BOOKED") return "BOOKED";
+
+  return "BOOKED";
+}
+
+function getSlotLabel(slot: TableSlot) {
+  const status = getSlotStatus(slot);
+
+  if (status === "AVAILABLE") return "Tersedia";
+  if (status === "PAST_TIME") return "Sudah lewat";
+  if (status === "WALK_IN") return "Walk-in aktif";
+  if (status === "AWAITING_PAYMENT") return "Menunggu pembayaran";
+  if (status === "PENDING_VERIFICATION") return "Menunggu verifikasi";
+  if (status === "CONFIRMED") return "Booking confirmed";
+  if (status === "CANCELLED") return "Dibatalkan";
+  if (status === "EXPIRED") return "Expired";
+
+  return "Sudah terisi";
+}
+
+function getSourceLabel(source: TableSlot["source"]) {
+  if (source === "ONLINE") return "Online";
+  if (source === "WALK_IN") return "Walk-in";
+  if (source === "ADMIN") return "Admin";
+
+  return source ?? null;
+}
+
+function getWalkInPaymentLabel(status: TableSlot["walkInPaymentStatus"]) {
+  if (status === "UNPAID") return "Belum bayar";
+  if (status === "PARTIAL") return "Bayar sebagian";
+  if (status === "PAID") return "Lunas";
+
+  return status ?? null;
+}
+
+function getSlotDetailLines(slot: TableSlot) {
+  const status = getSlotStatus(slot);
+
+  if (status === "AVAILABLE") {
+    return ["Slot bisa dipilih untuk booking manual."];
+  }
+
+  if (status === "PAST_TIME") {
+    return ["Jam ini sudah lewat untuk tanggal hari ini."];
+  }
+
+  if (status === "WALK_IN") {
+    const estimatedEnd = formatJakartaTime(slot.walkInEstimatedEndAt);
+    const paymentLabel = getWalkInPaymentLabel(slot.walkInPaymentStatus);
+
+    return [
+      slot.customerName ? `Customer: ${slot.customerName}` : "Customer: Walk-in",
+      slot.customerPhone ? `HP: ${slot.customerPhone}` : null,
+      estimatedEnd ? `Estimasi selesai: ${estimatedEnd}` : null,
+      paymentLabel ? `Pembayaran: ${paymentLabel}` : null,
+    ].filter(Boolean) as string[];
+  }
+
+  return [
+    slot.bookingCode ? `Kode: ${slot.bookingCode}` : null,
+    slot.customerName ? `Customer: ${slot.customerName}` : null,
+    slot.customerPhone ? `HP: ${slot.customerPhone}` : null,
+    getSourceLabel(slot.source) ? `Source: ${getSourceLabel(slot.source)}` : null,
+  ].filter(Boolean) as string[];
+}
+
+function getSlotTitle(slot: TableSlot) {
+  const detail = getSlotDetailLines(slot);
+
+  return [getSlotLabel(slot), ...detail].join(" • ");
+}
+
+function getSlotBadgeClass(slot: TableSlot, selected = false) {
+  if (selected) {
+    return "bg-white/20 text-white";
+  }
+
+  const status = getSlotStatus(slot);
+
+  if (status === "AVAILABLE") {
+    return "bg-emerald-50 text-emerald-700";
+  }
+
+  if (status === "WALK_IN") {
+    return "bg-amber-50 text-amber-700";
+  }
+
+  if (status === "AWAITING_PAYMENT") {
+    return "bg-orange-50 text-orange-700";
+  }
+
+  if (status === "PENDING_VERIFICATION") {
+    return "bg-blue-50 text-blue-700";
+  }
+
+  if (status === "CONFIRMED") {
+    return "bg-purple-50 text-purple-700";
+  }
+
+  if (status === "PAST_TIME") {
+    return "bg-slate-200 text-slate-600";
+  }
+
+  if (status === "CANCELLED" || status === "EXPIRED") {
+    return "bg-slate-100 text-slate-500";
+  }
+
+  return "bg-slate-100 text-slate-600";
+}
+
+function getSlotButtonClass(slot: TableSlot, selected: boolean, disabled: boolean) {
+  if (selected) {
+    return "border-[var(--tf-purple)] bg-[var(--tf-purple)] text-white shadow-sm";
+  }
+
+  const status = getSlotStatus(slot);
+
+  if (!disabled && status === "AVAILABLE") {
+    return "border-slate-200 bg-white hover:border-[var(--tf-purple)] hover:bg-[#FAF7FF]";
+  }
+
+  if (status === "WALK_IN") {
+    return "cursor-not-allowed border-amber-200 bg-amber-50 text-amber-900";
+  }
+
+  if (status === "AWAITING_PAYMENT") {
+    return "cursor-not-allowed border-orange-200 bg-orange-50 text-orange-900";
+  }
+
+  if (status === "PENDING_VERIFICATION") {
+    return "cursor-not-allowed border-blue-200 bg-blue-50 text-blue-900";
+  }
+
+  if (status === "CONFIRMED") {
+    return "cursor-not-allowed border-purple-200 bg-purple-50 text-purple-900";
+  }
+
+  return "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500";
+}
+
+function getTableSlotStats(slots: TableSlot[]) {
+  return slots.reduce(
+    (stats, slot) => {
+      const status = getSlotStatus(slot);
+
+      if (slot.isAvailable) stats.available += 1;
+      else stats.unavailable += 1;
+
+      if (status === "WALK_IN") stats.walkIn += 1;
+      if (status === "AWAITING_PAYMENT") stats.awaitingPayment += 1;
+      if (status === "PENDING_VERIFICATION") stats.pendingVerification += 1;
+      if (status === "CONFIRMED") stats.confirmed += 1;
+      if (status === "PAST_TIME") stats.pastTime += 1;
+
+      return stats;
+    },
+    {
+      available: 0,
+      unavailable: 0,
+      walkIn: 0,
+      awaitingPayment: 0,
+      pendingVerification: 0,
+      confirmed: 0,
+      pastTime: 0,
+    }
+  );
+}
+
+function getTableSummaryText(slots: TableSlot[]) {
+  if (slots.length === 0) return "Tidak ada jam operasional";
+
+  const stats = getTableSlotStats(slots);
+  const parts = [`Tersedia: ${stats.available}`];
+
+  if (stats.walkIn > 0) parts.push(`Walk-in: ${stats.walkIn}`);
+  if (stats.confirmed > 0) parts.push(`Confirmed: ${stats.confirmed}`);
+  if (stats.awaitingPayment > 0) parts.push(`Menunggu bayar: ${stats.awaitingPayment}`);
+  if (stats.pendingVerification > 0) parts.push(`Verifikasi: ${stats.pendingVerification}`);
+  if (stats.pastTime > 0) parts.push(`Lewat: ${stats.pastTime}`);
+
+  return parts.join(" • ");
+}
+
 const panelClass =
   "rounded-[1.9rem] border border-slate-200 bg-white p-6 shadow-[var(--tf-shadow-card)]";
 
@@ -172,6 +362,23 @@ export default function AdminManualBookingForm({
             cache: "no-store",
           }
         );
+
+        const contentType = response.headers.get("content-type") ?? "";
+
+        if (!contentType.includes("application/json")) {
+          const text = await response.text();
+
+          console.error("Admin availability returned non-JSON response:", {
+            status: response.status,
+            bodyPreview: text.slice(0, 200),
+          });
+
+          setErrorMessage(
+            "Endpoint availability admin tidak mengembalikan JSON. Cek route /api/admin/availability."
+          );
+          setAvailabilityTables([]);
+          return;
+        }
 
         const result = await response.json();
 
@@ -389,51 +596,87 @@ export default function AdminManualBookingForm({
               ) : availabilityTables.length === 0 ? (
                 <p className="text-slate-500">Belum ada meja yang bisa dipilih.</p>
               ) : (
-                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                <div className="grid gap-3 md:grid-cols-2">
                   {availabilityTables.map((table) => {
                     const isActive = table.id === selectedTableId;
-                    const availableCount = table.slots.filter(
-                      (slot) => slot.isAvailable
-                    ).length;
-
-                    const walkInCount = table.slots.filter(
-                      (slot) => slot.status === "WALK_IN"
-                    ).length;
-
-                    const isFullyBooked = availableCount === 0;
+                    const stats = getTableSlotStats(table.slots);
+                    const hasNoOperatingSlots = table.slots.length === 0;
+                    const isFullyOccupied = table.slots.length > 0 && stats.available === 0;
+                    const tableLabel = table.displayLabel || `Meja ${table.tableNumber}`;
 
                     return (
                       <button
                         key={table.id}
                         type="button"
-                        onClick={() => !isFullyBooked && handleSelectTable(table.id)}
-                        disabled={isFullyBooked}
+                        onClick={() => !hasNoOperatingSlots && handleSelectTable(table.id)}
+                        disabled={hasNoOperatingSlots}
+                        title={getTableSummaryText(table.slots)}
                         className={`rounded-2xl border p-4 text-left transition ${
                           isActive
-                            ? "border-[var(--tf-purple)] bg-[#F3EEFF]"
-                            : isFullyBooked
-                            ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-                            : "border-slate-200 bg-white hover:border-slate-300"
+                            ? "border-[var(--tf-purple)] bg-[#F3EEFF] shadow-sm ring-2 ring-[var(--tf-purple)]/10"
+                            : hasNoOperatingSlots
+                              ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                              : isFullyOccupied
+                                ? "border-slate-200 bg-slate-50 hover:border-slate-300"
+                                : "border-slate-200 bg-white hover:border-[var(--tf-purple)]"
                         }`}
                       >
-                        <p
-                          className={`font-bold ${
-                            isFullyBooked
-                              ? "text-slate-500"
-                              : "text-[var(--tf-purple)]"
-                          }`}
-                        >
-                          Meja {table.tableNumber}
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          Kapasitas: {table.capacity ?? "-"} orang
-                        </p>
-                        <p className="mt-2 text-xs">
-                          {isFullyBooked
-                            ? "Sudah penuh pada tanggal ini"
-                            : walkInCount > 0
-                              ? `Tersedia: ${availableCount} • Walk-in: ${walkInCount}`
-                              : `Jam yang masih tersedia: ${availableCount}`}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p
+                              className={`truncate text-base font-bold ${
+                                isFullyOccupied && !isActive
+                                  ? "text-slate-600"
+                                  : "text-[var(--tf-purple)]"
+                              }`}
+                            >
+                              {tableLabel}
+                            </p>
+
+                            <p className="mt-1 text-sm text-slate-500">
+                              Kapasitas {table.capacity ?? "-"} orang
+                            </p>
+                          </div>
+
+                          <span
+                            className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                              stats.available > 0
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-slate-200 text-slate-600"
+                            }`}
+                          >
+                            {stats.available} tersedia
+                          </span>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {stats.walkIn > 0 ? (
+                            <span className="rounded-full bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700">
+                              Walk-in {stats.walkIn}
+                            </span>
+                          ) : null}
+
+                          {stats.confirmed > 0 ? (
+                            <span className="rounded-full bg-purple-50 px-2 py-1 text-[11px] font-semibold text-purple-700">
+                              Booking {stats.confirmed}
+                            </span>
+                          ) : null}
+
+                          {stats.awaitingPayment > 0 ? (
+                            <span className="rounded-full bg-orange-50 px-2 py-1 text-[11px] font-semibold text-orange-700">
+                              Bayar {stats.awaitingPayment}
+                            </span>
+                          ) : null}
+
+                          {stats.pendingVerification > 0 ? (
+                            <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700">
+                              Verifikasi {stats.pendingVerification}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <p className="mt-3 line-clamp-1 text-xs text-slate-500">
+                          {getTableSummaryText(table.slots)}
                         </p>
                       </button>
                     );
@@ -452,43 +695,88 @@ export default function AdminManualBookingForm({
               ) : !selectedTable ? (
                 <p className="text-slate-500">Meja tidak ditemukan.</p>
               ) : (
-                <div className="grid gap-3 md:grid-cols-2">
-                  {selectedTable.slots.map((slot) => {
-                    const selected = selectedSlots.includes(slot.hour);
-                    const disabled = !slot.isAvailable && !selected;
-                    const slotDetail = getAdminSlotDetail(slot);
-
-                    return (
-                      <button
-                        key={slot.hour}
-                        type="button"
-                        onClick={() => handleToggleSlot(slot.hour)}
-                        disabled={disabled}
-                        title={slotDetail ?? getAdminSlotLabel(slot)}
-                        className={`rounded-2xl border px-4 py-3 text-left transition ${
-                          selected
-                            ? "border-[var(--tf-purple)] bg-[var(--tf-purple)] text-white"
-                            : disabled
-                            ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-                            : "border-slate-200 bg-white hover:border-slate-300"
-                        }`}
-                      >
-                        <span className="font-semibold">
-                          {formatHourLabel(slot.hour)}
-                        </span>
-
-                        <p className="mt-1 text-xs">
-                          {getAdminSlotLabel(slot)}
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-slate-800">
+                          {selectedTable.displayLabel || `Meja ${selectedTable.tableNumber}`}
                         </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {getTableSummaryText(selectedTable.slots)}
+                        </p>
+                      </div>
 
-                        {slotDetail ? (
-                          <p className="mt-1 line-clamp-2 text-[11px] leading-snug">
-                            {slotDetail}
-                          </p>
-                        ) : null}
-                      </button>
-                    );
-                  })}
+                      <div className="flex shrink-0 flex-wrap gap-1.5">
+                        <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700">
+                          Tersedia
+                        </span>
+                        <span className="rounded-full bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700">
+                          Walk-in
+                        </span>
+                        <span className="rounded-full bg-purple-50 px-2 py-1 text-[10px] font-semibold text-purple-700">
+                          Booking
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {selectedTable.slots.map((slot) => {
+                      const selected = selectedSlots.includes(slot.hour);
+                      const disabled = !slot.isAvailable && !selected;
+                      const detailLines = getSlotDetailLines(slot);
+
+                      return (
+                        <button
+                          key={slot.hour}
+                          type="button"
+                          onClick={() => handleToggleSlot(slot.hour)}
+                          disabled={disabled}
+                          title={getSlotTitle(slot)}
+                          className={`rounded-2xl border px-4 py-3 text-left transition ${getSlotButtonClass(
+                            slot,
+                            selected,
+                            disabled
+                          )}`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="font-semibold">
+                              {formatHourLabel(slot.hour)}
+                            </span>
+
+                            <span
+                              className={`rounded-full px-2 py-1 text-[11px] font-bold ${getSlotBadgeClass(
+                                slot,
+                                selected
+                              )}`}
+                            >
+                              {getSlotLabel(slot)}
+                            </span>
+                          </div>
+
+                          {detailLines.length > 0 ? (
+                            <div
+                              className={`mt-2 space-y-0.5 text-[11px] leading-snug ${
+                                selected ? "text-white/80" : "text-slate-500"
+                              }`}
+                            >
+                              {detailLines.slice(0, slot.isAvailable ? 1 : 3).map((line) => (
+                                <p key={line} className="line-clamp-1 break-words">
+                                  {line}
+                                </p>
+                              ))}
+                            </div>
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <p className="text-xs text-slate-500">
+                    Catatan: jam yang dipilih harus berurutan. Slot yang sedang dipakai
+                    walk-in atau sudah memiliki booking tidak bisa dipilih.
+                  </p>
                 </div>
               )}
             </div>
@@ -607,11 +895,23 @@ export default function AdminManualBookingForm({
                   {selectedSlots.length === 0 ? (
                     <p className="font-semibold">-</p>
                   ) : (
-                    <ul className="list-inside list-disc space-y-1">
-                      {selectedSlots.map((hour) => (
-                        <li key={hour}>{formatHourLabel(hour)}</li>
-                      ))}
-                    </ul>
+                    <div className="space-y-2">
+                      <p className="font-semibold">
+                        {formatHourLabel(selectedSlots[0])} -{" "}
+                        {formatHourLabel(selectedSlots[selectedSlots.length - 1] + 1)}
+                      </p>
+
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedSlots.map((hour) => (
+                          <span
+                            key={hour}
+                            className="rounded-full bg-[#F3EEFF] px-2.5 py-1 text-xs font-semibold text-[var(--tf-purple)]"
+                          >
+                            {formatHourLabel(hour)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
 
