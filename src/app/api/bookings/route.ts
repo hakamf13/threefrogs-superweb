@@ -31,6 +31,18 @@ function isSequential(slots: number[]) {
   });
 }
 
+function pad(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function buildSlotDate(bookingDate: string, hour: number) {
+  return new Date(`${bookingDate}T${pad(hour)}:00:00+07:00`);
+}
+
+function isOverlap(startA: Date, endA: Date, startB: Date, endB: Date) {
+  return startA < endB && endA > startB;
+}
+
 async function generateBookingCode(bookingDate: string) {
   const datePart = bookingDate.replaceAll("-", "");
   let bookingCode = "";
@@ -227,24 +239,48 @@ export async function POST(request: Request) {
 
     const bookingDateValue = new Date(`${bookingDate}T00:00:00.000Z`);
 
-    const conflicts = await prisma.bookingSlot.findMany({
-      where: {
-        tableId,
-        bookingDate: bookingDateValue,
-        slotHour: {
-          in: normalizedSlots,
+    // const bookingDateValue = new Date(`${bookingDate}T00:00:00.000Z`);
+
+    const requestedStart = buildSlotDate(bookingDate, firstSlot);
+    const requestedEnd = buildSlotDate(bookingDate, lastSlot + 1);
+
+    const [bookingSlots, activeWalkIns] = await Promise.all([
+      prisma.bookingSlot.findMany({
+        where: {
+          tableId,
+          bookingDate: bookingDateValue,
+          status: {
+            in: [...ACTIVE_BOOKING_STATUSES],
+          },
         },
-        status: {
-          in: [...ACTIVE_BOOKING_STATUSES],
+        select: {
+          slotHour: true,
+          slotEndHour: true,
         },
-      },
-      select: {
-        id: true,
-        slotHour: true,
-      },
+      }),
+
+      prisma.walkInSession.findMany({
+        where: {
+          tableId,
+          bookingDate: bookingDateValue,
+          status: "ACTIVE",
+        },
+        select: {
+          id: true,
+          startedAt: true,
+          estimatedEndAt: true,
+        },
+      }),
+    ]);
+
+    const hasBookingConflict = bookingSlots.some((slot) => {
+      const slotStart = buildSlotDate(bookingDate, slot.slotHour);
+      const slotEnd = buildSlotDate(bookingDate, slot.slotEndHour);
+
+      return isOverlap(requestedStart, requestedEnd, slotStart, slotEnd);
     });
 
-    if (conflicts.length > 0) {
+    if (hasBookingConflict) {
       return NextResponse.json(
         {
           error: "Ada slot yang barusan sudah terisi. Coba pilih ulang ya.",
@@ -252,6 +288,50 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     }
+
+    const hasWalkInConflict = activeWalkIns.some((walkIn) =>
+      isOverlap(
+        requestedStart,
+        requestedEnd,
+        walkIn.startedAt,
+        walkIn.estimatedEndAt
+      )
+    );
+
+    if (hasWalkInConflict) {
+      return NextResponse.json(
+        {
+          error: "Slot ini sedang dipakai untuk sesi walk-in aktif. Silakan pilih jam atau meja lain.",
+        },
+        { status: 409 }
+      );
+    }
+
+    // const conflicts = await prisma.bookingSlot.findMany({
+    //   where: {
+    //     tableId,
+    //     bookingDate: bookingDateValue,
+    //     slotHour: {
+    //       in: normalizedSlots,
+    //     },
+    //     status: {
+    //       in: [...ACTIVE_BOOKING_STATUSES],
+    //     },
+    //   },
+    //   select: {
+    //     id: true,
+    //     slotHour: true,
+    //   },
+    // });
+
+    // if (conflicts.length > 0) {
+    //   return NextResponse.json(
+    //     {
+    //       error: "Ada slot yang barusan sudah terisi. Coba pilih ulang ya.",
+    //     },
+    //     { status: 409 }
+    //   );
+    // }
 
     const totalSlots = normalizedSlots.length;
     const totalPrice = totalSlots * PRICE_PER_HOUR;

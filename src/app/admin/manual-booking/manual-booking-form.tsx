@@ -92,7 +92,7 @@ export default function AdminManualBookingForm({
         setErrorMessage("");
 
         const response = await fetch(
-          `/api/availability?storeId=${selectedStoreId}&bookingDate=${selectedDate}`
+          `/api/admin/availability?storeId=${selectedStoreId}&bookingDate=${selectedDate}`
         );
 
         const result = await response.json();
